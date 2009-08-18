@@ -40,7 +40,7 @@
   (apply #'glColor3f color))
 
 (defun load-texture (filename &optional (min-filter GL_LINEAR) (mag-filter GL_LINEAR))
-;  (init-textures)
+  (init-textures)
   (init-video-mode)
   (let ((image (IMG_Load filename))
 	(texture (car (glGenTextures 1))))
