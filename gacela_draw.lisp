@@ -56,7 +56,9 @@
 (defun draw-image-function (filename)
   (multiple-value-bind
    (texture width height) (load-texture filename)
-        (cond (texture))))
+        (cond (texture
+	       (lambda (&optional (f 0.0172))
+		 (draw-rectangle (* f width) (* f height) :texture texture))))))
 
 (defun draw-quad (v1 v2 v3 v4 &key texture color)
   (cond (texture (glBindTexture GL_TEXTURE_2D texture)
@@ -69,9 +71,12 @@
 	(t (cond (color (draw-color color)))
 	   (draw v1 v2 v3 v4))))
 
-(defun draw-square (&key size texture color)
-  (let ((-size (neg size)))
-    (draw-quad (list -size size 0) (list size size 0) (list size -size 0) (list -size -size 0) :texture texture :color color)))
+(defun draw-rectangle (width height &key texture color)
+  (let* ((w (/ width 2)) (-w (neg w)) (h (/ height 2)) (-h (neg h)))
+    (draw-quad (list -w h 0) (list w h 0) (list w -h 0) (list -w -h 0) :texture texture :color color)))
+
+(defun draw-square (&key (size 1) texture color)
+  (draw-rectangle size size :texture texture :color color))
 
 (defun draw-cube (&key size texture color)
   (let ((-size (neg size)))

@@ -103,7 +103,7 @@
       (next (random-tetramine))
       (timer (make-timer))
       (grid (make-list 20 :initial-element (make-list 14)))
-      (texture (load-texture "fondo_tetris.png")))
+      (background (draw-image-function "fondo_tetris.png")))
   (defun tetramine ()
     (cond ((eq (timer-state timer) 'stopped) (start-timer timer)))
 
@@ -129,7 +129,7 @@
 		  (setq next (random-tetramine)))
 		 (t (incf y) (start-timer timer)))))
 
-    (draw-square :size 20 :texture texture)))
+    (funcall background 0.086)))
 ;    (translate -25 19)
 ;    (draw-grid (join-grids tetramine grid x y))
 ;    (translate 40 40)
