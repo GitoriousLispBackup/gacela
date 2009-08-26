@@ -129,7 +129,7 @@
 		  (setq next (random-tetramine)))
 		 (t (incf y) (start-timer timer)))))
 
-    (funcall background 0.086)))
+    (funcall background)))
 ;    (translate -25 19)
 ;    (draw-grid (join-grids tetramine grid x y))
 ;    (translate 40 40)

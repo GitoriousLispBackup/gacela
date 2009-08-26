@@ -170,6 +170,9 @@
 (defcfun "void gacela_glBlendFunc (int sfactor, int dfactor)" 0
   "glBlendFunc (sfactor, dfactor);")
 
+(defcfun "void gacela_glOrtho (float left, float right, float bottom, float top, float near_val, float far_val)" 0
+  "glOrtho (left, right, bottom, top, near_val, far_val);")
+
 (defcfun "void gacela_gluPerspective (double fovy, double aspect, double zNear, double zFar)" 0
   "gluPerspective (fovy, aspect, zNear, zFar);")
 
@@ -201,6 +204,7 @@
 (defentry glLightfv (int int float float float float) (void "gacela_glLightfv"))
 (defentry glNormal3f (float float float) (void "gacela_glNormal3f"))
 (defentry glBlendFunc (int int) (void "gacela_glBlendFunc"))
+(defentry glOrtho (float float float float float float) (void "gacela_glOrtho"))
 
 (defentry gluPerspective (double double double double) (void "gacela_gluPerspective"))
 (defentry gluBuild2DMipmaps (int int int int int int int) (int "gacela_gluBuild2DMipmaps"))

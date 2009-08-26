@@ -112,6 +112,8 @@
     (glViewPort 0 0 width height)
     (glMatrixMode GL_PROJECTION)
     (glLoadIdentity)
+    (let* ((w (/ width 2)) (-w (neg w)) (h (/ height 2)) (-h (neg h)))
+      (glOrtho -w w -h h 0 1))
     (gluPerspective 45 ratio 0.1 100)
     (glMatrixMode GL_MODELVIEW)
     (glLoadIdentity)
