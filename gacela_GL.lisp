@@ -126,6 +126,9 @@
 (defcfun "void gacela_glTranslatef (float x, float y, float z)" 0
   "glTranslatef (x, y, z);")
 
+(defcfun "void gacela_glVertex2f (float x, float y)" 0
+  "glVertex2f (x, y);")
+
 (defcfun "void gacela_glVertex3f (float x, float y, float z)" 0
   "glVertex3f (x, y, z);")
 
@@ -194,6 +197,7 @@
 (defentry glRotatef (float float float float) (void "gacela_glRotatef"))
 (defentry glShadeModel (int) (void "gacela_glShadeModel"))
 (defentry glTranslatef (float float float) (void "gacela_glTranslatef"))
+(defentry glVertex2f (float float) (void "gacela_glVertex2f"))
 (defentry glVertex3f (float float float) (void "gacela_glVertex3f"))
 (defentry glViewport (int int int int) (void "gacela_glViewport"))
 (defentry glGenTextures (int) (object "gacela_glGenTextures"))

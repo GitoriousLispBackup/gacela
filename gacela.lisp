@@ -25,7 +25,6 @@
 (defvar *gacela-freq* 30)
 (defvar *transparent-color* '(:red 0 :green 0 :blue 0))
 (defvar *background-color* '(:red 0 :green 0 :blue 0))
-(defvar *zoom* -10)
 
 ;;; SDL Initialization Subsystem
 (let (initialized)
@@ -92,7 +91,7 @@
   (glShadeModel GL_SMOOTH)
   (glClearColor 0 0 0 0)
   (glClearDepth 1)
-  (glEnable GL_DEPTH_TEST)
+  (glDisable GL_DEPTH_TEST)
   (glDepthFunc GL_LEQUAL)
 ;  (glEnable GL_BLEND)
 ;  (glBlendFunc GL_SRC_ALPHA GL_ONE)
@@ -357,7 +356,6 @@
      (do () ((quit?))
 	 (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
 	 (glLoadIdentity)
-	 (translate 0 0 *zoom*)
 	 ,@code
 	 (SDL_GL_SwapBuffers)
 	 (SDL_Delay (- *gacela-freq* (rem (SDL_GetTicks) *gacela-freq*)))

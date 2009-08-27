@@ -17,6 +17,8 @@
 
 (in-package :gacela)
 
+(defmacro set-dimension (&key 2d 3d))
+
 (defun draw (&rest vertexes)
   (begin-draw (length vertexes))
   (draw-vertexes vertexes)
@@ -32,7 +34,7 @@
 	   (draw-vertexes (cdr vertexes)))))
 
 (defun draw-vertex (vertex &key texture-coord)
-  (cond ((consp (car vertex)) (apply #'glColor3f (car vertex)) (apply #'glVertex3f (cadr vertex)))
+  (cond ((consp (car vertex)) (draw-color (car vertex)) (apply #'glVertex3f (cadr vertex)))
 	(t (cond (texture-coord (apply #'glTexCoord2f texture-coord)))
 	   (apply #'glVertex3f vertex))))
 
