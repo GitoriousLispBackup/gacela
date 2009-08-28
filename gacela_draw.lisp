@@ -14,10 +14,17 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 (in-package :gacela)
 
-(defmacro set-dimension (&key 2d 3d))
+(let ((mode '2d))
+  (defun 2d-mode ()
+    (setq mode '2d))
+
+  (defun 3d-mode ()
+    (setq mode '3d))
+
+  (defun 3d-mode? ()
+    (eq mode '3d)))
 
 (defun draw (&rest vertexes)
   (begin-draw (length vertexes))
@@ -34,9 +41,13 @@
 	   (draw-vertexes (cdr vertexes)))))
 
 (defun draw-vertex (vertex &key texture-coord)
-  (cond ((consp (car vertex)) (draw-color (car vertex)) (apply #'glVertex3f (cadr vertex)))
+  (cond ((consp (car vertex)) (draw-color (car vertex)) (apply #'simple-draw-vertex (cadr vertex)))
 	(t (cond (texture-coord (apply #'glTexCoord2f texture-coord)))
-	   (apply #'glVertex3f vertex))))
+	   (apply #'simple-draw-vertex vertex))))
+
+(defun simple-draw-vertex (x y &optional (z 0))
+  (cond ((3d-mode?) (glVertex3f x y z))
+	(t (glVertex2f x y))))
 
 (defun draw-color (color)
   (apply #'glColor3f color))
