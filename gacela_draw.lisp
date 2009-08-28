@@ -18,9 +18,11 @@
 
 (let ((mode '2d))
   (defun 2d-mode ()
+    (glDisable GL_DEPTH_TEST)
     (setq mode '2d))
 
   (defun 3d-mode ()
+    (glEnable GL_DEPTH_TEST)
     (setq mode '3d))
 
   (defun 3d-mode? ()

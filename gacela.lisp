@@ -88,10 +88,10 @@
 
 
 (defun init-GL ()
+  (2d-mode)
   (glShadeModel GL_SMOOTH)
   (glClearColor 0 0 0 0)
   (glClearDepth 1)
-  (glDisable GL_DEPTH_TEST)
   (glDepthFunc GL_LEQUAL)
 ;  (glEnable GL_BLEND)
 ;  (glBlendFunc GL_SRC_ALPHA GL_ONE)
@@ -108,12 +108,12 @@
 
 (defun resize-screen-GL (width height)
   (let ((ratio (if (= height 0) width (/ width height))))
-    (glViewPort 0 0 width height)
+;    (glViewPort 0 0 width height)
     (glMatrixMode GL_PROJECTION)
     (glLoadIdentity)
     (let* ((w (/ width 2)) (-w (neg w)) (h (/ height 2)) (-h (neg h)))
       (glOrtho -w w -h h 0 1))
-    (gluPerspective 45 ratio 0.1 100)
+;    (gluPerspective 45 ratio 0.1 100)
     (glMatrixMode GL_MODELVIEW)
     (glLoadIdentity)
     t))
