@@ -1,7 +1,5 @@
 (in-package :gacela)
 
-(setq *zoom* -50)
-
 (defun tetramine-i ()
   (let ((color '(1 0 0)))
     `((,color ,color ,color ,color))))
@@ -48,13 +46,13 @@
 
 (defun draw-cell (cell)
   (cond ((null cell) nil)
-	(t (draw-color cell) (draw-square :size 0.9))))
+	(t (draw-color cell) (draw-square :size 20))))
 
 (defun draw-row (row)
-  (mapcar (lambda (cell) (draw-cell cell) (translate 2 0)) row))
+  (mapcar (lambda (cell) (draw-cell cell) (translate 23 0)) row))
 
 (defun draw-grid (grid)
-  (mapcar (lambda (row) (draw-row row) (translate (* -2 (length row)) -2)) grid))
+  (mapcar (lambda (row) (draw-row row) (translate (* -23 (length row)) -23)) grid))
 
 (defun join-rows (source destination &optional (offset 0))
   (cond ((null source) destination)
@@ -102,7 +100,7 @@
 (let ((tetramine (random-tetramine)) (x 6) (y 0)
       (next (random-tetramine))
       (timer (make-timer))
-      (grid (make-list 20 :initial-element (make-list 14)))
+      (grid (make-list 20 :initial-element (make-list 14)))   ;320x460
       (background (draw-image-function "fondo_tetris.png")))
   (defun tetramine ()
     (cond ((eq (timer-state timer) 'stopped) (start-timer timer)))
@@ -129,10 +127,10 @@
 		  (setq next (random-tetramine)))
 		 (t (incf y) (start-timer timer)))))
 
-    (funcall background)))
-;    (translate -25 19)
-;    (draw-grid (join-grids tetramine grid x y))
-;    (translate 40 40)
-;    (draw-grid next)))
+    (funcall background)
+    (translate -288 218)
+    (draw-grid (join-grids tetramine grid x y))
+    (translate 440 440)
+    (draw-grid next)))
 
 (run-game "Gacela Tetris" (tetramine))
