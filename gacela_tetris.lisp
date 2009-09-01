@@ -100,7 +100,7 @@
 (let ((tetramine (random-tetramine)) (x 6) (y 0)
       (next (random-tetramine))
       (timer (make-timer))
-      (grid (make-list 20 :initial-element (make-list 14)))   ;320x460
+      (grid (make-list 20 :initial-element (make-list 14)))
       (background (draw-image-function "fondo_tetris.png")))
   (defun tetramine ()
     (cond ((eq (timer-state timer) 'stopped) (start-timer timer)))
@@ -127,10 +127,17 @@
 		  (setq next (random-tetramine)))
 		 (t (incf y) (start-timer timer)))))
 
-    (funcall background)
-    (translate -288 218)
-    (draw-grid (join-grids tetramine grid x y))
-    (translate 440 440)
-    (draw-grid next)))
+;    (draw-square :size 200)))
+    (funcall background)))
+;    (translate -288 218)
+;    (draw-grid (join-grids tetramine grid x y))
+;    (translate 440 440)
+;    (draw-grid next)))
 
-(run-game "Gacela Tetris" (tetramine))
+(let ((frame 0.0) (fps (make-timer)) (update (make-timer)))
+  (start-timer update)
+  (start-timer fps)
+  (run-game "Gacela Tetris"
+	    (tetramine)
+	    (incf frame)
+	    (cond ((> (get-time update) 1000) (print (/ frame (/ (get-time fps) 1000.0))) (start-timer update)))))
