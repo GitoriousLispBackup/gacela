@@ -22,8 +22,7 @@
 (defvar *height-screen* 480)
 (defvar *bpp-screen* 32)
 (defvar *title-screen* "Happy Hacking!!")
-(defvar *frames-per-second* 30)
-;(defvar *gacela-freq* 100)
+(defvar *frames-per-second* 20)
 (defvar *transparent-color* '(:red 0 :green 0 :blue 0))
 (defvar *background-color* '(:red 0 :green 0 :blue 0))
 
@@ -349,21 +348,24 @@
 					     (eval (read-from-string (concatenate 'string "(progn " (car comlst) ")")))))))
 		     (run-com running)))))))
 
+(let ((gacela-timer (make-timer)))
+  (defun start-gacela-timer () (start-timer gacela-timer))
+  (defun get-gacela-time () (get-time gacela-timer)))
+
 (defmacro run-game (title &body code)
-  `(let ((fpstemp (make-timer)))
+  `(progn
      (init-video-mode)
      (SDL_WM_SetCaption ,title "")
      (process-events)
      (do () ((quit?))
-	 (start-timer fpstemp)
+	 (start-gacela-timer)
 	 (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
 	 (glLoadIdentity)
 	 ,@code
 	 (SDL_GL_SwapBuffers)
-	 (let ((frame-time (get-time fpstemp)) (time-per-frame (/ 1000.0 *frames-per-second*)))
+	 (let ((frame-time (get-gacela-time)) (time-per-frame (/ 1000.0 *frames-per-second*)))
 	   (cond ((< frame-time time-per-frame)
 		  (SDL_Delay (- time-per-frame frame-time)))))
-;	 (SDL_Delay (- *gacela-freq* (rem (SDL_GetTicks) *gacela-freq*)))
 	 (process-events)
 	 (setq running nil))))
 

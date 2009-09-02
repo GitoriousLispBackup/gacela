@@ -1,5 +1,7 @@
 (in-package :gacela)
 
+(setq *frames-per-second* 15)
+
 (defun tetramine-i ()
   (let ((color '(1 0 0)))
     `((,color ,color ,color ,color))))
@@ -101,7 +103,7 @@
       (next (random-tetramine))
       (timer (make-timer))
       (grid (make-list 20 :initial-element (make-list 14)))
-      (background (draw-image-function "fondo_tetris.png")))
+      (background (draw-image-function "fondo_tetris2.png")))
   (defun tetramine ()
     (cond ((eq (timer-state timer) 'stopped) (start-timer timer)))
 
@@ -127,12 +129,11 @@
 		  (setq next (random-tetramine)))
 		 (t (incf y) (start-timer timer)))))
 
-;    (draw-square :size 200)))
-    (funcall background)))
-;    (translate -288 218)
-;    (draw-grid (join-grids tetramine grid x y))
-;    (translate 440 440)
-;    (draw-grid next)))
+    (funcall background)
+    (translate -288 218)
+    (draw-grid (join-grids tetramine grid x y))
+    (translate 440 440)
+    (draw-grid next)))
 
 (let ((frame 0.0) (fps (make-timer)) (update (make-timer)))
   (start-timer update)
