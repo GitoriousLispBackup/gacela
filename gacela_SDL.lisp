@@ -21,7 +21,6 @@
 (clines "#include <SDL/SDL_image.h>")
 (clines "#include <SDL/SDL_ttf.h>")
 (clines "#include <SDL/SDL_mixer.h>")
-(clines "#include <SDL/sge.h>")
 
 ;;; These are the flags which may be passed to SDL_Init()
 (defconstant SDL_INIT_TIMER		#x00000001)
@@ -172,8 +171,6 @@
 ;(defentry Mix_FreeMusic (int) (void "gacela_Mix_FreeMusic"))
 ;(defentry Mix_FreeChunk (int) (void "gacela_Mix_FreeChunk"))
 ;(defentry Mix_CloseAudio () (void "gacela_Mix_CloseAudio"))
-;(defentry sge_FilledCircle (int int int int int int int) (void "gacela_sge_FilledCircle"))
-;(defentry sge_FilledRect (int int int int int int int int) (void "gacela_sge_FilledRect"))
 ;(defentry free (int) (void "gacela_free"))
 (defentry SDL_GL_SwapBuffers () (void "gacela_SDL_GL_SwapBuffers"))
 (defentry SDL_EnableKeyRepeat (int int) (int "gacela_SDL_EnableKeyRepeat"))

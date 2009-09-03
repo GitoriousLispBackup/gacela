@@ -184,32 +184,6 @@
   (flip))
 
 
-(defun filled-circle (radius &optional (color '(:red 255 :green 255 :blue 255)))
-  (init-video-mode)
-  (let ((new-surface (create-surface (1+ (* radius 2)) (1+ (* radius 2)))))
-    (sge_FilledCircle (surface-address new-surface)
-		      radius radius radius
-		      (getf color :red)
-		      (getf color :green)
-		      (getf color :blue))
-    (setf (surface-shape new-surface)
-	  `((,radius ,radius) ,radius))
-    new-surface))
-
-
-(defun filled-rect (width height &optional (color '(:red 255 :green 255 :blue 255)))
-  (init-video-mode)
-  (let ((new-surface (create-surface width height)))
-    (sge_FilledRect (surface-address new-surface)
-		    0 0 width height
-		    (getf color :red)
-		    (getf color :green)
-		    (getf color :blue))
-    (setf (surface-shape new-surface)
-	  (make-rectangle 0 0 width height))
-    new-surface))
-
-
 ;;; TTF Subsystem
 (defstruct font address)
 
