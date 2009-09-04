@@ -135,6 +135,9 @@
 (defcfun "int gacela_SDL_EnableKeyRepeat (int delay, int interval)" 0
   "return SDL_EnableKeyRepeat (delay, interval);")
 
+(defcfun "int gacela_zoomSurface (int src, float zoomx, float zoomy, int smooth)" 0
+  "return zoomSurface (src, zoomx, zoomy, smooth);")
+
 (defentry SDL_Init (int) (int "gacela_SDL_Init"))
 (defentry SDL_Quit () (void "gacela_SDL_Quit"))
 (defentry SDL_SetVideoMode (int int int int) (int "gacela_SDL_SetVideoMode"))
@@ -174,6 +177,7 @@
 ;(defentry free (int) (void "gacela_free"))
 (defentry SDL_GL_SwapBuffers () (void "gacela_SDL_GL_SwapBuffers"))
 (defentry SDL_EnableKeyRepeat (int int) (int "gacela_SDL_EnableKeyRepeat"))
+(defentry zoomSurface (int float float int) (int "gacela_zoomSurface"))
 
 ;;; C-Gacela Functions
 (defcfun "int gacela_surface_format (int surface)" 0
