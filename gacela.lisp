@@ -322,24 +322,32 @@
 					     (eval (read-from-string (concatenate 'string "(progn " (car comlst) ")")))))))
 		     (run-com running)))))))
 
-(let ((gacela-timer (make-timer)))
-  (defun start-gacela-timer () (start-timer gacela-timer))
-  (defun get-gacela-time () (get-time gacela-timer)))
+(let (time (time-per-frame (/ 1000.0 *frames-per-second*)))
+  (defun set-frames-per-second (fps)
+    (setq time-per-frame (/ 1000.0 fps)))
+
+  (defun init-frame-time ()
+    (setq time (SDL_GetTicks)))
+
+  (defun delay-frame ()
+    (let ((frame-time (- (SDL_GetTicks) time)))
+      (cond ((< frame-time time-per-frame)
+	     (SDL_Delay (- time-per-frame frame-time)))))))
+      
 
 (defmacro run-game (title &body code)
   `(progn
      (init-video-mode)
      (SDL_WM_SetCaption ,title "")
+     (init-frame-time)
      (process-events)
      (do () ((quit?))
-	 (start-gacela-timer)
 	 (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
 	 (glLoadIdentity)
 	 ,@code
 	 (SDL_GL_SwapBuffers)
-	 (let ((frame-time (get-gacela-time)) (time-per-frame (/ 1000.0 *frames-per-second*)))
-	   (cond ((< frame-time time-per-frame)
-		  (SDL_Delay (- time-per-frame frame-time)))))
+	 (delay-frame)
+	 (init-frame-time)
 	 (process-events)
 	 (setq running nil))))
 

@@ -63,6 +63,12 @@
 	 (cond ((or (numberp list) (numberp pattern)) (and (numberp list) (numberp pattern)))
 	       (t t)))))
 
+(defun nearest-power-of-two (n)
+  (labels ((power (p n)
+		  (cond ((> (* p 2) n) p)
+			(t (power (* p 2) n)))))
+	  (power 1 n)))
+
 ;Geometry
 (defun dotp (dot)
   (match-pattern dot '(0 0)))

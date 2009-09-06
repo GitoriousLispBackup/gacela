@@ -103,7 +103,7 @@
       (next (random-tetramine))
       (timer (make-timer))
       (grid (make-list 20 :initial-element (make-list 14)))
-      (background (draw-image-function "fondo_tetris2.png")))
+      (background (draw-image-function "fondo_tetris.png")))
   (defun tetramine ()
     (cond ((eq (timer-state timer) 'stopped) (start-timer timer)))
 

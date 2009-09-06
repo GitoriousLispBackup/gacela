@@ -33,7 +33,7 @@
    '("gacela.o" "gacela_SDL.o" "gacela_GL.o" "gacela_draw.o" "gacela_events.o" "gacela_mobs.o" "gacela_widgets.o" "gacela_misc.o")
    "gacela"
    ""
-   "-lSDL -lSDL_image -lSDL_ttf -lSDL_mixer -lSGE -lGL -lGLU"))
+   "-lSDL -lSDL_image -lSDL_ttf -lSDL_mixer -lSDL_gfx -lGL -lGLU"))
 
 (defun build-gacela ()
   (compile-gacela)
