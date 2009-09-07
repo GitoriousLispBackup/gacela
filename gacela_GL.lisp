@@ -61,6 +61,7 @@
 
 ;;; Buffers, Pixel Drawing/Reading
 (defconstant GL_RGB                           #x1907)
+(defconstant GL_RGBA                          #x1908)
 
 ;;; Hints
 (defconstant GL_PERSPECTIVE_CORRECTION_HINT   #x0C50)
@@ -79,6 +80,7 @@
 
 ;;; OpenGL 1.2
 (defconstant GL_BGR                           #x80E0)
+(defconstant GL_BGRA                          #x80E1)
 
 ;;; OpenGL Functions
 (defcfun "void gacela_glBegin (int mode)" 0

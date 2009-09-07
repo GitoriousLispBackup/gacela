@@ -76,7 +76,7 @@
 	       (let ((width (surface-w image)) (height (surface-h image))
 		     (texture (car (glGenTextures 1))))
 		 (glBindTexture GL_TEXTURE_2D texture)
-		 (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 GL_RGB GL_UNSIGNED_BYTE (surface-pixels image))
+		 (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 GL_RGBA GL_UNSIGNED_BYTE (surface-pixels image))
 		 (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
 		 (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
 		 (SDL_FreeSurface image)
