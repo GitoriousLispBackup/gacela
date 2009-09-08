@@ -21,7 +21,7 @@
 (clines "#include <SDL/SDL_image.h>")
 (clines "#include <SDL/SDL_ttf.h>")
 (clines "#include <SDL/SDL_mixer.h>")
-(clines "#include <SDL/rotozoom.h>")
+(clines "#include <SDL/SDL_rotozoom.h>")
 
 ;;; These are the flags which may be passed to SDL_Init()
 (defconstant SDL_INIT_TIMER		#x00000001)
