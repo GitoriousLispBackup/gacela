@@ -142,3 +142,19 @@
 
 (defun enable (&key textures)
   (cond (textures (glEnable GL_TEXTURE_2D))))
+
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN
+    if (surface -> format -> BytesPerPixel == 3){
+        mode = GL_BGR ;
+    }
+    else if (surface -> format -> BytesPerPixel == 4){
+        mode = GL_BGRA ;
+    }
+#else
+    if (surface -> format -> BytesPerPixel == 3){
+        mode = GL_RGB ;
+    }
+    else if (surface -> format -> BytesPerPixel == 4){
+        mode = GL_RGBA ;
+    }
+#endif
