@@ -74,10 +74,13 @@
    (image real-w real-h) (load-image-for-texture filename)
         (cond (image
 	       (let ((width (surface-w image)) (height (surface-h image))
-		     (byteorder (cond 
+		     (byteorder (if (= (SDL_ByteOrder) SDL_LIL_ENDIAN)
+				    (if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)
+				    (if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)))
+
 		     (texture (car (glGenTextures 1))))
 		 (glBindTexture GL_TEXTURE_2D texture)
-		 (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 GL_RGBA GL_UNSIGNED_BYTE (surface-pixels image))
+		 (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
 		 (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
 		 (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
 		 (SDL_FreeSurface image)
@@ -142,19 +145,3 @@
 
 (defun enable (&key textures)
   (cond (textures (glEnable GL_TEXTURE_2D))))
-
-#if SDL_BYTEORDER == SDL_LIL_ENDIAN
-    if (surface -> format -> BytesPerPixel == 3){
-        mode = GL_BGR ;
-    }
-    else if (surface -> format -> BytesPerPixel == 4){
-        mode = GL_BGRA ;
-    }
-#else
-    if (surface -> format -> BytesPerPixel == 3){
-        mode = GL_RGB ;
-    }
-    else if (surface -> format -> BytesPerPixel == 4){
-        mode = GL_RGBA ;
-    }
-#endif
