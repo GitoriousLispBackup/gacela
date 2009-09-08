@@ -74,6 +74,7 @@
    (image real-w real-h) (load-image-for-texture filename)
         (cond (image
 	       (let ((width (surface-w image)) (height (surface-h image))
+		     (byteorder (cond 
 		     (texture (car (glGenTextures 1))))
 		 (glBindTexture GL_TEXTURE_2D texture)
 		 (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 GL_RGBA GL_UNSIGNED_BYTE (surface-pixels image))

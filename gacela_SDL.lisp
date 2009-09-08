@@ -61,6 +61,10 @@
 (defconstant SDL_DEFAULT_REPEAT_DELAY     500)
 (defconstant SDL_DEFAULT_REPEAT_INTERVAL  30)
 
+;;; The two types of endianness
+(defconstant SDL_LIL_ENDIAN  1234)
+(defconstant SDL_BIG_ENDIAN  4321)
+
 
 ;;; SDL Functions
 (defcfun "int gacela_SDL_Init (int flags)" 0
@@ -138,6 +142,9 @@
 (defcfun "int gacela_zoomSurface (int src, float zoomx, float zoomy, int smooth)" 0
   "return zoomSurface (src, zoomx, zoomy, smooth);")
 
+(defcfun "int gacela_SDL_ByteOrder (void)" 0
+  "return SDL_BYTEORDER;")
+
 (defentry SDL_Init (int) (int "gacela_SDL_Init"))
 (defentry SDL_Quit () (void "gacela_SDL_Quit"))
 (defentry SDL_SetVideoMode (int int int int) (int "gacela_SDL_SetVideoMode"))
@@ -178,6 +185,7 @@
 (defentry SDL_GL_SwapBuffers () (void "gacela_SDL_GL_SwapBuffers"))
 (defentry SDL_EnableKeyRepeat (int int) (int "gacela_SDL_EnableKeyRepeat"))
 (defentry zoomSurface (int float float int) (int "gacela_zoomSurface"))
+(defentry SDL_ByteOrder () (int "gacela_SDL_ByteOrder"))
 
 ;;; C-Gacela Functions
 (defcfun "int gacela_surface_format (int surface)" 0
@@ -196,6 +204,10 @@
   "const SDL_Surface *s = surface;"
   "return s->pixels;")
 
+(defcfun "int gacela_surface_format_BytesPerPixel (int surface)" 0
+  "const SDL_Surface *s = surface;"
+  "return s->format->BytesPerPixel;")
+
 ;(defentry apply-surface2 (int int int int int int int int int) (void "apply_surface"))
 ;(defentry render-text2 (int string int int int) (int "render_text"))
 ;(defentry fill-surface (int int int int) (void "fill_surface"))
@@ -206,3 +218,4 @@
 (defentry surface-w (int) (int "gacela_surface_w"))
 (defentry surface-h (int) (int "gacela_surface_h"))
 (defentry surface-pixels (int) (int "gacela_surface_pixels"))
+(defentry surface-format-BytesPerPixel (int) (int "gacela_surface_format_BytesPerPixel"))
