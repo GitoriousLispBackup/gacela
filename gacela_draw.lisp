@@ -68,23 +68,23 @@
 		      (cond ((/= zoomed-image 0) (values zoomed-image width height))))))))))
 
 (defun load-texture (filename &optional (min-filter GL_LINEAR) (mag-filter GL_LINEAR))
-  (init-textures)
-  (init-video-mode)
-  (multiple-value-bind
-   (image real-w real-h) (load-image-for-texture filename)
+;  (init-textures)
+;  (init-video-mode)
+  (progn-textures
+   (multiple-value-bind
+    (image real-w real-h) (load-image-for-texture filename)
         (cond (image
 	       (let ((width (surface-w image)) (height (surface-h image))
 		     (byteorder (if (= (SDL_ByteOrder) SDL_LIL_ENDIAN)
 				    (if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)
 				    (if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)))
-
 		     (texture (car (glGenTextures 1))))
 		 (glBindTexture GL_TEXTURE_2D texture)
 		 (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
 		 (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
 		 (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
 		 (SDL_FreeSurface image)
-		 (values texture real-w real-h))))))
+		 (values texture real-w real-h)))))))
 
 (defun draw-image-function (filename)
   (multiple-value-bind
@@ -94,13 +94,14 @@
 		 (draw-rectangle (* f width) (* f height) :texture texture))))))
 
 (defun draw-quad (v1 v2 v3 v4 &key texture color)
-  (cond (texture (glBindTexture GL_TEXTURE_2D texture)
-		 (begin-draw 4)
-		 (draw-vertex v1 :texture-coord '(0 0))
-		 (draw-vertex v2 :texture-coord '(1 0))
-		 (draw-vertex v3 :texture-coord '(1 1))
-		 (draw-vertex v4 :texture-coord '(0 1))
-		 (glEnd))
+  (cond (texture (progn-textures
+		  (glBindTexture GL_TEXTURE_2D texture)
+		  (begin-draw 4)
+		  (draw-vertex v1 :texture-coord '(0 0))
+		  (draw-vertex v2 :texture-coord '(1 0))
+		  (draw-vertex v3 :texture-coord '(1 1))
+		  (draw-vertex v4 :texture-coord '(0 1))
+		  (glEnd)))
 	(t (cond (color (draw-color color)))
 	   (draw v1 v2 v3 v4))))
 

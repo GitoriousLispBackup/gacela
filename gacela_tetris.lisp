@@ -1,6 +1,6 @@
 (in-package :gacela)
 
-(setq *frames-per-second* 15)
+(set-frames-per-second 15)
 
 (defun tetramine-i ()
   (let ((color '(1 0 0)))

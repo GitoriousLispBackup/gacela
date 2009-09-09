@@ -98,6 +98,13 @@
   (glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST)
   t)
 
+(defmacro progn-textures (&body code)
+  `(progn
+     (init-video-mode)
+     (glEnable GL_TEXTURE_2D)
+     ,@code
+     (glDisable GL_TEXTURE_2D)))
+
 (defun init-textures ()
   (init-video-mode)
   (glEnable GL_TEXTURE_2D))
