@@ -89,9 +89,9 @@
 (defun draw-image-function (filename)
   (multiple-value-bind
    (texture width height) (load-texture filename)
-        (cond (texture
-	       (lambda (&optional (f 1))
-		 (draw-rectangle (* f width) (* f height) :texture texture))))))
+   (lambda (&optional (f 1))
+     (cond (texture
+	    (draw-rectangle (* f width) (* f height) :texture texture))))))
 
 (defun draw-quad (v1 v2 v3 v4 &key texture color)
   (cond (texture (progn-textures

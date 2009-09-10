@@ -99,11 +99,12 @@
   t)
 
 (defmacro progn-textures (&body code)
-  `(progn
+  `(let (values)
      (init-video-mode)
      (glEnable GL_TEXTURE_2D)
-     ,@code
-     (glDisable GL_TEXTURE_2D)))
+     (setq values (multiple-value-list (progn ,@code)))
+     (glDisable GL_TEXTURE_2D)
+     (apply #'values values)))
 
 (defun init-textures ()
   (init-video-mode)
