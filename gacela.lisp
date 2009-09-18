@@ -126,6 +126,14 @@
     (glLoadIdentity)
     t))
 
+(let ((current-color '(1 1 1 1)))
+  (defun get-color ()
+    current-color)
+
+  (defun set-color (red green blue (&optional (alpha 1)))
+    (setq current-color color)
+    (glColor4f red green blue alpha)))
+
 (defun copy-surface (source)
   (cond ((surface-p source)
 	 (let ((new-surface

@@ -98,6 +98,9 @@
 (defcfun "void gacela_glColor3f (float red, float green, float blue)" 0
   "glColor3f (red, green, blue);")
 
+(defcfun "void gacela_glColor4f (float red, float green, float blue, float alpha)" 0
+  "glColor4f (red, green, blue, alpha);")
+
 (defcfun "void gacela_glDepthFunc (int func)" 0
   "glDepthFunc (func);")
 
@@ -189,6 +192,7 @@
 (defentry glClearColor (float float float float) (void "gacela_glClearColor"))
 (defentry glClearDepth (double) (void "gacela_glClearDepth"))
 (defentry glColor3f (float float float) (void "gacela_glColor3f"))
+(defentry glColor4f (float float float) (void "gacela_glColor4f"))
 (defentry glDepthFunc (int) (void "gacela_glDepthFunc"))
 (defentry glEnable (int) (void "gacela_glEnable"))
 (defentry glDisable (int) (void "gacela_glDisable"))
