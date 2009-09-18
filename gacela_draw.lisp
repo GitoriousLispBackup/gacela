@@ -28,6 +28,12 @@
   (defun 3d-mode? ()
     (eq mode '3d)))
 
+(defmacro with-color (color &body code)
+  `(progn
+     (apply #'set-current-color ,color)
+     ,@code
+     (apply #'set-current-color ,(get-current-color))))
+
 (defun draw (&rest vertexes)
   (begin-draw (length vertexes))
   (draw-vertexes vertexes)

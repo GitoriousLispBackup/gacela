@@ -127,11 +127,11 @@
     t))
 
 (let ((current-color '(1 1 1 1)))
-  (defun get-color ()
+  (defun get-current-color ()
     current-color)
 
-  (defun set-color (red green blue (&optional (alpha 1)))
-    (setq current-color color)
+  (defun set-current-color (red green blue &optional (alpha 1))
+    (setq current-color (list red green blue alpha))
     (glColor4f red green blue alpha)))
 
 (defun copy-surface (source)
@@ -312,18 +312,6 @@
 
 
 ;;; GaCeLa Functions
-;(defun game-loop (code)
-;  (process-events)
-;  (cond ((quit?) nil)
-;	(t
-;	 (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-;	 (glLoadIdentity)
-;	 (translate 0 0 *zoom*)
-;	 (funcall code)
-;	 (SDL_GL_SwapBuffers)
-;	 (SDL_Delay (- *gacela-freq* (rem (SDL_GetTicks) *gacela-freq*)))
-;	 (game-loop code))))
-
 (let (commands)
   (defun prog-command (command)
     (setq commands (cons command commands)))
@@ -366,19 +354,6 @@
 	 (init-frame-time)
 	 (process-events)
 	 (setq running nil))))
-
-;(defun run-game ()
-;  (init-video-mode)
-;  (SDL_WM_SetCaption *title-screen* "")
-;  (refresh-active-procs)
-;  (enjoy!)
-;  (do () ((quit?))
-;      (process-events)
-;      (logic-procs)
-;      (motion-procs)
-;      (refresh-active-procs)
-;      (refresh-screen)
-;      (SDL_Delay (- *gacela-freq* (rem (SDL_GetTicks) *gacela-freq*)))))
 
 (defun quit-game ()
 ;  (free-all-resources)
