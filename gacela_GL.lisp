@@ -192,7 +192,7 @@
 (defentry glClearColor (float float float float) (void "gacela_glClearColor"))
 (defentry glClearDepth (double) (void "gacela_glClearDepth"))
 (defentry glColor3f (float float float) (void "gacela_glColor3f"))
-(defentry glColor4f (float float float) (void "gacela_glColor4f"))
+(defentry glColor4f (float float float float) (void "gacela_glColor4f"))
 (defentry glDepthFunc (int) (void "gacela_glDepthFunc"))
 (defentry glEnable (int) (void "gacela_glEnable"))
 (defentry glDisable (int) (void "gacela_glDisable"))

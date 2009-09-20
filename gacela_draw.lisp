@@ -29,10 +29,10 @@
     (eq mode '3d)))
 
 (defmacro with-color (color &body code)
-  `(progn
+  `(let ((original-color (get-current-color)))
      (apply #'set-current-color ,color)
      ,@code
-     (apply #'set-current-color ,(get-current-color))))
+     (apply #'set-current-color original-color)))
 
 (defun draw (&rest vertexes)
   (begin-draw (length vertexes))
@@ -49,16 +49,15 @@
 	   (draw-vertexes (cdr vertexes)))))
 
 (defun draw-vertex (vertex &key texture-coord)
-  (cond ((consp (car vertex)) (draw-color (car vertex)) (apply #'simple-draw-vertex (cadr vertex)))
+  (cond ((consp (car vertex))
+	 (with-color (car vertex)
+		     (apply #'simple-draw-vertex (cadr vertex))))
 	(t (cond (texture-coord (apply #'glTexCoord2f texture-coord)))
 	   (apply #'simple-draw-vertex vertex))))
 
 (defun simple-draw-vertex (x y &optional (z 0))
   (cond ((3d-mode?) (glVertex3f x y z))
 	(t (glVertex2f x y))))
-
-(defun draw-color (color)
-  (apply #'glColor3f color))
 
 (defun load-image-for-texture (filename)
   (init-video-mode)
@@ -99,7 +98,7 @@
      (cond (texture
 	    (draw-rectangle (* f width) (* f height) :texture texture))))))
 
-(defun draw-quad (v1 v2 v3 v4 &key texture color)
+(defun draw-quad (v1 v2 v3 v4 &key texture)
   (cond (texture (progn-textures
 		  (glBindTexture GL_TEXTURE_2D texture)
 		  (begin-draw 4)
@@ -108,31 +107,30 @@
 		  (draw-vertex v3 :texture-coord '(1 1))
 		  (draw-vertex v4 :texture-coord '(0 1))
 		  (glEnd)))
-	(t (cond (color (draw-color color)))
-	   (draw v1 v2 v3 v4))))
+	(t (draw v1 v2 v3 v4))))
 
-(defun draw-rectangle (width height &key texture color)
+(defun draw-rectangle (width height &key texture)
   (let* ((w (/ width 2)) (-w (neg w)) (h (/ height 2)) (-h (neg h)))
-    (draw-quad (list -w h 0) (list w h 0) (list w -h 0) (list -w -h 0) :texture texture :color color)))
+    (draw-quad (list -w h 0) (list w h 0) (list w -h 0) (list -w -h 0) :texture texture)))
 
-(defun draw-square (&key (size 1) texture color)
-  (draw-rectangle size size :texture texture :color color))
+(defun draw-square (&key (size 1) texture)
+  (draw-rectangle size size :texture texture))
 
-(defun draw-cube (&key size texture color)
+(defun draw-cube (&key size texture)
   (let ((-size (neg size)))
     (enable :textures texture)
     (glNormal3f 0 0 1)
-    (draw-quad (list -size size size) (list size size size) (list size -size size) (list -size -size size) :texture texture :color color)
+    (draw-quad (list -size size size) (list size size size) (list size -size size) (list -size -size size) :texture texture)
     (glNormal3f 0 0 -1)
-    (draw-quad (list -size -size -size) (list size -size -size) (list size size -size) (list -size size -size) :texture texture :color color)
+    (draw-quad (list -size -size -size) (list size -size -size) (list size size -size) (list -size size -size) :texture texture)
     (glNormal3f 0 1 0)
-    (draw-quad (list size size size) (list -size size size) (list -size size -size) (list size size -size) :texture texture :color color)
+    (draw-quad (list size size size) (list -size size size) (list -size size -size) (list size size -size) :texture texture)
     (glNormal3f 0 -1 0)
-    (draw-quad (list -size -size size) (list size -size size) (list size -size -size) (list -size -size -size) :texture texture :color color)
+    (draw-quad (list -size -size size) (list size -size size) (list size -size -size) (list -size -size -size) :texture texture)
     (glNormal3f 1 0 0)
-    (draw-quad (list size -size -size) (list size -size size) (list size size size) (list size size -size) :texture texture :color color)
+    (draw-quad (list size -size -size) (list size -size size) (list size size size) (list size size -size) :texture texture)
     (glNormal3f -1 0 0)
-    (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) :texture texture :color color)))
+    (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) :texture texture)))
 
 (defun add-light (&key light position ambient (id GL_LIGHT1) (turn-on t))
   (init-lighting)

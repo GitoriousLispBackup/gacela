@@ -48,7 +48,7 @@
 
 (defun draw-cell (cell)
   (cond ((null cell) nil)
-	(t (draw-color cell) (draw-square :size 20))))
+	(t (with-color cell (draw-square :size 20)))))
 
 (defun draw-row (row)
   (mapcar (lambda (cell) (draw-cell cell) (translate 23 0)) row))
