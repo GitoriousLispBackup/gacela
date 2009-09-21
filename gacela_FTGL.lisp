@@ -19,3 +19,16 @@
 
 (clines "#include <FTGL/ftgl.h>")
 
+;;; FTGL Functions
+(defcfun "int gacela_ftglCreateTextureFont (char *file)" 0
+  "return ftglCreateTextureFont (file);")
+
+(defcfun "int gacela_ftglSetFontFaceSize (int font, int size, int res)" 0
+  "return ftglSetFontFaceSize (font, size, res);")
+
+(defcfun "int gacela_ftglSetFontCharMap(int font, int encoding)" 0
+  "return ftglSetFontCharMap(font, encoding);")
+
+(defentry ftglCreateTextureFont (string) (int "gacela_ftglCreateTextureFont"))
+(defentry ftglSetFontFaceSize (int int int) (int "gacela_ftglSetFontFaceSize"))
+(defentry ftglSetFontCharMap (int int) (int "gacela_ftglSetFontCharMap"))
