@@ -23,48 +23,42 @@
 (clines "#include <SDL/SDL_mixer.h>")
 (clines "#include <SDL/SDL_rotozoom.h>")
 
-;;; These are the flags which may be passed to SDL_Init()
-(defconstant SDL_INIT_TIMER		#x00000001)
-(defconstant SDL_INIT_AUDIO		#x00000010)
-(defconstant SDL_INIT_VIDEO		#x00000020)
-(defconstant SDL_INIT_CDROM		#x00000100)
-(defconstant SDL_INIT_JOYSTICK		#x00000200)
-(defconstant SDL_INIT_NOPARACHUTE	#x00100000)
-(defconstant SDL_INIT_EVENTTHREAD	#x01000000)
-(defconstant SDL_INIT_EVERYTHING	#x0000FFFF)
+(defmacro defcconst (type name)
+  `(let ((header (concatenate 'string "(defcfun \"
 
+;;; SDL constants as functions
+(defcfun "int gacela_SDL_INIT_TIMER (void)" 0 "return SDL_INIT_TIMER;")
+(defcfun "int gacela_SDL_INIT_AUDIO (void)" 0 "return SDL_INIT_AUDIO;")
+(defcfun "int gacela_SDL_INIT_VIDEO (void)" 0 "return SDL_INIT_VIDEO;")
+(defcfun "int gacela_SDL_INIT_CDROM (void)" 0 "return SDL_INIT_CDROM;")
+(defcfun "int gacela_SDL_INIT_JOYSTICK (void)" 0 "return SDL_INIT_JOYSTICK;")
+(defcfun "int gacela_SDL_INIT_NOPARACHUTE (void)" 0 "return SDL_INIT_NOPARACHUTE;")
+(defcfun "int gacela_SDL_INIT_EVENTTHREAD (void)" 0 "return SDL_INIT_EVENTTHREAD;")
+(defcfun "int gacela_SDL_INIT_EVERYTHING (void)" 0 "return SDL_INIT_EVERYTHING;")
 
-;;; These are the currently supported flags for the SDL_surface
-;;; Available for SDL_CreateRGBSurface() or SDL_SetVideoMode()
-(defconstant SDL_SWSURFACE		#x00000000)
-(defconstant SDL_HWSURFACE		#x00000001)
-(defconstant SDL_ASYNCBLIT		#x00000004)
+(defcfun "int gacela_SDL_SWSURFACE (void)" 0 "return SDL_SWSURFACE;")
+(defcfun "int gacela_SDL_HWSURFACE (void)" 0 "return SDL_HWSURFACE;")
+(defcfun "int gacela_SDL_ASYNCBLIT (void)" 0 "return SDL_ASYNCBLIT;")
 
+(defcfun "int gacela_SDL_ANYFORMAT (void)" 0 "return SDL_ANYFORMAT;")
+(defcfun "int gacela_SDL_HWPALETTE (void)" 0 "return SDL_HWPALETTE;")
+(defcfun "int gacela_SDL_DOUBLEBUF (void)" 0 "return SDL_DOUBLEBUF;")
+(defcfun "int gacela_SDL_FULLSCREEN (void)" 0 "return SDL_FULLSCREEN;")
+(defcfun "int gacela_SDL_OPENGL (void)" 0 "return SDL_OPENGL;")
+(defcfun "int gacela_SDL_OPENGLBLIT (void)" 0 "return SDL_OPENGLBLIT;")
+(defcfun "int gacela_SDL_RESIZABLE (void)" 0 "return SDL_RESIZABLE;")
+(defcfun "int gacela_SDL_NOFRAME (void)" 0 "return SDL_NOFRAME;")
 
-;;; Available for SDL_SetVideoMode()
-(defconstant SDL_ANYFORMAT		#x10000000)
-(defconstant SDL_HWPALETTE		#x20000000)
-(defconstant SDL_DOUBLEBUF		#x40000000)
-(defconstant SDL_FULLSCREEN		#x80000000)
-(defconstant SDL_OPENGL			#x00000002)
-(defconstant SDL_OPENGLBLIT		#x0000000A)
-(defconstant SDL_RESIZABLE		#x00000010)
-(defconstant SDL_NOFRAME		#x00000020)
+(defcfun "int gacela_SDL_HWACCEL (void)" 0 "return SDL_HWACCEL;")
+(defcfun "int gacela_SDL_SRCCOLORKEY (void)" 0 "return SDL_SRCCOLORKEY;")
 
-;;; Used internally (read-only)
-(defconstant SDL_HWACCEL                #x00000100)
-(defconstant SDL_SRCCOLORKEY            #x00001000)
+(defcfun "int gacela_SDL_GL_DOUBLEBUFFER (void)" 0 "return SDL_GL_DOUBLEBUFFER;")
 
-;;; For setting the OpenGL window attributes
-(defconstant SDL_GL_DOUBLEBUFFER        5)
+(defcfun "int gacela_SDL_DEFAULT_REPEAT_DELAY (void)" 0 "return DEFAULT_REPEAT_DELAY;")
+(defcfun "int gacela_SDL_DEFAULT_REPEAT_INTERVAL (void)" 0 "return DEFAULT_REPEAT_INTERVAL;")
 
-;;; Keyboard
-(defconstant SDL_DEFAULT_REPEAT_DELAY     500)
-(defconstant SDL_DEFAULT_REPEAT_INTERVAL  30)
-
-;;; The two types of endianness
-(defconstant SDL_LIL_ENDIAN  1234)
-(defconstant SDL_BIG_ENDIAN  4321)
+(defcfun "int gacela_SDL_LIL_ENDIAN (void)" 0 "return SDL_LIL_ENDIAN;")
+(defcfun "int gacela_SDL_BIG_ENDIAN (void)" 0 "return SDL_BIG_ENDIAN;")
 
 
 ;;; SDL Functions

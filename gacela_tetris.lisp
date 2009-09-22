@@ -128,7 +128,7 @@
 		  (setq tetramine next x 6 y 0)
 		  (setq next (random-tetramine)))
 		 (t (incf y) (start-timer timer)))))
-
+    (draw-color '(0.8 0.8 0.8))
     (funcall background)
     (translate -288 218)
     (draw-grid (join-grids tetramine grid x y))
