@@ -23,8 +23,14 @@
 (clines "#include <SDL/SDL_mixer.h>")
 (clines "#include <SDL/SDL_rotozoom.h>")
 
-(defmacro defcconst (type name)
-  `(let ((header (concatenate 'string "(defcfun \"
+(defmacro mapcconst (type name)
+  `(let ((header (concatenate 'string ,type " gacela_" ,name " (void)"))
+	 (body (concatenate 'string "return " ,name ";"))
+	 (cfun (concatenate 'string "gacela_" ,name)))
+     (defcfun header 0 body)
+     (defentry 
+
+(defentry SDL_GetTicks () (int "gacela_SDL_GetTicks"))
 
 ;;; SDL constants as functions
 (defcfun "int gacela_SDL_INIT_TIMER (void)" 0 "return SDL_INIT_TIMER;")
