@@ -20,17 +20,17 @@
 
 (defun compile-gacela ()
   (compile-gfile "gacela.lisp")
+  (compile-gfile "gacela_misc.lisp")
   (compile-gfile "gacela_SDL.lisp")
   (compile-gfile "gacela_GL.lisp")
   (compile-gfile "gacela_draw.lisp")
   (compile-gfile "gacela_events.lisp")
   (compile-gfile "gacela_mobs.lisp")
-  (compile-gfile "gacela_widgets.lisp")
-  (compile-gfile "gacela_misc.lisp"))
+  (compile-gfile "gacela_widgets.lisp"))
 
 (defun link-gacela ()
   (compiler::link
-   '("gacela.o" "gacela_SDL.o" "gacela_GL.o" "gacela_draw.o" "gacela_events.o" "gacela_mobs.o" "gacela_widgets.o" "gacela_misc.o")
+   '("gacela.o" "gacela_misc.o" "gacela_SDL.o" "gacela_GL.o" "gacela_draw.o" "gacela_events.o" "gacela_mobs.o" "gacela_widgets.o")
    "gacela"
    ""
    "-lSDL -lSDL_image -lSDL_ttf -lSDL_mixer -lSDL_gfx -lGL -lGLU"))
