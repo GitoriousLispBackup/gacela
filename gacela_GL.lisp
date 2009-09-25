@@ -21,66 +21,66 @@
 (clines "#include <GL/glu.h>")
 
 ;;; Data types
-(defconstant GL_UNSIGNED_BYTE                 #x1401)
+(mapcconst int "int" "GL_UNSIGNED_BYTE")
 
 ;;; Primitives
-(defconstant GL_POINTS                        #x0000)
-(defconstant GL_LINES                         #x0001)
-(defconstant GL_LINE_LOOP                     #x0002)
-(defconstant GL_LINE_STRIP                    #x0003)
-(defconstant GL_TRIANGLES                     #x0004)
-(defconstant GL_TRIANGLE_STRIP                #x0005)
-(defconstant GL_TRIANGLE_FAN                  #x0006)
-(defconstant GL_QUADS                         #x0007)
-(defconstant GL_QUAD_STRIP                    #x0008)
-(defconstant GL_POLYGON                       #x0009)
+(mapcconst int "int" "GL_POINTS")
+(mapcconst int "int" "GL_LINES")
+(mapcconst int "int" "GL_LINE_LOOP")
+(mapcconst int "int" "GL_LINE_STRIP")
+(mapcconst int "int" "GL_TRIANGLES")
+(mapcconst int "int" "GL_TRIANGLE_STRIP")
+(mapcconst int "int" "GL_TRIANGLE_FAN")
+(mapcconst int "int" "GL_QUADS")
+(mapcconst int "int" "GL_QUAD_STRIP")
+(mapcconst int "int" "GL_POLYGON")
 
 ;;; Matrix Mode
-(defconstant GL_MODELVIEW                     #x1700)
-(defconstant GL_PROJECTION                    #x1701)
+(mapcconst int "int" "GL_MODELVIEW")
+(mapcconst int "int" "GL_PROJECTION")
 
 ;;; Depth buffer
-(defconstant GL_LEQUAL                        #x0203)
-(defconstant GL_DEPTH_TEST                    #x0B71)
+(mapcconst int "int" "GL_LEQUAL")
+(mapcconst int "int" "GL_DEPTH_TEST")
 
 ;;; Lighting
-(defconstant GL_LIGHTING                      #x0B50)
-(defconstant GL_LIGHT1                        #x4001)
-(defconstant GL_AMBIENT                       #x1200)
-(defconstant GL_DIFFUSE                       #x1201)
-(defconstant GL_POSITION                      #x1203)
-(defconstant GL_SMOOTH                        #x1D01)
+(mapcconst int "int" "GL_LIGHTING")
+(mapcconst int "int" "GL_LIGHT1")
+(mapcconst int "int" "GL_AMBIENT")
+(mapcconst int "int" "GL_DIFFUSE")
+(mapcconst int "int" "GL_POSITION")
+(mapcconst int "int" "GL_SMOOTH")
 
 ;;; Blending
-(defconstant GL_BLEND                         #x0BE2)
-(defconstant GL_ONE                           #x1)
-(defconstant GL_SRC_ALPHA                     #x0302)
+(mapcconst int "int" "GL_BLEND")
+(mapcconst int "int" "GL_ONE")
+(mapcconst int "int" "GL_SRC_ALPHA")
 
 ;;; Fog
-(defconstant GL_LINEAR                        #x2601)
+(mapcconst int "int" "GL_LINEAR")
 
 ;;; Buffers, Pixel Drawing/Reading
-(defconstant GL_RGB                           #x1907)
-(defconstant GL_RGBA                          #x1908)
+(mapcconst int "int" "GL_RGB")
+(mapcconst int "int" "GL_RGBA")
 
 ;;; Hints
-(defconstant GL_PERSPECTIVE_CORRECTION_HINT   #x0C50)
-(defconstant GL_NICEST                        #x1102)
+(mapcconst int "int" "GL_PERSPECTIVE_CORRECTION_HINT")
+(mapcconst int "int" "GL_NICEST")
 
 ;;; Texture mapping
-(defconstant GL_TEXTURE_2D                    #x0DE1)
-(defconstant GL_TEXTURE_MAG_FILTER            #x2800)
-(defconstant GL_TEXTURE_MIN_FILTER            #x2801)
-(defconstant GL_LINEAR_MIPMAP_NEAREST         #x2701)
-(defconstant GL_NEAREST                       #x2600)
+(mapcconst int "int" "GL_TEXTURE_2D")
+(mapcconst int "int" "GL_TEXTURE_MAG_FILTER")
+(mapcconst int "int" "GL_TEXTURE_MIN_FILTER")
+(mapcconst int "int" "GL_LINEAR_MIPMAP_NEAREST")
+(mapcconst int "int" "GL_NEAREST")
 
 ;;; glPush/PopAttrib bits
-(defconstant GL_DEPTH_BUFFER_BIT              #x00000100)
-(defconstant GL_COLOR_BUFFER_BIT              #x00004000)
+(mapcconst int "int" "GL_DEPTH_BUFFER_BIT")
+(mapcconst int "int" "GL_COLOR_BUFFER_BIT")
 
 ;;; OpenGL 1.2
-(defconstant GL_BGR                           #x80E0)
-(defconstant GL_BGRA                          #x80E1)
+(mapcconst int "int" "GL_BGR")
+(mapcconst int "int" "GL_BGRA")
 
 ;;; OpenGL Functions
 (defcfun "void gacela_glBegin (int mode)" 0

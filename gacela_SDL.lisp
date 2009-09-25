@@ -23,49 +23,39 @@
 (clines "#include <SDL/SDL_mixer.h>")
 (clines "#include <SDL/SDL_rotozoom.h>")
 
-(defmacro mapcconst (type name)
-  `(let ((header (concatenate 'string ,type " gacela_" ,name " (void)"))
-	 (body (concatenate 'string "return " ,name ";"))
-	 (cfun (concatenate 'string "gacela_" ,name)))
-     (defcfun header 0 body)
-     (defentry 
-
-(defentry SDL_GetTicks () (int "gacela_SDL_GetTicks"))
-
 ;;; SDL constants as functions
-(defcfun "int gacela_SDL_INIT_TIMER (void)" 0 "return SDL_INIT_TIMER;")
-(defcfun "int gacela_SDL_INIT_AUDIO (void)" 0 "return SDL_INIT_AUDIO;")
-(defcfun "int gacela_SDL_INIT_VIDEO (void)" 0 "return SDL_INIT_VIDEO;")
-(defcfun "int gacela_SDL_INIT_CDROM (void)" 0 "return SDL_INIT_CDROM;")
-(defcfun "int gacela_SDL_INIT_JOYSTICK (void)" 0 "return SDL_INIT_JOYSTICK;")
-(defcfun "int gacela_SDL_INIT_NOPARACHUTE (void)" 0 "return SDL_INIT_NOPARACHUTE;")
-(defcfun "int gacela_SDL_INIT_EVENTTHREAD (void)" 0 "return SDL_INIT_EVENTTHREAD;")
-(defcfun "int gacela_SDL_INIT_EVERYTHING (void)" 0 "return SDL_INIT_EVERYTHING;")
+(mapcconst int "int" "SDL_INIT_TIMER")
+(mapcconst int "int" "SDL_INIT_AUDIO")
+(mapcconst int "int" "SDL_INIT_VIDEO")
+(mapcconst int "int" "SDL_INIT_CDROM")
+(mapcconst int "int" "SDL_INIT_JOYSTICK")
+(mapcconst int "int" "SDL_INIT_NOPARACHUTE")
+(mapcconst int "int" "SDL_INIT_EVENTTHREAD")
+(mapcconst int "int" "SDL_INIT_EVERYTHING")
 
-(defcfun "int gacela_SDL_SWSURFACE (void)" 0 "return SDL_SWSURFACE;")
-(defcfun "int gacela_SDL_HWSURFACE (void)" 0 "return SDL_HWSURFACE;")
-(defcfun "int gacela_SDL_ASYNCBLIT (void)" 0 "return SDL_ASYNCBLIT;")
+(mapcconst int "int" "SDL_SWSURFACE")
+(mapcconst int "int" "SDL_HWSURFACE")
+(mapcconst int "int" "SDL_ASYNCBLIT")
 
-(defcfun "int gacela_SDL_ANYFORMAT (void)" 0 "return SDL_ANYFORMAT;")
-(defcfun "int gacela_SDL_HWPALETTE (void)" 0 "return SDL_HWPALETTE;")
-(defcfun "int gacela_SDL_DOUBLEBUF (void)" 0 "return SDL_DOUBLEBUF;")
-(defcfun "int gacela_SDL_FULLSCREEN (void)" 0 "return SDL_FULLSCREEN;")
-(defcfun "int gacela_SDL_OPENGL (void)" 0 "return SDL_OPENGL;")
-(defcfun "int gacela_SDL_OPENGLBLIT (void)" 0 "return SDL_OPENGLBLIT;")
-(defcfun "int gacela_SDL_RESIZABLE (void)" 0 "return SDL_RESIZABLE;")
-(defcfun "int gacela_SDL_NOFRAME (void)" 0 "return SDL_NOFRAME;")
+(mapcconst int "int" "SDL_ANYFORMAT")
+(mapcconst int "int" "SDL_HWPALETTE")
+(mapcconst int "int" "SDL_DOUBLEBUF")
+(mapcconst int "int" "SDL_FULLSCREEN")
+(mapcconst int "int" "SDL_OPENGL")
+(mapcconst int "int" "SDL_OPENGLBLIT")
+(mapcconst int "int" "SDL_RESIZABLE")
+(mapcconst int "int" "SDL_NOFRAME")
 
-(defcfun "int gacela_SDL_HWACCEL (void)" 0 "return SDL_HWACCEL;")
-(defcfun "int gacela_SDL_SRCCOLORKEY (void)" 0 "return SDL_SRCCOLORKEY;")
+(mapcconst int "int" "SDL_HWACCEL")
+(mapcconst int "int" "SDL_SRCCOLORKEY")
 
-(defcfun "int gacela_SDL_GL_DOUBLEBUFFER (void)" 0 "return SDL_GL_DOUBLEBUFFER;")
+(mapcconst int "int" "SDL_GL_DOUBLEBUFFER")
 
-(defcfun "int gacela_SDL_DEFAULT_REPEAT_DELAY (void)" 0 "return DEFAULT_REPEAT_DELAY;")
-(defcfun "int gacela_SDL_DEFAULT_REPEAT_INTERVAL (void)" 0 "return DEFAULT_REPEAT_INTERVAL;")
+(mapcconst int "int" "SDL_DEFAULT_REPEAT_DELAY")
+(mapcconst int "int" "SDL_DEFAULT_REPEAT_INTERVAL")
 
-(defcfun "int gacela_SDL_LIL_ENDIAN (void)" 0 "return SDL_LIL_ENDIAN;")
-(defcfun "int gacela_SDL_BIG_ENDIAN (void)" 0 "return SDL_BIG_ENDIAN;")
-
+(mapcconst int "int" "SDL_LIL_ENDIAN")
+(mapcconst int "int" "SDL_BIG_ENDIAN")
 
 ;;; SDL Functions
 (defcfun "int gacela_SDL_Init (int flags)" 0

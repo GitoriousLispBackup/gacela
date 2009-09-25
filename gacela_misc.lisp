@@ -69,6 +69,14 @@
 			(t (power (* p 2) n)))))
 	  (power 1 n)))
 
+(defmacro mapcconst (type c-type name)
+  `(progn
+     (defcfun ,(concatenate 'string c-type " gacela_" name " (void)") 0
+       ,(concatenate 'string "return " name ";"))
+     (defentry ,(intern (string-upcase name)) ()
+       (,type ,(concatenate 'string "gacela_" name)))))
+
+
 ;Geometry
 (defun dotp (dot)
   (match-pattern dot '(0 0)))
