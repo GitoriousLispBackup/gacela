@@ -14,6 +14,9 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+(setq compiler::*cc* (concatenate 'string
+				  compiler::*cc*
+				  "-I/usr/include/FTGL -I/usr/include/freetype2"))
 
 (defmacro compile-gfile (file-name)
   `(compile-file ,file-name :system-p t))
@@ -23,17 +26,19 @@
   (compile-gfile "gacela_misc.lisp")
   (compile-gfile "gacela_SDL.lisp")
   (compile-gfile "gacela_GL.lisp")
+  (compile-gfile "gacela_FTGL.lisp")
   (compile-gfile "gacela_draw.lisp")
+  (compile-gfile "gacela_ttf.lisp")
   (compile-gfile "gacela_events.lisp")
   (compile-gfile "gacela_mobs.lisp")
   (compile-gfile "gacela_widgets.lisp"))
 
 (defun link-gacela ()
   (compiler::link
-   '("gacela.o" "gacela_misc.o" "gacela_SDL.o" "gacela_GL.o" "gacela_draw.o" "gacela_events.o" "gacela_mobs.o" "gacela_widgets.o")
+   '("gacela.o" "gacela_misc.o" "gacela_SDL.o" "gacela_GL.o" "gacela_FTGL.o" "gacela_draw.o" "gacela_ttf.o" "gacela_events.o" "gacela_mobs.o" "gacela_widgets.o")
    "gacela"
    ""
-   "-lSDL -lSDL_image -lSDL_ttf -lSDL_mixer -lSDL_gfx -lGL -lGLU"))
+   "-lSDL -lSDL_image -lSDL_ttf -lSDL_mixer -lSDL_gfx -lGL -lGLU -lftgl"))
 
 (defun build-gacela ()
   (compile-gacela)

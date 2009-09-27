@@ -19,6 +19,9 @@
 
 (clines "#include <FTGL/ftgl.h>")
 
+(mapcconst int "int" "ft_encoding_unicode")
+(mapcconst int "int" "FTGL_RENDER_ALL")
+
 ;;; FTGL Functions
 (defcfun "int gacela_ftglCreateTextureFont (char *file)" 0
   "return ftglCreateTextureFont (file);")
@@ -26,9 +29,13 @@
 (defcfun "int gacela_ftglSetFontFaceSize (int font, int size, int res)" 0
   "return ftglSetFontFaceSize (font, size, res);")
 
-(defcfun "int gacela_ftglSetFontCharMap(int font, int encoding)" 0
-  "return ftglSetFontCharMap(font, encoding);")
+(defcfun "int gacela_ftglSetFontCharMap (int font, int encoding)" 0
+  "return ftglSetFontCharMap (font, encoding);")
+
+(defcfun "void gacela_ftglRenderFont (int font, char *string, int mode)" 0
+  "ftglRenderFont (font, string, mode);")
 
 (defentry ftglCreateTextureFont (string) (int "gacela_ftglCreateTextureFont"))
 (defentry ftglSetFontFaceSize (int int int) (int "gacela_ftglSetFontFaceSize"))
 (defentry ftglSetFontCharMap (int int) (int "gacela_ftglSetFontCharMap"))
+(defentry ftglRenderFont (int string int) (void "gacela_ftglRenderFont"))
