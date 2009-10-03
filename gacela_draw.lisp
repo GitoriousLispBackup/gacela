@@ -72,24 +72,28 @@
 		      (SDL_FreeSurface image)
 		      (cond ((/= zoomed-image 0) (values zoomed-image width height))))))))))
 
-(defun load-texture (filename &optional (min-filter GL_LINEAR) (mag-filter GL_LINEAR))
+(defun load-texture (filename &key (min-filter GL_LINEAR) (mag-filter GL_LINEAR) static)
 ;  (init-textures)
 ;  (init-video-mode)
-  (progn-textures
-   (multiple-value-bind
-    (image real-w real-h) (load-image-for-texture filename)
-        (cond (image
-	       (let ((width (surface-w image)) (height (surface-h image))
-		     (byteorder (if (= (SDL_ByteOrder) SDL_LIL_ENDIAN)
-				    (if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)
-				    (if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)))
-		     (texture (car (glGenTextures 1))))
-		 (glBindTexture GL_TEXTURE_2D texture)
-		 (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
-		 (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
-		 (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
-		 (SDL_FreeSurface image)
-		 (values texture real-w real-h)))))))
+  (let ((key (make-texture :filename filename :min-filter min-filter :mag-filter mag-filter)))
+    (cond ((get-resource key) key)
+	  (t
+	   (progn-textures
+	    (multiple-value-bind
+	     (image real-w real-h) (load-image-for-texture filename)
+	     (cond (image
+		    (let ((width (surface-w image)) (height (surface-h image))
+			  (byteorder (if (= (SDL_ByteOrder) SDL_LIL_ENDIAN)
+				     (if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)
+				     (if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)))
+			  (texture (car (glGenTextures 1))))
+		      (glBindTexture GL_TEXTURE_2D texture)
+		      (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
+		      (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
+		      (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
+		      (SDL_FreeSurface image)
+		      (set-resource key (list :texture texture :width real-w :height real-h) nil :static static)
+		      key)))))))))
 
 (defun draw-image-function (filename)
   (multiple-value-bind

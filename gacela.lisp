@@ -134,16 +134,6 @@
     (setq current-color (list red green blue alpha))
     (glColor4f red green blue alpha)))
 
-(defun copy-surface (source)
-  (cond ((surface-p source)
-	 (let ((new-surface
-		(make-surface :address (copy-SDL_Surface (surface-address source))
-			      :clip-w (surface-clip-w source)
-			      :clip-h (surface-clip-h source)
-			      :shape (surface-shape source))))
-	   (set-resource 'image new-surface (gentemp))
-	   new-surface))))
-
 (defun load-image (image-file &key (transparent-color nil))
   (init-video-mode)
   (let ((loaded-image (IMG_Load image-file)))
@@ -262,39 +252,24 @@
 
 
 ;;; Resources Manager
-(defstruct resource address free-function object)
+(defstruct resource plist free-function time)
+(defstruct texture filename min-filter mag-filter)
 
 (let ((resources-table (make-hash-table :test 'equal)))
 
-  (defun set-resource (type object &rest key)
-    (let ((res
-	   (cond ((surface-p object)
-		  (make-resource :address (surface-address object)
-				 :free-function #'SDL_FreeSurface
-				 :object object))
-		 ((font-p object)
-		  (make-resource :address (font-address object)
-				 :free-function #'TTF_CloseFont
-				 :object object))
-		 ((cp-space-p object)
-		  (make-resource :address (cp-space-address object)
-				 :free-function #'cpSpaceFree
-				 :object object))
-		 ((cp-body-p object)
-		  (make-resource :address (cp-body-address object)
-				 :free-function #'cpBodyFree
-				 :object object))
-		 ((cp-shape-p object)
-		  (make-resource :address (cp-shape-address object)
-				 :free-function #'cpShapeFree
-				 :object object))
-		 (t nil))))
-      (cond (res (setf (gethash `(,type ,@key) resources-table) res)))))
+  (defun set-resource (key plist free-function &key static)
+    (setf (gethash key resources-table)
+	  (make-resource :plist plist
+			 :free-function free-function
+			 :time (if static -1 (SDL_GetTicks)))))
 
-  (defun get-resource (type &rest key)
-    (let ((resource (gethash `(,type ,@key) resources-table)))
+  (defun get-resource (key)
+    (let ((resource (gethash key resources-table)))
       (cond ((null resource) nil)
-	    (t (resource-object resource)))))
+	    (t (cond ((/= (resource-time resource) -1)
+		      (setf (resource-time resource) (SDL_GetTicks))
+		      (setf (gethash key resources-table) resource)))
+	       (resource-plist resource)))))
 
   (defun free-all-resources ()
     (maphash (lambda (key res) (funcall (resource-free-function res) (resource-address res)))
