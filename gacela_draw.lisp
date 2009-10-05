@@ -76,7 +76,7 @@
 ;  (init-textures)
 ;  (init-video-mode)
   (let ((key (make-texture :filename filename :min-filter min-filter :mag-filter mag-filter)))
-    (cond ((get-resource key) key)
+    (cond ((get-resource key) t)
 	  (t
 	   (progn-textures
 	    (multiple-value-bind
