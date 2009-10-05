@@ -73,10 +73,8 @@
 		      (cond ((/= zoomed-image 0) (values zoomed-image width height))))))))))
 
 (defun load-texture (filename &key (min-filter GL_LINEAR) (mag-filter GL_LINEAR) static)
-;  (init-textures)
-;  (init-video-mode)
   (let ((key (make-texture :filename filename :min-filter min-filter :mag-filter mag-filter)))
-    (cond ((get-resource key) t)
+    (cond ((get-resource key) key)
 	  (t
 	   (progn-textures
 	    (multiple-value-bind
@@ -92,7 +90,7 @@
 		      (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
 		      (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
 		      (SDL_FreeSurface image)
-		      (set-resource key (list :texture texture :width real-w :height real-h) nil :static static)
+		      (set-resource key `(:id-texture ,texture :width ,real-w :height ,real-h) nil :static static)
 		      key)))))))))
 
 (defun draw-image-function (filename)
@@ -104,7 +102,7 @@
 
 (defun draw-quad (v1 v2 v3 v4 &key texture)
   (cond (texture (progn-textures
-		  (glBindTexture GL_TEXTURE_2D texture)
+		  (glBindTexture GL_TEXTURE_2D (getf texture :id-texture))
 		  (begin-draw 4)
 		  (draw-vertex v1 :texture-coord '(0 0))
 		  (draw-vertex v2 :texture-coord '(1 0))
@@ -122,19 +120,19 @@
 
 (defun draw-cube (&key size texture)
   (let ((-size (neg size)))
-    (enable :textures texture)
-    (glNormal3f 0 0 1)
-    (draw-quad (list -size size size) (list size size size) (list size -size size) (list -size -size size) :texture texture)
-    (glNormal3f 0 0 -1)
-    (draw-quad (list -size -size -size) (list size -size -size) (list size size -size) (list -size size -size) :texture texture)
-    (glNormal3f 0 1 0)
-    (draw-quad (list size size size) (list -size size size) (list -size size -size) (list size size -size) :texture texture)
-    (glNormal3f 0 -1 0)
-    (draw-quad (list -size -size size) (list size -size size) (list size -size -size) (list -size -size -size) :texture texture)
-    (glNormal3f 1 0 0)
-    (draw-quad (list size -size -size) (list size -size size) (list size size size) (list size size -size) :texture texture)
-    (glNormal3f -1 0 0)
-    (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) :texture texture)))
+    (progn-textures
+     (glNormal3f 0 0 1)
+     (draw-quad (list -size size size) (list size size size) (list size -size size) (list -size -size size) :texture texture)
+     (glNormal3f 0 0 -1)
+     (draw-quad (list -size -size -size) (list size -size -size) (list size size -size) (list -size size -size) :texture texture)
+     (glNormal3f 0 1 0)
+     (draw-quad (list size size size) (list -size size size) (list -size size -size) (list size size -size) :texture texture)
+     (glNormal3f 0 -1 0)
+     (draw-quad (list -size -size size) (list size -size size) (list size -size -size) (list -size -size -size) :texture texture)
+     (glNormal3f 1 0 0)
+     (draw-quad (list size -size -size) (list size -size size) (list size size size) (list size size -size) :texture texture)
+     (glNormal3f -1 0 0)
+     (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) :texture texture))))
 
 (defun add-light (&key light position ambient (id GL_LIGHT1) (turn-on t))
   (init-lighting)
@@ -151,6 +149,3 @@
   (glRotatef xrot 1 0 0)
   (glRotatef yrot 0 1 0)
   (cond (zrot (glRotatef zrot 0 0 1))))
-
-(defun enable (&key textures)
-  (cond (textures (glEnable GL_TEXTURE_2D))))

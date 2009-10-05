@@ -253,9 +253,11 @@
 
 ;;; Resources Manager
 (defstruct resource plist free-function time)
-(defstruct texture filename min-filter mag-filter)
 
-(let ((resources-table (make-hash-table :test 'equalp)))
+(defun make-texture (&key filename min-filter mag-filter)
+  `(:type texture :filename ,filename :min-filter ,min-filter :mag-filter ,mag-filter))
+
+(let ((resources-table (make-hash-table :test 'equal)))
 
   (defun set-resource (key plist free-function &key static)
     (setf (gethash key resources-table)
