@@ -73,7 +73,7 @@
 		      (cond ((/= zoomed-image 0) (values zoomed-image width height))))))))))
 
 (defun load-texture (filename &key (min-filter GL_LINEAR) (mag-filter GL_LINEAR) static)
-  (let ((key (make-texture :filename filename :min-filter min-filter :mag-filter mag-filter)))
+  (let ((key (make-resource-texture :filename filename :min-filter min-filter :mag-filter mag-filter)))
     (cond ((get-resource key) key)
 	  (t
 	   (progn-textures

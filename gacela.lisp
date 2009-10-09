@@ -66,23 +66,6 @@
     (cond ((null screen) nil)
 	  (t (SDL_Flip screen))))
 
-  (defun create-surface (width height &key (trans-color *transparent-color*))
-    (init-video-mode)
-    (let ((new-surface (make-surface
-			:address (create-SDL_Surface
-				  (surface-address screen)
-				  width
-				  height
-				  (getf trans-color :red)
-				  (getf trans-color :green)
-				  (getf trans-color :blue)))))
-      (set-resource 'image new-surface (gentemp))
-      new-surface))
-
-  (defun print-surface (x y surface)
-    (apply-surface x y surface screen)
-    surface)
-
   (defun quit-video-mode ()
     (setq screen nil)))
 
@@ -105,10 +88,6 @@
      (setq values (multiple-value-list (progn ,@code)))
      (glDisable GL_TEXTURE_2D)
      (apply #'values values)))
-
-(defun init-textures ()
-  (init-video-mode)
-  (glEnable GL_TEXTURE_2D))
 
 (defun init-lighting ()
   (init-video-mode)
@@ -156,31 +135,6 @@
      (lambda (x y) (print-surface x y address-image))
      (lambda () (SDL_FreeSurface address-image)))))
 
-(defun apply-surface (x y source destination)
-  (let ((offset (SDL_Rect x y 0 0)))
-    (SDL_BlitSurface source 0 destination offset)
-    (free offset)
-    destination))
-
-(defun apply-surface-old (x y source destination &optional (clip nil))
-  (cond ((null clip)
-	 (apply-surface2 x y (surface-address source) (surface-address destination) 0 0 0 0 0))
-	((integerp clip)
-	 (apply-surface2 x y (surface-address source) (surface-address destination) 0 0
-			 (surface-clip-w source) (surface-clip-h source) clip))
-	(t
-	 (apply-surface2 x y (surface-address source) (surface-address destination)
-			 (first clip) (second clip) (third clip) (fourth clip) 0)))
-  destination)
-
-
-(defun print-image (x y image-file &optional (clip nil))
-  (init-video-mode)
-  (let ((image (load-image image-file)))
-    (print-surface x y image clip)
-    image))
-
-
 (defun clean-screen ()
   (fill-screen *background-color*))
 
@@ -188,56 +142,6 @@
   (clean-screen)
   (funcall-procs #'print-mob)
   (flip))
-
-
-;;; TTF Subsystem
-(defstruct font address)
-
-(let ((ttf nil))
-
-  (defun init-ttf ()
-    (cond ((null ttf) (progn (init-sdl) (setq ttf (TTF_Init))))
-	  (t ttf)))
-
-  (defun quit-ttf ()
-    (setq ttf (TTF_Quit))))
-
-
-(defun open-font (font-name tam)
-  (init-ttf)
-  (let ((font (get-resource 'font font-name tam)))
-    (if (null font)
-	(progn (setq font (make-font :address (TTF_OpenFont font-name tam)))
-	       (set-resource 'font font font-name tam)))
-    font))
-
-
-(defun render-text (text-message
-		    &key (color '(:red 255 :green 255 :blue 255))
-		    (font-name "lazy.ttf") (tam 28))
-  (init-ttf)
-  (let ((message (get-resource 'text text-message color font-name tam)))
-    (if (null message)
-	(progn
-	  (setq message
-		(make-surface
-		 :address (render-text2 (open-font font-name tam)
-					text-message
-					(getf color :red)
-					(getf color :green)
-					(getf color :blue))))
-	  (set-resource 'text message text-message color font-name tam)))
-    message))
-
-
-(defun print-text (x y text-message
-		     &key (color '(:red 255 :green 255 :blue 255))
-		     (font-name "lazy.ttf") (tam 28))
-  (init-video-mode)
-  (init-ttf)
-  (let ((message (render-text text-message :color color :font-name font-name :tam tam)))
-    (print-surface x y message)
-    message))
 
 
 ;;; Audio Subsystem
@@ -254,8 +158,11 @@
 ;;; Resources Manager
 (defstruct resource plist free-function time)
 
-(defun make-texture (&key filename min-filter mag-filter)
+(defun make-resource-texture (&key filename min-filter mag-filter)
   `(:type texture :filename ,filename :min-filter ,min-filter :mag-filter ,mag-filter))
+
+(defun make-resource-font (&key filename size encoding)
+  `(:type font :filename ,filename :size ,size :enconding ,encoding))
 
 (let ((resources-table (make-hash-table :test 'equal)))
 
