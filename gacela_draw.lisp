@@ -90,7 +90,10 @@
 		      (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
 		      (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
 		      (SDL_FreeSurface image)
-		      (set-resource key `(:id-texture ,texture :width ,real-w :height ,real-h) nil :static static)
+		      (set-resource key
+				    `(:id-texture ,texture :width ,real-w :height ,real-h)
+				    (lambda () (glDeleteTextures 1 `(,texture)))
+				    :static static)
 		      key)))))))))
 
 (defun draw-image-function (filename)

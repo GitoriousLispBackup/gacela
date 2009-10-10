@@ -24,7 +24,10 @@
 	     (cond ((/= font 0)
 		    (ftglSetFontFaceSize font size 72)
 		    (ftglSetFontCharMap font encoding)
-		    (set-resource key `(:id-font ,font) nil :static static)
+		    (set-resource key
+				  `(:id-font ,font)
+				  (lambda () (ftglDestroyFont font))
+				  :static static)
 		    key)))))))
 
 (defun render-text (text font)

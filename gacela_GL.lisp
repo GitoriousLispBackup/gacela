@@ -152,6 +152,15 @@
   "}"
   "return textures;")
 
+(defcfun "void gacela_glDeleteTextures (int n, object textures)" 0
+  "GLuint text[n];"
+  "int i, t;"
+  "for (i = 0; i < n; i++) {"
+  ((nth (int i) textures) t)
+  "text[i] = t;"
+  "}"
+  "glDeleteTextures (n, &text[0]);")
+
 (defcfun "void gacela_glBindTexture (int target, int texture)" 0
   "glBindTexture (target, texture);")
 
@@ -207,6 +216,7 @@
 (defentry glVertex3f (float float float) (void "gacela_glVertex3f"))
 (defentry glViewport (int int int int) (void "gacela_glViewport"))
 (defentry glGenTextures (int) (object "gacela_glGenTextures"))
+(defentry glDeleteTextures (int object) (void "gacela_glDeleteTextures"))
 (defentry glBindTexture (int int) (void "gacela_glBindTexture"))
 (defentry glTexImage2D (int int int int int int int int int) (void "gacela_glTexImage2D"))
 (defentry glTexParameteri (int int int) (void "gacela_glTexParameteri"))
