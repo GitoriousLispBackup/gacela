@@ -35,7 +35,11 @@
 (defcfun "void gacela_ftglRenderFont (int font, char *string, int mode)" 0
   "ftglRenderFont (font, string, mode);")
 
+(defcfun "void gacela_ftglDestroyFont (int font)" 0
+  "ftglDestroyFont (font);")
+
 (defentry ftglCreateTextureFont (string) (int "gacela_ftglCreateTextureFont"))
 (defentry ftglSetFontFaceSize (int int int) (int "gacela_ftglSetFontFaceSize"))
 (defentry ftglSetFontCharMap (int int) (int "gacela_ftglSetFontCharMap"))
 (defentry ftglRenderFont (int string int) (void "gacela_ftglRenderFont"))
+(defentry ftglDestroyFont (int) (void "gacela_ftglDestroyFont"))
