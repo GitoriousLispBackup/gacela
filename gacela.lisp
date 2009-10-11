@@ -156,7 +156,7 @@
 
 
 ;;; Resources Manager
-(defstruct resource plist free-function time)
+(defstruct resource plist constructor destructor time)
 
 (defun make-resource-texture (&key filename min-filter mag-filter)
   `(:type texture :filename ,filename :min-filter ,min-filter :mag-filter ,mag-filter))
@@ -166,9 +166,11 @@
 
 (let ((resources-table (make-hash-table :test 'equal)))
 
-  (defun set-resource (key plist free-function &key static)
+  (defun set-resource (key plist constructor destructor &key static)
     (setf (gethash key resources-table)
 	  (make-resource :plist plist
+			 :constructor constructor
+			 :destructor destructor
 			 :free-function free-function
 			 :time (if static -1 (SDL_GetTicks)))))
 

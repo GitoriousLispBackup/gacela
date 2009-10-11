@@ -92,6 +92,7 @@
 		      (SDL_FreeSurface image)
 		      (set-resource key
 				    `(:id-texture ,texture :width ,real-w :height ,real-h)
+				    (lambda () (load-texture filename :min-filter min-filter :mag-filter mag-filter :static static))
 				    (lambda () (glDeleteTextures 1 `(,texture)))
 				    :static static)
 		      key)))))))))
