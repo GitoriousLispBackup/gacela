@@ -16,20 +16,23 @@
 
 (in-package :gacela)
 
-(defun open-font (font-file &key (size 80) (encoding ft_encoding_unicode) static)
+(defun load-font (font-file &key (size 80) (encoding ft_encoding_unicode) static)
   (let ((key (make-resource-font :filename font-file :size size :encoding encoding)))
     (cond ((get-resource key) key)
-	  (t
-	   (let ((font (ftglCreateTextureFont font-file)))
-	     (cond ((/= font 0)
-		    (ftglSetFontFaceSize font size 72)
-		    (ftglSetFontCharMap font encoding)
-		    (set-resource key
-				  `(:id-font ,font)
-				  (lambda () (open-font font-file :size size :encoding encoding :static static))
-				  (lambda () (ftglDestroyFont font))
-				  :static static)
-		    key)))))))
+	  (t (true-load-font font-file size encoding static)))))
+
+(defun true-load-font (font-file size encoding static)
+  (let ((key (make-resource-font :filename font-file :size size :encoding encoding))
+	(font (ftglCreateTextureFont font-file)))
+    (cond ((/= font 0)
+	   (ftglSetFontFaceSize font size 72)
+	   (ftglSetFontCharMap font encoding)
+	   (set-resource key
+			 `(:id-font ,font)
+			 (lambda () (true-load-font font-file size encoding static))
+			 (lambda () (ftglDestroyFont font))
+			 :static static)
+	   key))))
 
 (defun render-text (text font)
   (ftglRenderFont (getf font :id-font) text FTGL_RENDER_ALL))

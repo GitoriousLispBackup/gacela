@@ -172,7 +172,7 @@
 			 :constructor constructor
 			 :destructor destructor
 			 :free-function free-function
-			 :time (if static -1 (SDL_GetTicks)))))
+			 :time (if static t (SDL_GetTicks)))))
 
   (defun get-resource (key)
     (let ((resource (gethash key resources-table)))
