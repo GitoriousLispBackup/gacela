@@ -182,10 +182,12 @@
 		      (setf (gethash key resources-table) resource)))
 	       (resource-plist resource)))))
 
+  (defun free-resource (key)
+    (funcall (resource-destructor (gethash key resources-table)))
+    (setf (resource-time (gethash key resources-table)) nil))
+
   (defun free-all-resources ()
-    (maphash (lambda (key res) (funcall (resource-free-function res) (resource-address res)))
-	     resources-table)
-    (clrhash resources-table)))
+    (maphash (lambda (key res) (free-resource key)) resources-table)))
 
 
 ;;; Connection with the GUI
