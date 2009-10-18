@@ -9,11 +9,11 @@ OBJ = gacela.o gacela_misc.o gacela_SDL.o gacela_GL.o gacela_FTGL.o \
 GCL_OBJ = $(OBJ:%.o=\"%.o\")
 
 %.o: %.lisp
-	$(LISP) -eval "(progn (setq compiler::*cc* (concatenate 'string compiler::*cc* \"$(INC)\")) (compile-file \"$<\" :system-p t))" -batch
+	$(LISP) -eval "(progn (load \"gacela_make.lisp\") (compile-gfile \"$<\" :include \"$(INC)\"))" -batch
 
 all: $(OBJ)
 	$(LISP) -eval "(compiler::link '($(GCL_OBJ)) \"gacela\" \"\" \"$(LIBS)\")" -batch
 
 clean:
-	rm $(OBJ) gacela
+	rm -f $(OBJ) gacela
 

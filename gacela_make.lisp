@@ -14,12 +14,10 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(setq compiler::*cc* (concatenate 'string
-				  compiler::*cc*
-				  "-I/usr/include/FTGL -I/usr/include/freetype2"))
-
-(defmacro compile-gfile (file-name)
-  `(compile-file ,file-name :system-p t))
+(defmacro compile-gfile (file-name &key include)
+  `(progn
+     (setq compiler::*cc* (concatenate 'string compiler::*cc* ,include " "))
+     (compile-file ,file-name :system-p t)))
 
 (defun compile-gacela ()
   (compile-gfile "gacela.lisp")
