@@ -104,7 +104,7 @@
       (timer (make-timer))
       (grid (make-list 20 :initial-element (make-list 14)))
       (background (draw-image-function "fondo_tetris.png"))
-      (font (open-font "lazy.ttf")))
+      (font (load-font "lazy.ttf")))
   (defun tetramine ()
     (cond ((eq (timer-state timer) 'stopped) (start-timer timer)))
 

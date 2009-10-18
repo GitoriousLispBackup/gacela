@@ -81,14 +81,6 @@
   (glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST)
   t)
 
-(defmacro progn-textures (&body code)
-  `(let (values)
-     (init-video-mode)
-     (glEnable GL_TEXTURE_2D)
-     (setq values (multiple-value-list (progn ,@code)))
-     (glDisable GL_TEXTURE_2D)
-     (apply #'values values)))
-
 (defun init-lighting ()
   (init-video-mode)
   (glEnable GL_LIGHTING))
@@ -171,7 +163,6 @@
 	  (make-resource :plist plist
 			 :constructor constructor
 			 :destructor destructor
-			 :free-function free-function
 			 :time (if static t (SDL_GetTicks)))))
 
   (defun get-resource (key)

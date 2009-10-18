@@ -69,16 +69,6 @@
 			(t (power (* p 2) n)))))
 	  (power 1 n)))
 
-(defmacro mapcconst (type c-type name)
-  (let ((c-header (concatenate 'string c-type " gacela_" name " (void)"))
-	(c-body (concatenate 'string "return " name ";"))
-	(c-name (concatenate 'string "gacela_" name))
-	(lisp-name (intern (string-upcase name))))
-    `(progn
-       (defcfun ,c-header 0 ,c-body)
-       (defentry ,lisp-name () (,type ,c-name))
-       (eval-when (load) (defconstant ,lisp-name (,lisp-name))))))
-
 ;Geometry
 (defun dotp (dot)
   (match-pattern dot '(0 0)))

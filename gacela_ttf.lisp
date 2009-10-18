@@ -35,4 +35,4 @@
 	   key))))
 
 (defun render-text (text font)
-  (ftglRenderFont (getf font :id-font) text FTGL_RENDER_ALL))
+  (ftglRenderFont (getf (get-resource font) :id-font) text FTGL_RENDER_ALL))

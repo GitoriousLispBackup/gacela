@@ -34,6 +34,14 @@
      ,@code
      (apply #'set-current-color original-color)))
 
+(defmacro progn-textures (&body code)
+  `(let (values)
+     (init-video-mode)
+     (glEnable GL_TEXTURE_2D)
+     (setq values (multiple-value-list (progn ,@code)))
+     (glDisable GL_TEXTURE_2D)
+     (apply #'values values)))
+
 (defun draw (&rest vertexes)
   (begin-draw (length vertexes))
   (draw-vertexes vertexes)
@@ -101,15 +109,17 @@
 	       key)))))))
 
 (defun draw-image-function (filename)
-  (multiple-value-bind
-   (texture width height) (load-texture filename)
-   (lambda (&optional (f 1))
-     (cond (texture
-	    (draw-rectangle (* f width) (* f height) :texture texture))))))
+  (let ((texture (load-texture filename)))
+    (lambda (&optional (f 1))
+      (cond (texture
+	     (let ((width (getf (get-resource texture) :width))
+		   (height (getf (get-resource texture) :height)))
+(print texture)
+	       (draw-rectangle (* f width) (* f height) :texture texture)))))))
 
 (defun draw-quad (v1 v2 v3 v4 &key texture)
   (cond (texture (progn-textures
-		  (glBindTexture GL_TEXTURE_2D (getf texture :id-texture))
+		  (glBindTexture GL_TEXTURE_2D (getf (get-resource texture) :id-texture))
 		  (begin-draw 4)
 		  (draw-vertex v1 :texture-coord '(0 0))
 		  (draw-vertex v2 :texture-coord '(1 0))
