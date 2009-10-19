@@ -114,7 +114,6 @@
       (cond (texture
 	     (let ((width (getf (get-resource texture) :width))
 		   (height (getf (get-resource texture) :height)))
-(print texture)
 	       (draw-rectangle (* f width) (* f height) :texture texture)))))))
 
 (defun draw-quad (v1 v2 v3 v4 &key texture)
