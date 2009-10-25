@@ -99,12 +99,16 @@
 			 (t (fill (cons (make-list 14) grid) (- n 1))))))
 	    (fill res (- 20 (length res))))))
 
+(let ((points 0))
+  (defun get-points ()
+    points))
+
 (let ((tetramine (random-tetramine)) (x 6) (y 0)
       (next (random-tetramine))
       (timer (make-timer))
       (grid (make-list 20 :initial-element (make-list 14)))
       (background (draw-image-function "fondo_tetris.png"))
-      (font (load-font "lazy.ttf")))
+      (font (load-font "lazy.ttf" :size 20)))
   (defun tetramine ()
     (cond ((eq (timer-state timer) 'stopped) (start-timer timer)))
 

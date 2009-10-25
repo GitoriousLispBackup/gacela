@@ -153,8 +153,8 @@
 (defun make-resource-texture (&key filename min-filter mag-filter)
   `(:type texture :filename ,filename :min-filter ,min-filter :mag-filter ,mag-filter))
 
-(defun make-resource-font (&key filename size encoding)
-  `(:type font :filename ,filename :size ,size :enconding ,encoding))
+(defun make-resource-font (&key filename encoding)
+  `(:type font :filename ,filename :enconding ,encoding))
 
 (let ((resources-table (make-hash-table :test 'equal)))
 
