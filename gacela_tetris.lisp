@@ -94,14 +94,23 @@
 
 (defun remove-rows-completed (grid)
   (let ((res (remove-if (lambda (x) (row-completed x)) grid)))
+    (inc-points (- (length grid) (length res)))
     (labels ((fill (grid n)
 		   (cond ((< n 1) grid)
 			 (t (fill (cons (make-list 14) grid) (- n 1))))))
 	    (fill res (- 20 (length res))))))
 
-(let ((points 0))
+(let ((points 0) (lines 0))
   (defun get-points ()
-    points))
+    points)
+
+  (defun get-lines ()
+    lines)
+
+  (defun inc-points (l)
+    (incf points
+	  (labels ((more-lines-better 
+    (incf lines l)))
 
 (let ((tetramine (random-tetramine)) (x 6) (y 0)
       (next (random-tetramine))
@@ -138,7 +147,10 @@
     (draw-grid (join-grids tetramine grid x y))
     (translate 440 440)
     (draw-grid next)
-    (render-text "Hola" font)))
+    (translate -40 -100)
+    (render-text (format nil "Points: ~d" (get-points)) font)
+    (translate 0 -30)
+    (render-text (format nil "Lines: ~d" (get-lines)) font)))
 
 (let ((frame 0.0) (fps (make-timer)) (update (make-timer)))
   (start-timer update)
