@@ -31,7 +31,7 @@
 	   (ftglSetFontCharMap font encoding)
 	   (set-resource key
 			 `(:id-font ,font)
-			 (lambda () (true-load-font font-file encoding static))
+			 (lambda () (true-load-font font-file size encoding static))
 			 (lambda () (ftglDestroyFont font))
 			 :static static)
 	   key))))
