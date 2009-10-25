@@ -156,6 +156,18 @@
 (defun make-resource-font (&key filename encoding)
   `(:type font :filename ,filename :enconding ,encoding))
 
+(defmacro get-rtime (key)
+  `(resource-time (gethash ,key resources-table)))
+
+(defmacro get-rplist (key)
+  `(resource-plist (gethash ,key resources-table)))
+
+(defmacro get-rconstructor (key)
+  `(resource-constructor (gethash ,key resources-table)))
+
+(defmacro get-rdestructor (key)
+  `(resource-destructor (gethash ,key resources-table)))
+
 (let ((resources-table (make-hash-table :test 'equal)))
 
   (defun set-resource (key plist constructor destructor &key static)
@@ -166,16 +178,15 @@
 			 :time (if static t (SDL_GetTicks)))))
 
   (defun get-resource (key)
-    (let ((resource (gethash key resources-table)))
-      (cond ((null resource) nil)
-	    (t (cond ((/= (resource-time resource) -1)
-		      (setf (resource-time resource) (SDL_GetTicks))
-		      (setf (gethash key resources-table) resource)))
-	       (resource-plist resource)))))
+    (cond ((null (gethash key resources-table)) nil)
+	  (t (let ((time (get-rtime key)))
+	       (cond ((null time) (funcall (get-rconstructor key)))
+		     ((numberp time) (setf (get-rtime key) (SDL_GetTicks))))
+	       (get-rplist key)))))
 
   (defun free-resource (key)
-    (funcall (resource-destructor (gethash key resources-table)))
-    (setf (resource-time (gethash key resources-table)) nil))
+    (funcall (get-rdestructor key))
+    (setf (get-rtime key) nil))
 
   (defun free-all-resources ()
     (maphash (lambda (key res) (free-resource key)) resources-table)))
@@ -235,9 +246,8 @@
 	 (setq running nil))))
 
 (defun quit-game ()
-;  (free-all-resources)
+  (free-all-resources)
 ;  (quit-audio)
-;  (quit-ttf)
   (quit-video-mode)
 ;  (quit-all-procs)
 ;  (clear-events)

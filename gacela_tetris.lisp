@@ -109,7 +109,10 @@
 
   (defun inc-points (l)
     (incf points
-	  (labels ((more-lines-better 
+	  (labels ((more-lines-better (n)
+				      (cond ((= n 0) n)
+					    (t (+ n (more-lines-better (- n 1)))))))
+		  (* (more-lines-better l) 10)))
     (incf lines l)))
 
 (let ((tetramine (random-tetramine)) (x 6) (y 0)
@@ -117,7 +120,15 @@
       (timer (make-timer))
       (grid (make-list 20 :initial-element (make-list 14)))
       (background (draw-image-function "fondo_tetris.png"))
-      (font (load-font "lazy.ttf" :size 20)))
+      (font (load-font "lazy.ttf" :size 20))
+      (game-over))
+  (defun game ()
+    (if game-over (game-over) (tetramine)))
+
+  (defun game-over ()
+    (translate -100 0)
+    (render-text "Game Over" font :size 50))
+
   (defun tetramine ()
     (cond ((eq (timer-state timer) 'stopped) (start-timer timer)))
 
@@ -140,6 +151,7 @@
 		      (> (+ y 1 (length tetramine)) 20))
 		  (setq grid (remove-rows-completed (join-grids tetramine grid x y)))
 		  (setq tetramine next x 6 y 0)
+		  (cond ((collide-grids tetramine grid x y) (setq game-over t)))
 		  (setq next (random-tetramine)))
 		 (t (incf y) (start-timer timer)))))
     (funcall background)
@@ -156,6 +168,7 @@
   (start-timer update)
   (start-timer fps)
   (run-game "Gacela Tetris"
-	    (tetramine)
+	    (game)
 	    (incf frame)
-	    (cond ((> (get-time update) 1000) (print (/ frame (/ (get-time fps) 1000.0))) (start-timer update)))))
+	    (cond ((> (get-time update) 1000) (print (/ frame (/ (get-time fps) 1000.0))) (start-timer update))))
+  (quit-game))
