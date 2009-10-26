@@ -168,9 +168,14 @@
 (defmacro get-rdestructor (key)
   `(resource-destructor (gethash ,key resources-table)))
 
-(let ((resources-table (make-hash-table :test 'equal)))
+(let ((resources-table (make-hash-table :test 'equal))
+      (expiration-time 50000))
+
+  (defun set-expiration-time (new-time)
+    (setq expiration-time new-time))
 
   (defun set-resource (key plist constructor destructor &key static)
+    (expire-resources)
     (setf (gethash key resources-table)
 	  (make-resource :plist plist
 			 :constructor constructor
@@ -187,6 +192,13 @@
   (defun free-resource (key)
     (funcall (get-rdestructor key))
     (setf (get-rtime key) nil))
+
+  (defun expire-resource (key &optional (now (SDL_GetTicks)))
+    (let ((time (get-rtime key)))
+      (cond ((and (numberp time) (> (- now time) expiration-time)) (free-resource key)))))
+
+  (defun expire-resources ()
+    (maphash (lambda (key res) (expire-resource key)) resources-table))
 
   (defun free-all-resources ()
     (maphash (lambda (key res) (free-resource key)) resources-table)))
