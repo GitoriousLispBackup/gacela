@@ -25,7 +25,10 @@
        ,(mob-options methods))))
 
 (defun mob-options (methods)
-  )
+  (labels ((options (m &aux (option (car m)) (vars (cadr m)) (body (caddr m)))
+		    (cond ((null m) nil)
+			  (t (cons option (cons (lambda body (options (cdddr m))))))))
+	  (cons 'case (cons 'option (options methods)))))
 
 (defmacro defmob (name variables &key init logic render)
   `(let ((make-name ',(intern (concatenate 'string "MAKE-" (string name)))))
