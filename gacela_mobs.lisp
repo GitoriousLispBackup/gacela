@@ -17,10 +17,15 @@
 
 ;;; World of Mob
 
-(in-package :gacela)
+;(in-package :gacela)
 
 (defmacro makemob (name variables &rest methods)
-  `(lambda ,
+  `(let ,variables
+     (defun ,name (&rest args &aux (option (car args)))
+       ,(mob-options methods))))
+
+(defun mob-options (methods)
+  )
 
 (defmacro defmob (name variables &key init logic render)
   `(let ((make-name ',(intern (concatenate 'string "MAKE-" (string name)))))
