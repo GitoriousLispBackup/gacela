@@ -15,19 +15,23 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+;;; World of Mob
+
 (in-package :gacela)
 
-;;; World of Mob
+(defmacro makemob (name variables &rest methods)
+  `(lambda ,
+
 (defmacro defmob (name variables &key init logic render)
   `(let ((make-name ',(intern (concatenate 'string "MAKE-" (string name)))))
      (setf (symbol-function make-name)
 	   (makemob ,variables :init ,init :logic ,logic :render ,render))
      make-name))
 
-(defmacro makemob (variables &key init logic render)
-  `(lambda
-     ,(if (null variables) () (cons '&key variables))
-     (mob-structure ,variables ,init ,logic ,render)))
+;(defmacro makemob (variables &key init logic render)
+;  `(lambda
+;     ,(if (null variables) () (cons '&key variables))
+;     (mob-structure ,variables ,init ,logic ,render)))
 
 (defmacro mob-structure (variables init logic render)
   `(list
