@@ -21,11 +21,14 @@
 
 (defmacro makemob (name &rest methods)
   `(defun ,name (&rest args &aux (option (car args)))
-     ,(cond (methods
-	     (labels ((options (m &aux (option (car m)) (body (cadr m)))
-			       (cond ((null m) nil)
-				     (t (cons (list option `(apply ,body (cdr args))) (options (cddr m)))))))
-		     (cons 'case (cons 'option (options methods))))))))
+     ,(union
+       `(case option
+	      (:on (mob-on #',name))
+	      (:off (mob-off #',name)))
+       (labels ((options (m &aux (option (car m)) (body (cadr m)))
+			 (cond ((null m) nil)
+			       (t (cons (list option `(apply ,body (cdr args))) (options (cddr m)))))))
+	       (options methods)))))
 
 (defmacro defmob (name variables &key init logic render)
   `(let ((make-name ',(intern (concatenate 'string "MAKE-" (string name)))))
