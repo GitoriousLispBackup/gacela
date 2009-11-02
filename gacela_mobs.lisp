@@ -19,16 +19,13 @@
 
 ;(in-package :gacela)
 
-(defmacro makemob (name variables &rest methods)
-  `(let ,variables
-     (defun ,name (&rest args &aux (option (car args)))
-       ,(mob-options methods))))
-
-(defun mob-options (methods)
-  (labels ((options (m &aux (option (car m)) (vars (cadr m)) (body (caddr m)))
-		    (cond ((null m) nil)
-			  (t (cons option (cons (lambda body (options (cdddr m))))))))
-	  (cons 'case (cons 'option (options methods)))))
+(defmacro makemob (name &rest methods)
+  `(defun ,name (&rest args &aux (option (car args)))
+     ,(cond (methods
+	     (labels ((options (m &aux (option (car m)) (body (cadr m)))
+			       (cond ((null m) nil)
+				     (t (cons (list option `(apply ,body (cdr args))) (options (cddr m)))))))
+		     (cons 'case (cons 'option (options methods))))))))
 
 (defmacro defmob (name variables &key init logic render)
   `(let ((make-name ',(intern (concatenate 'string "MAKE-" (string name)))))
