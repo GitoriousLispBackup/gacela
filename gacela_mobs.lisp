@@ -43,18 +43,24 @@
 			      (values-list ,(cons 'list (mapcar #'car+ variables)))))
 		  nil))))
 
-(defun init-mob (mob)
-  (funcall (getf mob :init)))
-
-(defun logic-mob (mob)
-  (funcall (getf mob :logic)))
-
-(defun render-mob (mob)
-  (funcall (getf mob :render)))
-
 (let (running-mobs mobs-to-add mobs-to-quit)
   (defun mob-on (mob)
     (push mob mobs-to-add))
 
+  (defun logic-mobs ()
+    (dolist (mob running-mobs) (funcall mob :logic)))
+
+  (defun render-mobs ()
+    (dolist (mob running-mobs) (funcall mob :render)))
+
   (defun mob-off (mob)
-    (push mob mobs-to-quit)))
+    (push mob mobs-to-quit))
+
+  (defun refresh-running-mobs ()
+    (do ((mob (pop mobs-to-add) (pop mobs-to-add))) ((null mob))
+	(push mob running-mobs)
+	(funcall mob :init))
+    (setq running-mobs (reverse (set-difference running-mobs mobs-to-quit :test #'equal))))
+
+  (defun quit-all-mobs ()
+    (setq running-mobs nil mobs-to-add nil mobs-to-quit nil)))
