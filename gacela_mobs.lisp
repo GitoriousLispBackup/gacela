@@ -30,28 +30,15 @@
 			       (t (cons (list option `(apply ,body (cdr args))) (options (cddr m)))))))
 	       (options methods)))))
 
-(defmacro mob-structure (variables init logic render)
-  `(list
-    :init (lambda () ,init)
-    :logic (lambda () ,logic)
-    :render (lambda () ,render)
-    :context (lambda ()
-	       ,(if variables
-		    `(mapcar #'list
-			     ',(mapcar #'car+ variables)
-			     (multiple-value-list
-			      (values-list ,(cons 'list (mapcar #'car+ variables)))))
-		  nil))))
 
 (let (running-mobs mobs-to-add mobs-to-quit)
   (defun mob-on (mob)
     (push mob mobs-to-add))
 
-  (defun logic-mobs ()
-    (dolist (mob running-mobs) (funcall mob :logic)))
-
-  (defun render-mobs ()
-    (dolist (mob running-mobs) (funcall mob :render)))
+  (defun run-mobs (option &key args function)
+    (dolist (mob running-mobs)
+      (cond (function (funcall function)))
+      (apply mob (cons option args))))
 
   (defun mob-off (mob)
     (push mob mobs-to-quit))
@@ -64,3 +51,10 @@
 
   (defun quit-all-mobs ()
     (setq running-mobs nil mobs-to-add nil mobs-to-quit nil)))
+
+
+(defun logic-mobs ()
+  (run-mobs :logic))
+
+(defun render-mobs ()
+  (run-mobs :render :function (lambda () (glLoadIdentity))))
