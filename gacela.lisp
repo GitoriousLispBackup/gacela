@@ -204,13 +204,19 @@
     (maphash (lambda (key res) (free-resource key)) resources-table)))
 
 
-;;; Connection with the GUI
-(let (socket)
-  (defun connect-to-gui ()
-    (setq socket (si::socket 1984 :host "localhost")))
+;;; Gacela Server for development mode
+(let (socket clients)
+  (defun server-running? ()
+    (if socket t nil))
 
-  (defun eval-from-gui ()
-    (cond ((and socket (listen socket)) (eval (read socket))))))
+  (defun start-server (port)
+    (setq socket (si::socket port :server #'eval-from-client)))
+
+  (defun check-server-connections ()
+    (when (si::listen socket) (push (si:accept socket) clients)))
+
+  (defun eval-from-clients ()
+    (dolist (cli clients) (when (si::listen cli) (eval (read cli))))))
 
 
 ;;; GaCeLa Functions
