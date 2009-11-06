@@ -15,7 +15,7 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-;;; World of Mob
+;;; Mob Factory
 
 (in-package :gacela)
 
@@ -23,8 +23,8 @@
   `(defun ,name (&rest args &aux (option (car args)))
      ,(union
        `(case option
-	      (:on (mob-on #',name))
-	      (:off (mob-off #',name)))
+	      (:on (mob-on ',name))
+	      (:off (mob-off ',name)))
        (labels ((options (m &aux (option (car m)) (body (cadr m)))
 			 (cond ((null m) nil)
 			       (t (cons (list option `(apply ,body (cdr args))) (options (cddr m)))))))
@@ -38,7 +38,7 @@
   (defun run-mobs (option &key args function)
     (dolist (mob running-mobs)
       (cond (function (funcall function)))
-      (apply mob (cons option args))))
+      (apply (symbol-function mob) (cons option args))))
 
   (defun mob-off (mob)
     (push mob mobs-to-quit))
@@ -46,8 +46,8 @@
   (defun refresh-running-mobs ()
     (do ((mob (pop mobs-to-add) (pop mobs-to-add))) ((null mob))
 	(push mob running-mobs)
-	(funcall mob :init))
-    (setq running-mobs (reverse (set-difference running-mobs mobs-to-quit :test #'equal))))
+	(funcall (symbol-function mob) :init))
+    (setq running-mobs (reverse (set-difference running-mobs mobs-to-quit))))
 
   (defun quit-all-mobs ()
     (setq running-mobs nil mobs-to-add nil mobs-to-quit nil)))
