@@ -206,14 +206,11 @@
 
 ;;; Gacela Server for development mode
 (let (socket clients)
-  (defun server-running? ()
-    (if socket t nil))
-
   (defun start-server (port)
-    (setq socket (si::socket port :server #'eval-from-client)))
+    (when (null socket) (setq socket (si::socket port :server #'eval-from-clients))))
 
   (defun check-server-connections ()
-    (when (si::listen socket) (push (si:accept socket) clients)))
+    (when (and socket (si::listen socket)) (push (si:accept socket) clients)))
 
   (defun eval-from-clients ()
     (dolist (cli clients) (when (si::listen cli) (eval (read cli))))))
@@ -252,6 +249,8 @@
      (init-video-mode)
      (SDL_WM_SetCaption ,title "")
      (init-frame-time)
+     (check-server-connections)
+     (eval-from-clients)
      (refresh-running-mobs)
      (process-events)
      (do () ((quit?))
@@ -263,6 +262,8 @@
 	 (SDL_GL_SwapBuffers)
 	 (delay-frame)
 	 (init-frame-time)
+	 (check-server-connections)
+	 (eval-from-clients)
 	 (refresh-running-mobs)
 	 (process-events)
 	 (setq running nil))))
