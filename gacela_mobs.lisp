@@ -47,7 +47,8 @@
     (do ((mob (pop mobs-to-add) (pop mobs-to-add))) ((null mob))
 	(push mob running-mobs)
 	(funcall (symbol-function mob) :init))
-    (setq running-mobs (reverse (set-difference running-mobs mobs-to-quit))))
+    (setq running-mobs (reverse (set-difference running-mobs mobs-to-quit)))
+    (setq mobs-to-quit nil))
 
   (defun quit-all-mobs ()
     (setq running-mobs nil mobs-to-add nil mobs-to-quit nil)))

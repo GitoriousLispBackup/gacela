@@ -213,24 +213,16 @@
     (when (and socket (si::listen socket)) (push (si:accept socket) clients)))
 
   (defun eval-from-clients ()
-    (dolist (cli clients) (when (si::listen cli) (eval (read cli))))))
+    (dolist (cli clients) (when (si::listen cli) (eval (read cli)))))
+
+  (defun stop-server ()
+    (when socket
+      (dolist (cli clients) (si::close cli))
+      (si::close socket)
+      (setq socket nil clients nil))))
 
 
 ;;; GaCeLa Functions
-(let (commands)
-  (defun prog-command (command)
-    (setq commands (cons command commands)))
-
-  (defun run-commands ()
-    (cond (commands
-	   (let (running)
-	     (setq running commands)
-	     (setq commands nil)
-	     (labels ((run-com (comlst)
-			       (cond (comlst (run-com (cdr comlst))
-					     (eval (read-from-string (concatenate 'string "(progn " (car comlst) ")")))))))
-		     (run-com running)))))))
-
 (let (time (time-per-frame (/ 1000.0 *frames-per-second*)))
   (defun set-frames-per-second (fps)
     (setq time-per-frame (/ 1000.0 fps)))
