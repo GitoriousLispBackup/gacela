@@ -213,7 +213,14 @@
     (when (and socket (si::listen socket)) (push (si:accept socket) clients)))
 
   (defun eval-from-clients ()
-    (dolist (cli clients) (when (si::listen cli) (eval (read cli)))))
+    (dolist (cli clients)
+      (when (si::listen cli)
+	(let ((sto *standard-output*))
+	  (setq *standard-output* cli)
+	  (setq *break-enable* nil)
+	  (eval (read cli))
+	  (setq *break-enable* t)
+	  (setq *standard-output* sto)))))
 
   (defun stop-server ()
     (when socket
