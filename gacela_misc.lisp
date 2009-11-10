@@ -69,13 +69,16 @@
 	  (power 1 n)))
 
 (defmacro secured-eval (form &optional output-stream)
-  `(let ((error-handler #'si::universal-error-handler)
-	 (result-eval))
-     (defun si::universal-error-handler (error-name correctable function-name continue-format-string error-format-string &rest args)
-       ,(when output-stream `(format ,output-stream error-format-string)))
-     (setq result-eval (eval ,form))
-     (setf (symbol-function 'si::universal-error-handler) error-handler)
-     result-eval))
+  (let ((error-handler #'si::universal-error-handler))
+    `(block secure
+       (defun si::universal-error-handler (error-name correctable function-name continue-format-string error-format-string &rest args)
+	 ,(when output-stream `(format ,output-stream error-format-string))
+	 (setf (symbol-function 'si::universal-error-handler) ,error-handler)
+	 (return-from secure))
+       (let (result-eval)
+	 (setq result-eval (eval ,form))
+	 (setf (symbol-function 'si::universal-error-handler) ,error-handler)
+	 result-eval))))
 
 ;Geometry
 (defun dotp (dot)
