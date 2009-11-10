@@ -38,7 +38,7 @@
   (defun run-mobs (option &key args function)
     (dolist (mob running-mobs)
       (cond (function (funcall function)))
-      (apply (symbol-function mob) (cons option args))))
+      (secure-block nil (apply (symbol-function mob) (cons option args)))))
 
   (defun mob-off (mob)
     (push mob mobs-to-quit))
@@ -46,7 +46,7 @@
   (defun refresh-running-mobs ()
     (do ((mob (pop mobs-to-add) (pop mobs-to-add))) ((null mob))
 	(push mob running-mobs)
-	(funcall (symbol-function mob) :init))
+	(secure-block nil (funcall (symbol-function mob) :init)))
     (setq running-mobs (reverse (set-difference running-mobs mobs-to-quit)))
     (setq mobs-to-quit nil))
 

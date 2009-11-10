@@ -68,15 +68,18 @@
 			(t (power (* p 2) n)))))
 	  (power 1 n)))
 
-(defmacro secured-eval (form &optional output-stream)
+(defmacro secure-block (output-stream &rest forms)
   (let ((error-handler #'si::universal-error-handler))
     `(block secure
        (defun si::universal-error-handler (error-name correctable function-name continue-format-string error-format-string &rest args)
-	 ,(when output-stream `(format ,output-stream error-format-string))
+	 ,(when output-stream
+	    `(format ,output-stream
+		     (cond ((eq error-name :WRONG-TYPE-ARGUMENT) (string error-name))
+			   (t error-format-string))))
 	 (setf (symbol-function 'si::universal-error-handler) ,error-handler)
 	 (return-from secure))
        (let (result-eval)
-	 (setq result-eval (eval ,form))
+	 (setq result-eval (progn ,@forms))
 	 (setf (symbol-function 'si::universal-error-handler) ,error-handler)
 	 result-eval))))
 
