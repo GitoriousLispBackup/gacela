@@ -14,8 +14,6 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :gacela)
-
 (defconstant INFINITY MOST-POSITIVE-LONG-FLOAT)
 
 (defun append-if (new test tree &key (key #'first) (test-if #'equal))
@@ -82,6 +80,22 @@
 	 (setq result-eval (progn ,@forms))
 	 (setf (symbol-function 'si::universal-error-handler) ,error-handler)
 	 result-eval))))
+
+(defmacro persistent-let (name vars &rest forms)
+  (labels ((get-vars (vars)
+		     (cond ((null vars) nil)
+			   (t (cons (if (consp (car vars)) (caar vars) (car vars))
+				    (get-vars (cdr vars)))))))
+   
+	  `(let ,(cond ((functionp name)
+			(let ((old-vars (funcall name)))
+			  (cond ((equal (get-vars vars) (get-vars old-vars)) old-vars)
+				(t vars))))
+		       (t vars))
+	     (defun ,name ()
+	       ,(let ((lvars (get-vars vars)))
+		  `(mapcar (lambda (x y) (list x y)) ',lvars ,(cons 'list lvars))))
+	     ,@forms)))
 
 ;Geometry
 (defun dotp (dot)
