@@ -71,9 +71,10 @@
     `(block secure
        (defun si::universal-error-handler (error-name correctable function-name continue-format-string error-format-string &rest args)
 	 ,(when output-stream
-	    `(format ,output-stream
-		     (cond ((eq error-name :WRONG-TYPE-ARGUMENT) (string error-name))
-			   (t error-format-string))))
+	    `(write-line
+	      (cond ((eq error-name :WRONG-TYPE-ARGUMENT) (string error-name))
+		    (t error-format-string))
+	      ,output-stream))
 	 (setf (symbol-function 'si::universal-error-handler) ,error-handler)
 	 (return-from secure))
        (let (result-eval)

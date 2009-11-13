@@ -215,7 +215,7 @@
   (defun eval-from-clients ()
     (dolist (cli clients)
       (when (si::listen cli)
-	(secure-block cli (eval (read cli))))))
+	(secure-block cli (eval (read-from-string (read-line cli)))))))
 
   (defun stop-server ()
     (when socket
