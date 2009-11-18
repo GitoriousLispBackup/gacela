@@ -204,24 +204,19 @@
     (maphash (lambda (key res) (free-resource key)) resources-table)))
 
 
-;;; Gacela Server for development mode
-(let (socket clients)
-  (defun start-server (port)
-    (when (null socket) (setq socket (si::socket port :server #'eval-from-clients))))
+;;; Connection with Gacela Skin
+(let (socket)
+  (defun start-skin-client (port)
+    (when (null socket) (setq socket (si::socket port :host "localhost"))))
 
-  (defun check-server-connections ()
-    (when (and socket (si::listen socket)) (push (si:accept socket) clients)))
+  (defun eval-from-skin ()
+    (when (si::listen socket)
+      (secure-block socket (eval (read-from-string (read-line socket))))))
 
-  (defun eval-from-clients ()
-    (dolist (cli clients)
-      (when (si::listen cli)
-	(secure-block cli (eval (read-from-string (read-line cli)))))))
-
-  (defun stop-server ()
+  (defun stop-skin-client ()
     (when socket
-      (dolist (cli clients) (si::close cli))
       (si::close socket)
-      (setq socket nil clients nil))))
+      (setq socket nil))))
 
 
 ;;; GaCeLa Functions
@@ -243,8 +238,7 @@
      (init-video-mode)
      (SDL_WM_SetCaption ,title "")
      (init-frame-time)
-     (check-server-connections)
-     (eval-from-clients)
+     (eval-from-skin)
      (refresh-running-mobs)
      (process-events)
      (do () ((quit?))
@@ -256,8 +250,7 @@
 	 (SDL_GL_SwapBuffers)
 	 (delay-frame)
 	 (init-frame-time)
-	 (check-server-connections)
-	 (eval-from-clients)
+	 (eval-from-skin)
 	 (refresh-running-mobs)
 	 (process-events)
 	 (setq running nil))))
