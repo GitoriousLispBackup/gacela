@@ -28,6 +28,6 @@
 			     (gacela::draw-cube :size 40))))
 
 ;(cuadrado :on)
-(gacela::start-server 1984)
+(gacela::start-skin-client 1984)
 
 (gacela::run-game "Prueba Mobs")
