@@ -15,7 +15,7 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-(in-package :gacela)
+(in-package :gacela :nicknames '(gg))
 
 ;;; Default values for Gacela
 (defvar *width-screen* 640)
@@ -211,7 +211,7 @@
 
   (defun eval-from-skin ()
     (when (si::listen socket)
-      (secure-block socket (eval (read-from-string (read-line socket))))))
+      (secure-block socket (eval (read socket)))))
 
   (defun stop-skin-client ()
     (when socket
@@ -231,29 +231,37 @@
     (let ((frame-time (- (SDL_GetTicks) time)))
       (cond ((< frame-time time-per-frame)
 	     (SDL_Delay (- time-per-frame frame-time)))))))
-      
+
 
 (defmacro run-game (title &body code)
-  `(progn
+  `(let ((game-function (lambda () ,@code)))
      (init-video-mode)
      (SDL_WM_SetCaption ,title "")
-     (init-frame-time)
-     (eval-from-skin)
-     (refresh-running-mobs)
-     (process-events)
-     (do () ((quit?))
-	 (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-	 (logic-mobs)
-	 (render-mobs)
-	 (glLoadIdentity)
-	 ,@code
-	 (SDL_GL_SwapBuffers)
-	 (delay-frame)
-	 (init-frame-time)
-	 (eval-from-skin)
-	 (refresh-running-mobs)
-	 (process-events)
-	 (setq running nil))))
+     (set-game-code game-function)
+     (cond ((not (game-running?))
+	    (init-frame-time)
+	    (process-events)
+	    (game-loop)))))
+
+(let (running game-code)
+  (defun game-loop ()
+    (setq running t)
+    (do () ((quit?))
+	(glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
+	(glLoadIdentity)
+	(when (functionp game-code) (funcall game-code))
+	(SDL_GL_SwapBuffers)
+	(delay-frame)
+	(init-frame-time)
+	(eval-from-skin)
+	(process-events))
+    (setq running nil))
+
+  (defun game-running? ()
+    running)
+
+  (defun set-game-code (game-function)
+    (setq game-code game-function)))
 
 (defun quit-game ()
   (free-all-resources)
