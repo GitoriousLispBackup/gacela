@@ -16,18 +16,6 @@
 
 (in-package :gacela)
 
-(let ((mode '2d))
-  (defun 2d-mode ()
-    (glDisable GL_DEPTH_TEST)
-    (setq mode '2d))
-
-  (defun 3d-mode ()
-    (glEnable GL_DEPTH_TEST)
-    (setq mode '3d))
-
-  (defun 3d-mode? ()
-    (eq mode '3d)))
-
 (defmacro with-color (color &body code)
   `(let ((original-color (get-current-color)))
      (apply #'set-current-color ,color)
@@ -161,7 +149,10 @@
 (defun translate (x y &optional (z 0))
   (glTranslatef x y z))
 
-(defun rotate (xrot yrot &optional zrot)
+(defun rotate (xrot yrot zrot)
   (glRotatef xrot 1 0 0)
   (glRotatef yrot 0 1 0)
-  (cond (zrot (glRotatef zrot 0 0 1))))
+  (glRotatef zrot 0 0 1))
+
+(defun 2d-rotate (rot)
+  (rotate 0 0 rot))

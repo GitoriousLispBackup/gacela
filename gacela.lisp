@@ -38,9 +38,7 @@
 
 
 ;;; Video Subsystem
-(defstruct surface address clip-w clip-h shape)
-
-(let (screen flags)
+(let (screen flags current-width current-height)
 
   (defun init-video-mode (&key (width *width-screen*) (height *height-screen*) (bpp *bpp-screen*))
     (cond ((null screen)
@@ -51,12 +49,17 @@
 			  (if (= (getf (SDL_GetVideoInfo) :blit_hw) 0) 0 SDL_HWACCEL)))
 	   (setq screen (SDL_SetVideoMode width height bpp flags))
 	   (init-GL)
-	   (resize-screen-GL width height))
+	   (resize-screen-GL width height)
+	   (setq current-width width current-height height))
 	  (t t)))
 
   (defun resize-screen (width height bpp)
     (setq screen (SDL_SetVideoMode width height bpp flags))
-    (resize-screen-GL width height))
+    (resize-screen-GL width height)
+    (setq current-width width current-height height))
+
+  (defun apply-mode-change ()
+    (resize-screen-GL current-width current-height))
 
   (defun fill-screen (color)
     (init-video-mode)
@@ -69,9 +72,25 @@
   (defun quit-video-mode ()
     (setq screen nil)))
 
+(let ((mode '2d))
+  (defun set-2d-mode ()
+    (cond ((3d-mode?)
+	   (setq mode '2d)
+	   (init-video-mode)
+	   (glDisable GL_DEPTH_TEST)
+	   (apply-mode-change))))
+
+  (defun set-3d-mode ()
+    (cond ((not (3d-mode?))
+	   (setq mode '3d)
+	   (init-video-mode)
+	   (glEnable GL_DEPTH_TEST)
+	   (apply-mode-change))))
+
+  (defun 3d-mode? ()
+    (eq mode '3d)))
 
 (defun init-GL ()
-  (2d-mode)
   (glShadeModel GL_SMOOTH)
   (glClearColor 0 0 0 0)
   (glClearDepth 1)
@@ -86,11 +105,11 @@
   (glEnable GL_LIGHTING))
 
 (defun resize-screen-GL (width height)
-  (cond ((3d-mode?) (glViewPort 0 0 width height)))
+  (glViewPort 0 0 width height)
   (glMatrixMode GL_PROJECTION)
   (glLoadIdentity)
   (cond ((3d-mode?) (let ((ratio (if (= height 0) width (/ width height))))
-		      (gluPerspective 45 ratio 0.1 100)))
+		      (gluPerspective 45 ratio 0.1 100))) ;0.1
 	(t (let* ((w (/ width 2)) (-w (neg w)) (h (/ height 2)) (-h (neg h)))
 	     (glOrtho -w w -h h 0 1))))
   (glMatrixMode GL_MODELVIEW)
@@ -120,20 +139,6 @@
 						     (cadr transparent-color)
 						     (caddr transparent-color)))
 			optimized-image)))))))
-
-(defun load-image2 (image-file &key (transparent-color nil))
-  (let ((address-image (load-image image-file :transparent-color transparent-color)))
-    (list
-     (lambda (x y) (print-surface x y address-image))
-     (lambda () (SDL_FreeSurface address-image)))))
-
-(defun clean-screen ()
-  (fill-screen *background-color*))
-
-(defun refresh-screen ()
-  (clean-screen)
-  (funcall-procs #'print-mob)
-  (flip))
 
 
 ;;; Audio Subsystem
