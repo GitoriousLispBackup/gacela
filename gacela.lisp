@@ -84,7 +84,9 @@
     (cond ((not (3d-mode?))
 	   (setq mode '3d)
 	   (init-video-mode)
+	   (glClearDepth 1)
 	   (glEnable GL_DEPTH_TEST)
+	   (glDepthFunc GL_LEQUAL)
 	   (apply-mode-change))))
 
   (defun 3d-mode? ()
@@ -93,8 +95,8 @@
 (defun init-GL ()
   (glShadeModel GL_SMOOTH)
   (glClearColor 0 0 0 0)
-  (glClearDepth 1)
-  (glDepthFunc GL_LEQUAL)
+;  (glClearDepth 1)
+;  (glDepthFunc GL_LEQUAL)
 ;  (glEnable GL_BLEND)
 ;  (glBlendFunc GL_SRC_ALPHA GL_ONE)
   (glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST)
@@ -209,12 +211,16 @@
     (maphash (lambda (key res) (free-resource key)) resources-table)))
 
 
-;;; Connection with Gacela Skin
-(let (socket)
-  (defun start-skin-client (port)
-    (when (null socket) (setq socket (si::socket port :host "localhost"))))
+;;; Connection with Gacela Skin Clients
+(let (server-socket clients)
+  (defun start-skin-server (port)
+    (cond ((null server-socket) (setq server-socket (si::socket port :server #'check-skin-connections)))))
+
+  (defun check-skin-connections ()
+    (cond ((listen server-socket) (setq clients (cons (si::accept server-socket) clients)))))
 
   (defun eval-from-skin ()
+    
     (when (si::listen socket)
       (secure-block socket (eval (read socket)))))
 
