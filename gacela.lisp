@@ -65,10 +65,6 @@
     (init-video-mode)
     (fill-surface screen (getf color :red) (getf color :green) (getf color :blue)))
 
-  (defun flip ()
-    (cond ((null screen) nil)
-	  (t (SDL_Flip screen))))
-
   (defun quit-video-mode ()
     (setq screen nil)))
 
@@ -220,14 +216,25 @@
     (cond ((listen server-socket) (setq clients (cons (si::accept server-socket) clients)))))
 
   (defun eval-from-skin ()
-    
-    (when (si::listen socket)
-      (secure-block socket (eval (read socket)))))
+    (labels ((eval-clients (cli-socks)
+			   (cond (cli-socks
+				  (let ((cli (car cli-socks)))
+				    (cond ((si::listen cli)
+					   (secure-block cli (eval (read cli)))
+					   (si::close cli)
+					   (eval-clients (cdr cli-socks)))
+					  (t
+					   (cons cli (eval-clients (cdr cli-socks))))))))))
+	    (setq clients (eval-clients clients))))
 
-  (defun stop-skin-client ()
-    (when socket
-      (si::close socket)
-      (setq socket nil))))
+  (defun stop-skin-server ()
+    (cond (server-socket (si::close server-socket) (setq server-socket nil)))
+    (cond (clients
+	   (labels ((close-clients (cli-socks)
+				   (si::close (car cli-socks))
+				   (close-clients (cdr cli-socks))))
+		   (close-clients clients))
+	   (setq clients nil)))))
 
 
 ;;; GaCeLa Functions
