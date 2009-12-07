@@ -271,6 +271,7 @@
 	(SDL_GL_SwapBuffers)
 	(delay-frame)
 	(init-frame-time)
+	(check-skin-connections)
 	(eval-from-skin)
 	(process-events))
     (setq running nil))
