@@ -213,7 +213,7 @@
     (cond ((null server-socket) (setq server-socket (si::socket port :server #'check-skin-connections)))))
 
   (defun check-skin-connections ()
-    (cond ((listen server-socket) (setq clients (cons (si::accept server-socket) clients)))))
+    (cond ((and server-socket (listen server-socket)) (setq clients (cons (si::accept server-socket) clients)))))
 
   (defun eval-from-skin ()
     (labels ((eval-clients (cli-socks)
