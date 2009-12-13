@@ -105,14 +105,15 @@
 	       (draw-rectangle (* f width) (* f height) :texture texture)))))))
 
 (defun draw-quad (v1 v2 v3 v4 &key texture)
-  (cond (texture (progn-textures
-		  (glBindTexture GL_TEXTURE_2D (getf (get-resource texture) :id-texture))
-		  (begin-draw 4)
-		  (draw-vertex v1 :texture-coord '(0 0))
-		  (draw-vertex v2 :texture-coord '(1 0))
-		  (draw-vertex v3 :texture-coord '(1 1))
-		  (draw-vertex v4 :texture-coord '(0 1))
-		  (glEnd)))
+  (cond (texture
+	 (progn-textures
+	  (glBindTexture GL_TEXTURE_2D (getf (get-resource texture) :id-texture))
+	  (begin-draw 4)
+	  (draw-vertex v1 :texture-coord '(0 0))
+	  (draw-vertex v2 :texture-coord '(1 0))
+	  (draw-vertex v3 :texture-coord '(1 1))
+	  (draw-vertex v4 :texture-coord '(0 1))
+	  (glEnd)))
 	(t (draw v1 v2 v3 v4))))
 
 (defun draw-rectangle (width height &key texture)
@@ -122,21 +123,21 @@
 (defun draw-square (&key (size 1) texture)
   (draw-rectangle size size :texture texture))
 
-(defun draw-cube (&key size texture)
+(defun draw-cube (&key size texture texture-1 texture-2 texture-3 texture-4 texture-5 texture-6)
   (let ((-size (neg size)))
     (progn-textures
      (glNormal3f 0 0 1)
-     (draw-quad (list -size size size) (list size size size) (list size -size size) (list -size -size size) :texture texture)
+     (draw-quad (list -size size size) (list size size size) (list size -size size) (list -size -size size) :texture (or texture-1 texture))
      (glNormal3f 0 0 -1)
-     (draw-quad (list -size -size -size) (list size -size -size) (list size size -size) (list -size size -size) :texture texture)
+     (draw-quad (list -size -size -size) (list size -size -size) (list size size -size) (list -size size -size) :texture (or texture-2 texture))
      (glNormal3f 0 1 0)
-     (draw-quad (list size size size) (list -size size size) (list -size size -size) (list size size -size) :texture texture)
+     (draw-quad (list size size size) (list -size size size) (list -size size -size) (list size size -size) :texture (or texture-3 texture))
      (glNormal3f 0 -1 0)
-     (draw-quad (list -size -size size) (list size -size size) (list size -size -size) (list -size -size -size) :texture texture)
+     (draw-quad (list -size -size size) (list size -size size) (list size -size -size) (list -size -size -size) :texture (or texture-4 texture))
      (glNormal3f 1 0 0)
-     (draw-quad (list size -size -size) (list size -size size) (list size size size) (list size size -size) :texture texture)
+     (draw-quad (list size -size -size) (list size -size size) (list size size size) (list size size -size) :texture (or texture-5 texture))
      (glNormal3f -1 0 0)
-     (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) :texture texture))))
+     (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) :texture (or texture-6 texture)))))
 
 (defun add-light (&key light position ambient (id GL_LIGHT1) (turn-on t))
   (init-lighting)

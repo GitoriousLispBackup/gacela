@@ -206,6 +206,9 @@
 (defcfun "int gacela_gluBuild2DMipmaps (int target, int internalFormat, int width, int height, int format, int type, int data)" 0
   "return gluBuild2DMipmaps (target, internalFormat, width, height, format, type, data);")
 
+(defcfun "void gacela_gluLookAt (double eyeX, double eyeY, double eyeZ, double centerX, double centerY, double centerZ, double upX, double upY, double upZ)" 0
+  "gluLookAt (eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ);")
+
 (defentry glBegin (int) (void "gacela_glBegin"))
 (defentry glClear (int) (void "gacela_glClear"))
 (defentry glClearColor (float float float float) (void "gacela_glClearColor"))
@@ -238,3 +241,4 @@
 
 (defentry gluPerspective (double double double double) (void "gacela_gluPerspective"))
 (defentry gluBuild2DMipmaps (int int int int int int int) (int "gacela_gluBuild2DMipmaps"))
+(defentry gluLookAt (float float float float float float float float float) (void "gacela_gluLookAt"))
