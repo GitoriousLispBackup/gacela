@@ -17,10 +17,14 @@
 (in-package :gacela)
 
 (defmacro with-color (color &body code)
-  `(let ((original-color (get-current-color)))
-     (apply #'set-current-color ,color)
-     ,@code
-     (apply #'set-current-color original-color)))
+  (cond (color
+	 `(let ((original-color (get-current-color)))
+	    (apply #'set-current-color ,color)
+	    ,@code
+	    (apply #'set-current-color original-color)))
+	(t
+	 `(progn
+	    ,@code))))
 
 (defmacro progn-textures (&body code)
   `(let (values)
@@ -105,7 +109,8 @@
 	       (draw-rectangle (* f width) (* f height) :texture texture)))))))
 
 (defun draw-quad (v1 v2 v3 v4 &key texture)
-  (cond (texture
+  (cond ((consp texture) (with-color texture (draw v1 v2 v3 v4)))
+	(texture
 	 (progn-textures
 	  (glBindTexture GL_TEXTURE_2D (getf (get-resource texture) :id-texture))
 	  (begin-draw 4)

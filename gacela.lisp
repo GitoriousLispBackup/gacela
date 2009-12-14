@@ -267,6 +267,7 @@
     (do () ((quit?))
 	(glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
 	(glLoadIdentity)
+(gluLookAt 0 0 50 0 0 0 0 1 0)
 	(when (functionp game-code) (funcall game-code))
 	(SDL_GL_SwapBuffers)
 	(delay-frame)

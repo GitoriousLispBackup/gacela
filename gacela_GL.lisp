@@ -241,4 +241,4 @@
 
 (defentry gluPerspective (double double double double) (void "gacela_gluPerspective"))
 (defentry gluBuild2DMipmaps (int int int int int int int) (int "gacela_gluBuild2DMipmaps"))
-(defentry gluLookAt (float float float float float float float float float) (void "gacela_gluLookAt"))
+(defentry gluLookAt (double double double double double double double double double) (void "gacela_gluLookAt"))
