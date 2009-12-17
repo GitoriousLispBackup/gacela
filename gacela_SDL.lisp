@@ -29,9 +29,7 @@
 
 (clines "#include <SDL/SDL.h>")
 (clines "#include <SDL/SDL_image.h>")
-(clines "#include <SDL/SDL_ttf.h>")
 (clines "#include <SDL/SDL_mixer.h>")
-(clines "#include <SDL/SDL_rotozoom.h>")
 
 ;;; SDL constants as functions
 (mapcconst int "int" "SDL_INIT_TIMER")
@@ -140,9 +138,6 @@
 (defcfun "int gacela_SDL_EnableKeyRepeat (int delay, int interval)" 0
   "return SDL_EnableKeyRepeat (delay, interval);")
 
-(defcfun "int gacela_zoomSurface (int src, float zoomx, float zoomy, int smooth)" 0
-  "return zoomSurface (src, zoomx, zoomy, smooth);")
-
 (defcfun "int gacela_SDL_ByteOrder (void)" 0
   "return SDL_BYTEORDER;")
 
@@ -185,7 +180,6 @@
 ;(defentry free (int) (void "gacela_free"))
 (defentry SDL_GL_SwapBuffers () (void "gacela_SDL_GL_SwapBuffers"))
 (defentry SDL_EnableKeyRepeat (int int) (int "gacela_SDL_EnableKeyRepeat"))
-(defentry zoomSurface (int float float int) (int "gacela_zoomSurface"))
 (defentry SDL_ByteOrder () (int "gacela_SDL_ByteOrder"))
 
 ;;; C-Gacela Functions

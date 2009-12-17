@@ -128,7 +128,7 @@
 (defun draw-square (&key (size 1) texture)
   (draw-rectangle size size :texture texture))
 
-(defun draw-cube (&key size texture texture-1 texture-2 texture-3 texture-4 texture-5 texture-6)
+(defun draw-cube (&key (size 1) texture texture-1 texture-2 texture-3 texture-4 texture-5 texture-6)
   (let ((-size (neg size)))
     (progn-textures
      (glNormal3f 0 0 1)
