@@ -155,10 +155,17 @@
 (defun translate (x y &optional (z 0))
   (glTranslatef x y z))
 
-(defun rotate (xrot yrot zrot)
+(defun rotate (&rest rot)
+  (cond ((3d-mode?) (apply #'3d-rotate rot))
+	(t (apply #'2d-rotate rot))))
+
+(defun 3d-rotate (xrot yrot zrot)
   (glRotatef xrot 1 0 0)
   (glRotatef yrot 0 1 0)
   (glRotatef zrot 0 0 1))
 
 (defun 2d-rotate (rot)
-  (rotate 0 0 rot))
+  (glRotatef rot 0 0 1))
+
+(defun to-origin ()
+  (glLoadIdentity))
