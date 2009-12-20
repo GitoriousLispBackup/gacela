@@ -168,4 +168,14 @@
   (glRotatef rot 0 0 1))
 
 (defun to-origin ()
-  (glLoadIdentity))
+  (glLoadIdentity)
+  (cond ((3d-mode?) (camera-look))))
+
+(let ((camera-eye '(0 0 0)) (camera-center '(0 0 -100)) (camera-up '(0 1 0)))
+  (defun set-camera (&key eye center up)
+    (cond (eye (setq camera-eye eye)))
+    (cond (center (setq camera-center center)))
+    (cond (up (setq camera-up up))))
+
+  (defun camera-look ()
+    (apply #'gluLookAt (concatenate 'list camera-eye camera-center camera-up))))
