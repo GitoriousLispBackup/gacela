@@ -21,10 +21,7 @@
 (defvar *width-screen* 640)
 (defvar *height-screen* 480)
 (defvar *bpp-screen* 32)
-(defvar *title-screen* "Happy Hacking!!")
 (defvar *frames-per-second* 20)
-(defvar *transparent-color* '(:red 0 :green 0 :blue 0))
-(defvar *background-color* '(:red 0 :green 0 :blue 0))
 
 ;;; SDL Initialization Subsystem
 (let (initialized)
@@ -38,7 +35,7 @@
 
 
 ;;; Video Subsystem
-(let (screen flags current-width current-height)
+(let (screen flags current-width current-height current-bpp)
 
   (defun init-video-mode (&key (width *width-screen*) (height *height-screen*) (bpp *bpp-screen*))
     (cond ((null screen)
@@ -50,20 +47,16 @@
 	   (setq screen (SDL_SetVideoMode width height bpp flags))
 	   (init-GL)
 	   (resize-screen-GL width height)
-	   (setq current-width width current-height height))
+	   (setq current-width width current-height height current-bpp bpp))
 	  (t t)))
 
-  (defun resize-screen (width height bpp)
+  (defun resize-screen (width height &optional (bpp current-bpp))
     (setq screen (SDL_SetVideoMode width height bpp flags))
     (resize-screen-GL width height)
     (setq current-width width current-height height))
 
   (defun apply-mode-change ()
     (resize-screen-GL current-width current-height))
-
-  (defun fill-screen (color)
-    (init-video-mode)
-    (fill-surface screen (getf color :red) (getf color :green) (getf color :blue)))
 
   (defun quit-video-mode ()
     (setq screen nil)))
@@ -207,15 +200,15 @@
     (maphash (lambda (key res) (free-resource key)) resources-table)))
 
 
-;;; Connection with Gacela Skin Clients
+;;; Connection with Gacela Clients
 (let (server-socket clients)
-  (defun start-skin-server (port)
-    (cond ((null server-socket) (setq server-socket (si::socket port :server #'check-skin-connections)))))
+  (defun start-server (port)
+    (cond ((null server-socket) (setq server-socket (si::socket port :server #'check-connections)))))
 
-  (defun check-skin-connections ()
+  (defun check-connections ()
     (cond ((and server-socket (listen server-socket)) (setq clients (cons (si::accept server-socket) clients)))))
 
-  (defun eval-from-skin ()
+  (defun eval-from-clients ()
     (labels ((eval-clients (cli-socks)
 			   (cond (cli-socks
 				  (let ((cli (car cli-socks)))
@@ -227,7 +220,7 @@
 					   (cons cli (eval-clients (cdr cli-socks))))))))))
 	    (setq clients (eval-clients clients))))
 
-  (defun stop-skin-server ()
+  (defun stop-server ()
     (cond (server-socket (si::close server-socket) (setq server-socket nil)))
     (cond (clients
 	   (labels ((close-clients (cli-socks)
@@ -271,8 +264,8 @@
 	(SDL_GL_SwapBuffers)
 	(delay-frame)
 	(init-frame-time)
-	(check-skin-connections)
-	(eval-from-skin)
+	(check-connections)
+	(eval-from-clients)
 	(process-events))
     (setq running nil))
 

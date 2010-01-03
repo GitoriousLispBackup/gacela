@@ -205,7 +205,6 @@
 
 ;(defentry apply-surface2 (int int int int int int int int int) (void "apply_surface"))
 ;(defentry render-text2 (int string int int int) (int "render_text"))
-;(defentry fill-surface (int int int int) (void "fill_surface"))
 ;(defentry box-collision (int int int int int int) (int "box_collision"))
 ;(defentry create-SDL_Surface (int int int int int int) (int "create_SDL_Surface"))
 ;(defentry copy-SDL_Surface (int) (int "copy_SDL_Surface"))
