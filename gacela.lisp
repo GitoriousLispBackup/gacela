@@ -35,9 +35,9 @@
 
 
 ;;; Video Subsystem
-(let (screen flags current-width current-height current-bpp)
+(let (screen flags (current-width *width-screen*) (current-height *height-screen*) current-bpp)
 
-  (defun init-video-mode (&key (width *width-screen*) (height *height-screen*) (bpp *bpp-screen*))
+  (defun init-video-mode (&key (width current-width) (height current-height) (bpp *bpp-screen*))
     (cond ((null screen)
 	   (init-sdl)
 	   (SDL_GL_SetAttribute SDL_GL_DOUBLEBUFFER 1)
@@ -51,8 +51,8 @@
 	  (t t)))
 
   (defun resize-screen (width height &optional (bpp current-bpp))
-    (setq screen (SDL_SetVideoMode width height bpp flags))
-    (resize-screen-GL width height)
+    (cond (screen (setq screen (SDL_SetVideoMode width height bpp flags))
+		  (resize-screen-GL width height)))
     (setq current-width width current-height height))
 
   (defun apply-mode-change ()
@@ -61,25 +61,22 @@
   (defun quit-video-mode ()
     (setq screen nil)))
 
-(let ((mode '2d))
-  (defun set-2d-mode ()
-    (cond ((3d-mode?)
-	   (setq mode '2d)
-	   (init-video-mode)
-	   (glDisable GL_DEPTH_TEST)
-	   (apply-mode-change))))
+(defun set-2d-mode ()
+  (cond ((3d-mode?)
+	 (init-video-mode)
+	 (glDisable GL_DEPTH_TEST)
+	 (apply-mode-change))))
 
-  (defun set-3d-mode ()
-    (cond ((not (3d-mode?))
-	   (setq mode '3d)
-	   (init-video-mode)
-	   (glClearDepth 1)
-	   (glEnable GL_DEPTH_TEST)
-	   (glDepthFunc GL_LEQUAL)
-	   (apply-mode-change))))
+(defun set-3d-mode ()
+  (cond ((not (3d-mode?))
+	 (init-video-mode)
+	 (glClearDepth 1)
+	 (glEnable GL_DEPTH_TEST)
+	 (glDepthFunc GL_LEQUAL)
+	 (apply-mode-change))))
 
-  (defun 3d-mode? ()
-    (eq mode '3d)))
+(defun 3d-mode? ()
+  (eq (getf (get-game-properties) :mode) '3d))
 
 (defun init-GL ()
   (glShadeModel GL_SMOOTH)
@@ -244,10 +241,27 @@
 	     (SDL_Delay (- time-per-frame frame-time)))))))
 
 
-(defmacro run-game (title &body code)
+(let ((ptitle "") (pwidth *width-screen*) (pheight *height-screen*) (pbpp *bpp-screen*) (pfps *frames-per-second*) (pmode '2d))
+  (defun set-game-properties (&key title width height bpp fps mode)
+    (init-video-mode)
+    (when title (progn (setq ptitle title) (SDL_WM_SetCaption title "")))
+    (when (or width height bpp)
+      (progn
+	(when width (setq pwidth width))
+	(when height (setq pheight height))
+	(when bpp (setq pbpp bpp))
+	(resize-screen pwidth pheight pbpp)))
+    (when fps (progn (setq pfps fps) (set-frames-per-second fps)))
+    (when mode (progn (setq pmode mode) (if (eq mode '3d) (set-3d-mode) (set-2d-mode))))
+    (get-game-properties))
+
+  (defun get-game-properties ()
+    (list :title ptitle :width pwidth :height pheight :bpp pbpp :fps pfps :mode pmode)))
+
+
+(defmacro run-game (&body code)
   `(let ((game-function (lambda () ,@code)))
      (init-video-mode)
-     (SDL_WM_SetCaption ,title "")
      (set-game-code game-function)
      (cond ((not (game-running?))
 	    (init-frame-time)
