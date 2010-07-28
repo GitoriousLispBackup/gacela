@@ -17,7 +17,10 @@
 
 ;;; Mob Factory
 
-(in-package :gacela)
+(when (not (find-package 'gacela))
+  (make-package 'gacela :nicknames '(gg) :use '(lisp)))
+
+(eval-when (eval) (in-package 'gacela :nicknames '(gg) :use '(lisp)))
 
 (defmacro makemob (name &rest methods)
   `(defun ,name (&rest args &aux (option (car args)))

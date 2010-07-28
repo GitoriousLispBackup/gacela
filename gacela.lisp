@@ -15,7 +15,10 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-(in-package :gacela :nicknames '(gg))
+(when (not (find-package 'gacela))
+  (make-package 'gacela :nicknames '(gg) :use '(lisp)))
+
+(eval-when (eval) (in-package 'gacela :nicknames '(gg) :use '(lisp)))
 
 ;;; Default values for Gacela
 (defvar *width-screen* 640)

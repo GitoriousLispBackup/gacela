@@ -14,7 +14,10 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :gacela)
+(when (not (find-package 'gacela))
+  (make-package 'gacela :nicknames '(gg) :use '(lisp)))
+
+(eval-when (eval) (in-package 'gacela :nicknames '(gg) :use '(lisp)))
 
 (defconstant INFINITY MOST-POSITIVE-LONG-FLOAT)
 

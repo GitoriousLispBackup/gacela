@@ -14,7 +14,11 @@
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-(in-package :gacela)
+
+(when (not (find-package 'gacela))
+  (make-package 'gacela :nicknames '(gg) :use '(lisp)))
+
+(eval-when (eval) (in-package 'gacela :nicknames '(gg) :use '(lisp)))
 
 (defun load-font (font-file &key (size 40) (encoding ft_encoding_unicode) static)
   (let* ((key (make-resource-font :filename font-file :encoding encoding))
