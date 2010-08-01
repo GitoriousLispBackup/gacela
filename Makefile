@@ -13,7 +13,7 @@ GCL_OBJ = $(OBJ:%.o=\"%.o\")
 	$(LISP) -eval "(progn (load \"gacela_make.lisp\") (compile-gfile \"$<\" :include \"$(INC)\"))" -batch
 
 all: $(OBJ)
-	$(LISP) -eval "(compiler::link '($(GCL_OBJ)) \"gacela\" \"\" \"$(LIBS)\")" -batch
+	$(LISP) -eval "(progn (make-package 'gacela :nicknames '(gg) :use '(lisp)) (compiler::link '($(GCL_OBJ)) \"gacela\" \"\" \"$(LIBS)\"))" -batch
 
 clean:
 	rm -f $(OBJ) gacela

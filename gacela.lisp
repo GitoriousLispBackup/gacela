@@ -15,10 +15,19 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+(eval-when (compile)
+	   (make-package 'gacela :nicknames '(gg) :use '(lisp))
+	   (in-package 'gacela :nicknames '(gg) :use '(lisp)))
+
+;(eval-when (load)
+;	   (make-package 'gacela :nicknames '(gg) :use '(lisp))
+;	   (in-package 'gacela :nicknames '(gg) :use '(lisp)))
+
 (when (not (find-package 'gacela))
   (make-package 'gacela :nicknames '(gg) :use '(lisp)))
 
-(eval-when (eval) (in-package 'gacela :nicknames '(gg) :use '(lisp)))
+;(eval-when (compile) (make-package 'gacela :nicknames '(gg) :use '(lisp)))
+(eval-when (eval load) (in-package 'gacela :nicknames '(gg) :use '(lisp)))
 
 ;;; Default values for Gacela
 (defvar *width-screen* 640)
