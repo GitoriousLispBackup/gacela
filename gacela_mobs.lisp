@@ -15,12 +15,12 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+(eval-when (compile load eval)
+	   (when (not (find-package 'gacela)) (make-package 'gacela :nicknames '(gg) :use '(lisp)))
+	   (in-package 'gacela :nicknames '(gg) :use '(lisp)))
+
+
 ;;; Mob Factory
-
-(when (not (find-package 'gacela))
-  (make-package 'gacela :nicknames '(gg) :use '(lisp)))
-
-(eval-when (eval) (in-package 'gacela :nicknames '(gg) :use '(lisp)))
 
 (defmacro makemob (name &rest methods)
   `(defun ,name (&rest args &aux (option (car args)))

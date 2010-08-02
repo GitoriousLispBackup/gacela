@@ -15,10 +15,10 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-(when (not (find-package 'gacela))
-  (make-package 'gacela :nicknames '(gg) :use '(lisp)))
+(eval-when (compile load eval)
+	   (when (not (find-package 'gacela)) (make-package 'gacela :nicknames '(gg) :use '(lisp)))
+	   (in-package 'gacela :nicknames '(gg) :use '(lisp)))
 
-(eval-when (eval) (in-package 'gacela :nicknames '(gg) :use '(lisp)))
 
 (defmacro mapcconst (type c-type name)
   (let ((c-header (concatenate 'string c-type " gacela_" name " (void)"))
