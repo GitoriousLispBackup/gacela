@@ -1,6 +1,6 @@
 (in-package :gacela)
 
-(set-frames-per-second 15)
+(set-game-properties :title "Gacela Tetris" :fps 15)
 
 (defun tetramine-i ()
   (let ((color '(1 0 0)))
@@ -122,6 +122,7 @@
       (background (draw-image-function "fondo_tetris.png"))
       (font (load-font "lazy.ttf" :size 20))
       (game-over))
+
   (defun game ()
     (if game-over (game-over) (tetramine)))
 
@@ -167,8 +168,8 @@
 (let ((frame 0.0) (fps (make-timer)) (update (make-timer)))
   (start-timer update)
   (start-timer fps)
-  (run-game "Gacela Tetris"
-	    (game)
-	    (incf frame)
-	    (cond ((> (get-time update) 1000) (print (/ frame (/ (get-time fps) 1000.0))) (start-timer update))))
+  (run-game
+   (game)
+   (incf frame)
+   (cond ((> (get-time update) 1000) (print (/ frame (/ (get-time fps) 1000.0))) (start-timer update))))
   (quit-game))
