@@ -22,10 +22,12 @@
 
 (defmacro with-color (color &body code)
   (cond (color
-	 `(let ((original-color (get-current-color)))
+	 `(let ((original-color (get-current-color))
+		result)
 	    (apply #'set-current-color ,color)
-	    ,@code
-	    (apply #'set-current-color original-color)))
+	    (setq result ,@code)
+	    (apply #'set-current-color original-color)
+	    result))
 	(t
 	 `(progn
 	    ,@code))))
@@ -113,17 +115,18 @@
 	       (draw-rectangle (* f width) (* f height) :texture texture)))))))
 
 (defun draw-quad (v1 v2 v3 v4 &key texture)
-  (cond ((consp texture) (with-color texture (draw v1 v2 v3 v4)))
-	(texture
-	 (progn-textures
-	  (glBindTexture GL_TEXTURE_2D (getf (get-resource texture) :id-texture))
-	  (begin-draw 4)
-	  (draw-vertex v1 :texture-coord '(0 0))
-	  (draw-vertex v2 :texture-coord '(1 0))
-	  (draw-vertex v3 :texture-coord '(1 1))
-	  (draw-vertex v4 :texture-coord '(0 1))
-	  (glEnd)))
-	(t (draw v1 v2 v3 v4))))
+  (let ((id-texture (getf (get-resource texture) :id-texture)))
+    (cond (id-texture
+	   (progn-textures
+	    (glBindTexture GL_TEXTURE_2D id-texture)
+	    (begin-draw 4)
+	    (draw-vertex v1 :texture-coord '(0 0))
+	    (draw-vertex v2 :texture-coord '(1 0))
+	    (draw-vertex v3 :texture-coord '(1 1))
+	    (draw-vertex v4 :texture-coord '(0 1))
+	    (glEnd)))
+	  ((consp texture) (with-color texture (draw v1 v2 v3 v4)))
+	  (t (draw v1 v2 v3 v4)))))
 
 (defun draw-rectangle (width height &key texture)
   (let* ((w (/ width 2)) (-w (neg w)) (h (/ height 2)) (-h (neg h)))
