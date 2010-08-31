@@ -144,6 +144,9 @@
 (defcfun "int gacela_SDL_ByteOrder (void)" 0
   "return SDL_BYTEORDER;")
 
+(defcfun "int gacela_zoomSurface (int src, double zoomx, double zoomy, int smooth)" 0
+  "return zoomSurface (src, zoomx, zoomy, smooth);")
+
 (defentry SDL_Init (int) (int "gacela_SDL_Init"))
 (defentry SDL_Quit () (void "gacela_SDL_Quit"))
 (defentry SDL_SetVideoMode (int int int int) (int "gacela_SDL_SetVideoMode"))
@@ -184,6 +187,7 @@
 (defentry SDL_GL_SwapBuffers () (void "gacela_SDL_GL_SwapBuffers"))
 (defentry SDL_EnableKeyRepeat (int int) (int "gacela_SDL_EnableKeyRepeat"))
 (defentry SDL_ByteOrder () (int "gacela_SDL_ByteOrder"))
+(defentry zoomSurface (int double double int) (int "gacela_zoomSurface"))
 
 ;;; C-Gacela Functions
 (defcfun "int gacela_surface_format (int surface)" 0
