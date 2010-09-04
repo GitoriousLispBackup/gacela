@@ -67,13 +67,13 @@
     (setq screen nil)))
 
 (defun set-2d-mode ()
-  (cond ((3d-mode?)
+  (cond ((not (3d-mode?))
 	 (init-video-mode)
 	 (glDisable GL_DEPTH_TEST)
 	 (apply-mode-change))))
 
 (defun set-3d-mode ()
-  (cond ((not (3d-mode?))
+  (cond ((3d-mode?)
 	 (init-video-mode)
 	 (glClearDepth 1)
 	 (glEnable GL_DEPTH_TEST)
