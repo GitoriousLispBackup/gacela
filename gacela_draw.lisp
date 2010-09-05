@@ -91,9 +91,10 @@
       (cond (image
 	     (let ((width (surface-w image)) (height (surface-h image))
 		   (byteorder (if (= (SDL_ByteOrder) SDL_LIL_ENDIAN)
-				(if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)
-				(if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)))
+				(if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)
+				(if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)))
 		   (texture (car (glGenTextures 1))))
+
 	       (glBindTexture GL_TEXTURE_2D texture)
 	       (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
 	       (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
