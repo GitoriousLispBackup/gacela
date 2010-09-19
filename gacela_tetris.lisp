@@ -120,6 +120,7 @@
       (timer (make-timer))
       (grid (make-list 20 :initial-element (make-list 14)))
       (background (draw-image-function "fondo_tetris.png"))
+;      (background (draw-image-function "../../nehe/lesson06/data/nehe.bmp"))
       (font (load-font "lazy.ttf" :size 20))
       (game-over))
 
