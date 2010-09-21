@@ -77,6 +77,12 @@
 		      (SDL_FreeSurface image)
 		      (cond ((/= resized-image 0) (values resized-image width height))))))))))
 
+(defun resize-surface (surface width height)
+  (let ((old-width (surface-w surface)) (old-height (surface-h surface)))
+    (cond ((and (= width old-width) (= height old-height)) surface)
+	  (t (let ((zoomx (/ (+ width 0.5) old-width)) (zoomy (/ (+ height 0.5) old-height)))
+	       (zoomSurface surface zoomx zoomy 0))))))
+
 (defun load-texture (filename &key (min-filter GL_LINEAR) (mag-filter GL_LINEAR) static)
   (let ((key (make-resource-texture :filename filename :min-filter min-filter :mag-filter mag-filter)))
     (cond ((get-resource key) key)

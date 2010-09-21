@@ -211,14 +211,6 @@
   "const SDL_Surface *s = surface;"
   "return s->format->BytesPerPixel;")
 
-(defcfun "int gacela_resize_surface (int surface, int width, int height)" 0
-  "const SDL_Surface *s = surface;"
-  "if (s->w == width && s->h == height) {"
-  "  return s;"
-  "} else {"
-  "  return zoomSurface (s, width / s->w, height / s->h, 0);"
-  "}")
-
 ;(defentry apply-surface2 (int int int int int int int int int) (void "apply_surface"))
 ;(defentry render-text2 (int string int int int) (int "render_text"))
 ;(defentry box-collision (int int int int int int) (int "box_collision"))
@@ -229,4 +221,3 @@
 (defentry surface-h (int) (int "gacela_surface_h"))
 (defentry surface-pixels (int) (int "gacela_surface_pixels"))
 (defentry surface-format-BytesPerPixel (int) (int "gacela_surface_format_BytesPerPixel"))
-(defentry resize-surface (int int int) (int "gacela_resize_surface"))
