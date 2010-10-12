@@ -68,6 +68,8 @@
 (mapcconst int "int" "SDL_LIL_ENDIAN")
 (mapcconst int "int" "SDL_BIG_ENDIAN")
 
+(mapcconst int "int" "MIX_DEFAULT_FORMAT")
+
 ;;; SDL Functions
 (defcfun "int gacela_SDL_Init (int flags)" 0
   "return SDL_Init (flags);")
@@ -148,6 +150,45 @@
 (defcfun "int gacela_zoomSurface (int src, double zoomx, double zoomy, int smooth)" 0
   "return zoomSurface (src, zoomx, zoomy, smooth);")
 
+(defcfun "int gacela_Mix_OpenAudio (int frequency, int format, int channels, int chunksize)" 0
+  "return Mix_OpenAudio (frequency, format, channels, chunksize);")
+
+(defcfun "int gacela_Mix_LoadMUS (char *file)" 0
+  "return Mix_LoadMUS (file);")
+
+(defcfun "int gacela_Mix_LoadWAV (char *file)" 0
+  "return Mix_LoadWAV (file);")
+
+(defcfun "int gacela_Mix_PlayChannel (int channel, int chunk, int loops)" 0
+  "return Mix_PlayChannel (channel, chunk, loops);")
+
+(defcfun "int gacela_Mix_PlayMusic (int music, int loops)" 0
+  "return Mix_PlayMusic (music, loops);")
+
+(defcfun "int gacela_Mix_PlayingMusic (void)" 0
+  "return Mix_PlayingMusic ();")
+
+(defcfun "int gacela_Mix_PausedMusic (void)" 0
+  "return Mix_PausedMusic ();")
+
+(defcfun "void gacela_Mix_PauseMusic (void)" 0
+  "Mix_PauseMusic ();")
+
+(defcfun "void gacela_Mix_ResumeMusic (void)" 0
+  "Mix_ResumeMusic ();")
+
+(defcfun "int gacela_Mix_HaltMusic (void)" 0
+  "return Mix_HaltMusic ();")
+
+(defcfun "void gacela_Mix_FreeMusic (int music)" 0
+  "Mix_FreeMusic (music);")
+
+(defcfun "void gacela_Mix_FreeChunk (int chunk)" 0
+  "Mix_FreeChunk (chunk);")
+
+(defcfun "void gacela_Mix_CloseAudio (void)" 0
+  "Mix_CloseAudio ();")
+
 (defentry SDL_Init (int) (int "gacela_SDL_Init"))
 (defentry SDL_Quit () (void "gacela_SDL_Quit"))
 (defentry SDL_SetVideoMode (int int int int) (int "gacela_SDL_SetVideoMode"))
@@ -171,19 +212,19 @@
 ;(defentry TTF_OpenFont (string int) (int "gacela_TTF_OpenFont"))
 ;(defentry TTF_CloseFont (int) (void "gacela_TTF_CloseFont"))
 ;(defentry TTF_Quit () (void "gacela_TTF_Quit"))
-;(defentry Mix_OpenAudio (int int int) (int "gacela_Mix_OpenAudio"))
-;(defentry Mix_LoadMUS (string) (int "gacela_Mix_LoadMUS"))
-;(defentry Mix_LoadWAV (string) (int "gacela_Mix_LoadWAV"))
-;(defentry Mix_PlayChannel (int int int) (int "gacela_Mix_PlayChannel"))
-;(defentry Mix_PlayMusic (int int) (int "gacela_Mix_PlayMusic"))
-;(defentry Mix_PlayingMusic () (int "gacela_Mix_PlayingMusic"))
-;(defentry Mix_PausedMusic () (int "gacela_Mix_PausedMusic"))
-;(defentry Mix_PauseMusic () (void "gacela_Mix_PauseMusic"))
-;(defentry Mix_ResumeMusic () (void "gacela_Mix_ResumeMusic"))
-;(defentry Mix_HaltMusic () (int "gacela_Mix_HaltMusic"))
-;(defentry Mix_FreeMusic (int) (void "gacela_Mix_FreeMusic"))
-;(defentry Mix_FreeChunk (int) (void "gacela_Mix_FreeChunk"))
-;(defentry Mix_CloseAudio () (void "gacela_Mix_CloseAudio"))
+(defentry Mix_OpenAudio (int int int int) (int "gacela_Mix_OpenAudio"))
+(defentry Mix_LoadMUS (string) (int "gacela_Mix_LoadMUS"))
+(defentry Mix_LoadWAV (string) (int "gacela_Mix_LoadWAV"))
+(defentry Mix_PlayChannel (int int int) (int "gacela_Mix_PlayChannel"))
+(defentry Mix_PlayMusic (int int) (int "gacela_Mix_PlayMusic"))
+(defentry Mix_PlayingMusic () (int "gacela_Mix_PlayingMusic"))
+(defentry Mix_PausedMusic () (int "gacela_Mix_PausedMusic"))
+(defentry Mix_PauseMusic () (void "gacela_Mix_PauseMusic"))
+(defentry Mix_ResumeMusic () (void "gacela_Mix_ResumeMusic"))
+(defentry Mix_HaltMusic () (int "gacela_Mix_HaltMusic"))
+(defentry Mix_FreeMusic (int) (void "gacela_Mix_FreeMusic"))
+(defentry Mix_FreeChunk (int) (void "gacela_Mix_FreeChunk"))
+(defentry Mix_CloseAudio () (void "gacela_Mix_CloseAudio"))
 ;(defentry free (int) (void "gacela_free"))
 (defentry SDL_GL_SwapBuffers () (void "gacela_SDL_GL_SwapBuffers"))
 (defentry SDL_EnableKeyRepeat (int int) (int "gacela_SDL_EnableKeyRepeat"))

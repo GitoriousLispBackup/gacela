@@ -138,7 +138,7 @@
 (let ((audio nil))
 
   (defun init-audio ()
-    (cond ((null audio) (progn (init-sdl) (setq audio (Mix_OpenAudio 22050 2 4096))))
+    (cond ((null audio) (progn (init-sdl) (setq audio (Mix_OpenAudio 22050 MIX_DEFAULT_FORMAT 2 4096))))
 	  (t audio)))
 
   (defun quit-audio ()
@@ -296,7 +296,7 @@
 
 (defun quit-game ()
   (free-all-resources)
-;  (quit-audio)
+  (quit-audio)
   (quit-video-mode)
   (quit-all-mobs)
 ;  (clear-events)
