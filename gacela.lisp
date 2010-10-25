@@ -154,6 +154,9 @@
 (defun make-resource-font (&key filename encoding)
   `(:type font :filename ,filename :enconding ,encoding))
 
+(defun make-resource-sound (&key filename)
+  `(:type sound :filename ,filename))
+
 (defmacro get-rtime (key)
   `(resource-time (gethash ,key resources-table)))
 

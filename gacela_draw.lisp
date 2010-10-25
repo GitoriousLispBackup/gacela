@@ -112,13 +112,15 @@
 			     :static static)
 	       key)))))))
 
-(defun draw-image-function (filename)
+(defun draw-image (filename &ptional (zoom 1))
   (let ((texture (load-texture filename)))
-    (lambda (&optional (f 1))
-      (cond (texture
-	     (let ((width (getf (get-resource texture) :width))
-		   (height (getf (get-resource texture) :height)))
-	       (draw-rectangle (* f width) (* f height) :texture texture)))))))
+    (cond (texture (draw-texture texture zoom)))))
+
+(defun draw-texture (texture &optional (zoom 1))
+  (cond (texture
+	 (let ((width (getf (get-resource texture) :width))
+	       (height (getf (get-resource texture) :height)))
+	   (draw-rectangle (* zoom width) (* zoom height) :texture texture)))))
 
 (defun draw-quad (v1 v2 v3 v4 &key texture)
   (let ((id-texture (getf (get-resource texture) :id-texture)))

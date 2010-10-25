@@ -20,3 +20,20 @@
 	   (in-package 'gacela :nicknames '(gg) :use '(lisp)))
 
 
+(defun load-sound (filename &key static)
+  (let ((key (make-resource-sound :filename filename)))
+    (cond ((get-resource key) key)
+	  (t (true-load-sound filename static)))))
+
+(defun true-load-sound (filename static)
+  (init-audio)
+  (let ((key (make-resource-sound :filename filename))
+	(sound (Mix_LoadWAV filename)))
+    (cond ((/= sound 0)
+	   (set-resource key
+			 `(:id-sound ,sound)
+			 (lambda () (true-load-sound filename static))
+			 (lambda () (Mix_FreeChunk sound))
+			 :static static)
+	   key))))
+
