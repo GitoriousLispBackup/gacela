@@ -37,3 +37,31 @@
 			 :static static)
 	   key))))
 
+(defun play-sound (sound &optional (loops 0))
+  (let ((id-sound (getf (get-resource sound) :id-sound)))
+    (/= (Mix_PlayChannel -1 id-sound loops) -1)))
+
+(defun load-music (filename &key static)
+  (let ((key (make-resource-music :filename filename)))
+    (cond ((get-resource key) key)
+	  (t (true-load-music filename static)))))
+
+(defun true-load-music (filename static)
+  (init-audio)
+  (let ((key (make-resource-music :filename filename))
+	(music (Mix_LoadMUS filename)))
+    (cond ((/= music 0)
+	   (set-resource key
+			 `(:id-music ,music)
+			 (lambda () (true-load-music filename static))
+			 (lambda () (Mix_FreeMusic music))
+			 :static static)
+	   key))))
+
+(defun playing-music? ()
+  (/= (Mix_PlayingMusic) 0))
+
+(defun play-music (music &optional (loops -1))
+  (cond ((not (playing-music?))
+	 (let ((id-music (getf (get-resource music) :id-music)))
+	   (/= (Mix_PlayMusic id-music loops) -1)))))

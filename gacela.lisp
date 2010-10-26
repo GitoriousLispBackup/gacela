@@ -157,6 +157,9 @@
 (defun make-resource-sound (&key filename)
   `(:type sound :filename ,filename))
 
+(defun make-resource-music (&key filename)
+  `(:type music :filename ,filename))
+
 (defmacro get-rtime (key)
   `(resource-time (gethash ,key resources-table)))
 
