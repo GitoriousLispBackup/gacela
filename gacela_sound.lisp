@@ -20,6 +20,8 @@
 	   (in-package 'gacela :nicknames '(gg) :use '(lisp)))
 
 
+;;; Sound
+
 (defun load-sound (filename &key static)
   (let ((key (make-resource-sound :filename filename)))
     (cond ((get-resource key) key)
@@ -41,6 +43,9 @@
   (let ((id-sound (getf (get-resource sound) :id-sound)))
     (/= (Mix_PlayChannel -1 id-sound loops) -1)))
 
+
+;;; Music
+
 (defun load-music (filename &key static)
   (let ((key (make-resource-music :filename filename)))
     (cond ((get-resource key) key)
@@ -61,7 +66,25 @@
 (defun playing-music? ()
   (/= (Mix_PlayingMusic) 0))
 
+(defun paused-music? ()
+  (/= (Mix_PausedMusic) 0))
+
 (defun play-music (music &optional (loops -1))
   (cond ((not (playing-music?))
 	 (let ((id-music (getf (get-resource music) :id-music)))
 	   (/= (Mix_PlayMusic id-music loops) -1)))))
+
+(defun pause-music ()
+  (cond ((and (playing-music?) (not (paused-music?)))
+	 (Mix_PauseMusic)
+	 t)))
+
+(defun resume-music ()
+  (cond ((and (playing-music?) (paused-music?))
+	 (Mix_ResumeMusic)
+	 t)))
+
+(defun halt-music ()
+  (cond ((playing-music?)
+	 (Mix_HaltMusic)
+	 t)))
