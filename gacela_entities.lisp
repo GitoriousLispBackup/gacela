@@ -20,6 +20,35 @@
 	   (in-package 'gacela :nicknames '(gg) :use '(lisp)))
 
 
+;;; Behaviours of entities
+
+(defmacro make-behaviour (name properties &rest code)
+  `(defun ,name (entity)
+     (let ,(mapcar #'property-definition properties)
+       ,@code
+       ,(cons 'progn (mapcar #'property-save properties))
+       entity)))
+
+(defun property-name (property)
+  (intern (string property) 'keyword))
+
+(defun property-definition (property)
+  (let* ((name (cond ((listp property) (car property))
+		     (t property)))
+	 (pname (property-name name))
+	 (value (cond ((listp property) (cadr property)))))
+    `(,name (getf entity ,pname ,value))))
+
+(defun property-save (property)
+  (let* ((name (cond ((listp property) (car property))
+		     (t property)))
+	 (pname (property-name name)))
+    `(setf (getf entity ,pname) ,name)))
+
+
+
+;;; Constructor
+
 ;;; Boxes Factory
 
 (let (visible-boxes boxes-to-add boxes-to-quit)
@@ -59,9 +88,3 @@
        (defun ,(render-fun-name name) () ,@code)
        (defun ,(get-props-fun-name name) () (list :rx rx :ry ry :rz rz)))
      (add-box ',name)))
-
-
-;;; Translations and rotations
-
-(defun rotate-box (&rest rot)
-  )

@@ -4,7 +4,7 @@ INC = -I/usr/include/FTGL -I/usr/include/freetype2
 LIBS = -lSDL -lSDL_image -lSDL_mixer -lSDL_gfx -lGL -lGLU -lftgl
 
 OBJ = gacela.o gacela_misc.o gacela_SDL.o gacela_GL.o gacela_FTGL.o \
-      gacela_draw.o gacela_ttf.o gacela_events.o gacela_mobs.o gacela_boxes.o \
+      gacela_draw.o gacela_ttf.o gacela_events.o gacela_mobs.o gacela_entities.o \
       gacela_widgets.o gacela_sound.o
 
 GCL_OBJ = $(OBJ:%.o=\"%.o\")
