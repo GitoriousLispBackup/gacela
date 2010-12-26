@@ -23,11 +23,11 @@
 ;;; Behaviours of objects
 
 (defmacro make-behaviour (name attr &rest code)
-  `(defun ,(get-behaviour-fun-name name) (object)
+  `(defun ,(get-behaviour-fun-name name) (object-attr)
      (let ,(mapcar #'attribute-definition attr)
        ,@code
        ,(cons 'progn (mapcar #'attribute-save (reverse attr)))
-       object)))
+       object-attr)))
 
 (defun get-behaviour-fun-name (name)
   (intern (concatenate 'string "BEHAVIOUR-" (string name)) 'gacela))
@@ -40,13 +40,13 @@
 		     (t attribute)))
 	 (pname (attribute-name name))
 	 (value (cond ((listp attribute) (cadr attribute)))))
-    `(,name (getf object ,pname ,value))))
+    `(,name (getf object-attr ,pname ,value))))
 
 (defun attribute-save (attribute)
   (let* ((name (cond ((listp attribute) (car attribute))
 		     (t attribute)))
 	 (pname (attribute-name name)))
-    `(setf (getf object ,pname) ,name)))
+    `(setf (getf object-attr ,pname) ,name)))
 
 
 
@@ -70,29 +70,30 @@
 	   (setq active-objects (reverse (set-difference active-objects objects-to-kill)))
 	   (setq objects-to-kill nil))))
 
-  (defun render-boxes ()
-    (labels ((render (l)
-		     (cond (l (funcall (render-fun-name (car l)))
-			      (render (cdr l))))))
-	    (render visible-boxes))))
+  (defun render-objects ()
+    active-objects))
 
 
-(defmacro make-box (name attr &rest code)
-  `(progn
-     (let ,(union '((rx 0) (ry 0) (rz 0)) attr)
-       (defun ,(render-fun-name name) () ,@code)
-       (defun ,(get-props-fun-name name) () (list :rx rx :ry ry :rz rz)))
-     (add-box ',name)))
+(defmacro make-object (&key name class attr bhv look)
+  `(let ((object
+	  '(:name ,name :class ,class :attr ,(make-object-attributes attr) :bhv ,(make-object-behaviour bhv) :look ,look)))
+     (add-object object)
+     object))
 
-(defmacro make-object (name &key attr bhv look)
-  `(let ((object '(:name ,name)))
-     (union object
-	    (union ,(make-object-attributes attr)
-		   (union ,(make-object-behaviour bhv)
-			  ,(make-object-look look))))))
+(defun make-object-attributes (attr)
+  (cond ((or (null attr) (atom attr)) nil)
+	(t (let ((rest (make-object-attributes (cdr attr)))
+		 (this (object-attribute-definition (car attr))))
+	     (setf (getf rest (car this)) (cadr this))
+	     rest))))
 
-(defun make-object-attributes (attr))
+(defun object-attribute-definition (attribute)
+  (let* ((name (cond ((listp attribute) (car attribute))
+		     (t attribute)))
+	 (pname (attribute-name name))
+	 (value (cond ((listp attribute) (cadr attribute)))))
+    `(,pname ,value)))
 
-(defun make-object-behaviour (bhv))
-
-(defun make-object-look (look))
+(defun make-object-behaviour (bhv)
+  (cond ((consp bhv) bhv)
+	(t (list bhv))))
