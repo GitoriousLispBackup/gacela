@@ -74,11 +74,17 @@
     active-objects))
 
 
-(defun make-object (&key name class attr bhv look)
+(defun make-object-old (name &key attr bhv look)
   (let ((object
-	 `(:name ,name :class ,class :attr ,(make-object-attributes attr) :bhv ,(make-object-behaviour bhv) :look ,look)))
+	 `(:name ,name :attr ,(make-object-attributes attr) :bhv ,(make-object-behaviour bhv) :look ,look)))
     (add-object object)
     object))
+
+(defmacro make-object (name attr bhv &body look)
+  `(let ((object
+	 '(:name ,name :attr ,(make-object-attributes attr) :bhv ,(make-object-behaviour bhv) :look (lambda () ,@look))))
+     (add-object object)
+     object))
 
 (defun make-object-attributes (attr)
   (cond ((or (null attr) (atom attr)) nil)
