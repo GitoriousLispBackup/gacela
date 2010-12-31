@@ -81,9 +81,14 @@
     object))
 
 (defmacro make-object (name attr bhv &body look)
-  `(let ((attr ,(make-object-attributes attr) bhv ,(make-object-behaviour bhv)))
-     (defun ,name (option) ,@look)
-     ))
+  `(let ((attr ,(cond (attr (cons 'list (make-object-attributes attr)))))
+	 (bhv ,(cond (bhv (cons 'list (make-object-behaviour bhv))))))
+     (defun ,name (option &rest param)
+       (case option
+	     (:get-attr attr)
+	     (:set-attr (setq attr @param))
+	     (:get-bhv bhv)
+	     (:render ,@look)))))
 
 (defun make-object-attributes (attr)
   (cond ((or (null attr) (atom attr)) nil)
