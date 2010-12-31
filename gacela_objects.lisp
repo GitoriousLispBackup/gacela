@@ -81,10 +81,9 @@
     object))
 
 (defmacro make-object (name attr bhv &body look)
-  `(let ((object
-	 '(:name ,name :attr ,(make-object-attributes attr) :bhv ,(make-object-behaviour bhv) :look (lambda () ,@look))))
-     (add-object object)
-     object))
+  `(let ((attr ,(make-object-attributes attr) bhv ,(make-object-behaviour bhv)))
+     (defun ,name (option) ,@look)
+     ))
 
 (defun make-object-attributes (attr)
   (cond ((or (null attr) (atom attr)) nil)
