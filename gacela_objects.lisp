@@ -30,7 +30,7 @@
        object-attr)))
 
 (defun get-behaviour-fun-name (name)
-  (intern (concatenate 'string "BEHAVIOUR-" (string name)) 'gacela))
+  (intern (concatenate 'string "BEHAVIOUR-" (string-upcase (string name))) 'gacela))
 
 (defun attribute-name (attribute)
   (intern (string attribute) 'keyword))
@@ -54,10 +54,10 @@
 
 (let (active-objects objects-to-add objects-to-kill)
   (defun add-object (object)
-    (push object objects-to-add))
+    (pushnew object objects-to-add))
 
   (defun kill-object (object)
-    (push object objects-to-kill))
+    (pushnew object objects-to-kill))
 
   (defun kill-all-objects ()
     (setq active-objects nil objects-to-add nil objects-to-kill nil))
@@ -70,25 +70,26 @@
 	   (setq active-objects (reverse (set-difference active-objects objects-to-kill)))
 	   (setq objects-to-kill nil))))
 
+  (defun bhv-objects ()
+    (dolist (o active-objects) (funcall o :action)))
+
   (defun render-objects ()
-    active-objects))
+    (dolist (o active-objects) (funcall o :render))))
 
-
-(defun make-object-old (name &key attr bhv look)
-  (let ((object
-	 `(:name ,name :attr ,(make-object-attributes attr) :bhv ,(make-object-behaviour bhv) :look ,look)))
-    (add-object object)
-    object))
 
 (defmacro make-object (name attr bhv &body look)
-  `(let ((attr ,(cond (attr (cons 'list (make-object-attributes attr)))))
-	 (bhv ,(cond (bhv (cons 'list (make-object-behaviour bhv))))))
-     (defun ,name (option &rest param)
-       (case option
-	     (:get-attr attr)
-	     (:set-attr (setq attr @param))
-	     (:get-bhv bhv)
-	     (:render ,@look)))))
+  `(progn
+     (let ((attr ,(cond (attr (cons 'list (make-object-attributes attr)))))
+	   (bhv ,(cond (bhv (cons 'list (make-object-behaviour bhv))))))
+       (defun ,name (option &rest param)
+	 (case option
+	       (:action (dolist (b bhv t) (setq attr (funcall (get-behaviour-fun-name b) attr))))
+	       (:get-attr attr)
+	       (:get-bhv bhv)
+	       (:set-bhv (setq bhv (car param)))
+	       (:render ,@look))))
+     (add-object ',name)
+     ',name))
 
 (defun make-object-attributes (attr)
   (cond ((or (null attr) (atom attr)) nil)
