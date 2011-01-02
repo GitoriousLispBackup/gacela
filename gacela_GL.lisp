@@ -203,6 +203,12 @@
 (defcfun "void gacela_glOrtho (float left, float right, float bottom, float top, float near_val, float far_val)" 0
   "glOrtho (left, right, bottom, top, near_val, far_val);")
 
+(defcfun "void gacela_glPushMatrix (void)" 0
+  "glPushMatrix ();")
+
+(defcfun "void gacela_glPopMatrix (void)" 0
+  "glPopMatrix ();")
+
 (defcfun "void gacela_gluPerspective (double fovy, double aspect, double zNear, double zFar)" 0
   "gluPerspective (fovy, aspect, zNear, zFar);")
 
@@ -241,6 +247,8 @@
 (defentry glNormal3f (float float float) (void "gacela_glNormal3f"))
 (defentry glBlendFunc (int int) (void "gacela_glBlendFunc"))
 (defentry glOrtho (float float float float float float) (void "gacela_glOrtho"))
+(defentry glPushMatrix () (void "gacela_glPushMatrix"))
+(defentry glPopMatrix () (void "gacela_glPopMatrix"))
 
 (defentry gluPerspective (double double double double) (void "gacela_gluPerspective"))
 (defentry gluBuild2DMipmaps (int int int int int int int) (int "gacela_gluBuild2DMipmaps"))

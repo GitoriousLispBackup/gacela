@@ -87,7 +87,9 @@
 	       (:get-attr attr)
 	       (:get-bhv bhv)
 	       (:set-bhv (setq bhv (car param)))
-	       (:render ,@look))))
+	       (:render (glPushMatrix)
+			,@(mapcar (lambda (x) (if (stringp x) `(draw-image ,x) x)) look)
+			(glPopMatrix)))))
      (add-object ',name)
      ',name))
 
