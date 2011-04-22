@@ -2,6 +2,7 @@
 #include <readline/readline.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <libguile.h>
 
 /* Read-Send-Print-Loop */
 void rspl(int pin, int pout)
@@ -42,13 +43,20 @@ int main (int argc, char *argv[])
   }
   else {
     char buf;
+    static char *line = (char *)NULL;
+
+    dup2(pfd[0], 0);
+    close(pfd[0]);
 
     while (1) {
-      while (read(pfd[0], &buf, 1) > 0) {
-	if (buf == '\n')
-	  write(STDOUT_FILENO, "-\n", 2);
-	else
-	  write(STDOUT_FILENO, &buf, 1);
+      if (line) {
+	free(line);
+	line = (char *)NULL;
+      }
+
+      line = readline("");
+      if (line && *line) {
+	printf("%s-\n", line);
       }
     }
   }
