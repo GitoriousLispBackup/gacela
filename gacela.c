@@ -49,6 +49,9 @@ int main (int argc, char *argv[])
     close(pfd[0]);
 
     while (1) {
+      scm_init_guile();
+      scm_c_eval_string("(if (char-ready? (current-input-port)) (format #t \"~a guile~%\" (read)))");
+      /*
       if (line) {
 	free(line);
 	line = (char *)NULL;
@@ -58,6 +61,7 @@ int main (int argc, char *argv[])
       if (line && *line) {
 	printf("%s-\n", line);
       }
+      */
     }
   }
 }
