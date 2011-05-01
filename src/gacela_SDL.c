@@ -2,7 +2,7 @@
 #include <SDL/SDL.h>
 #include "gacela_SDL.h"
 
-static void*
+void*
 SDL_register_functions (void* data)
 {
   return NULL;

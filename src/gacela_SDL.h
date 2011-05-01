@@ -1,1 +1,1 @@
-static void* SDL_register_functions (void* data);
+void* SDL_register_functions (void* data);
