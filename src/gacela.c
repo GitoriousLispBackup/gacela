@@ -1,4 +1,3 @@
-#include <GL/gl.h>
 #include <libguile.h>
 #include "gacela_SDL.h"
 
