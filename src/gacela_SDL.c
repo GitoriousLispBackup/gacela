@@ -1,3 +1,20 @@
+/* Gacela, a GNU Guile extension for fast games development
+   Copyright (C) 2009 by Javier Sancho Fernandez <jsf at jsancho dot org>
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <libguile.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
@@ -11,7 +28,7 @@ gacela_SDL_Init (SCM flags)
 }
 
 SCM
-gacela_SDL_Quit ()
+gacela_SDL_Quit (void)
 {
   SDL_Quit ();
   return SCM_UNSPECIFIED;
@@ -52,7 +69,7 @@ gacela_SDL_Delay (SCM ms)
 }
 
 SCM
-gacela_SDL_GetTicks ()
+gacela_SDL_GetTicks (void)
 {
   return scm_from_int (SDL_GetTicks ());
 }
@@ -88,7 +105,7 @@ gacela_IMG_Load (SCM filename)
 }
 
 SCM
-gacela_SDL_GetVideoInfo ()
+gacela_SDL_GetVideoInfo (void)
 {
   const SDL_VideoInfo *info;
   SCM vi;
@@ -109,7 +126,7 @@ gacela_SDL_GL_SetAttribute (SCM attr, SCM value)
 }
 
 SCM
-gacela_SDL_PollEvent ()
+gacela_SDL_PollEvent (void)
 {
   SDL_Event sdl_event;
   SCM event;
@@ -129,44 +146,141 @@ gacela_SDL_PollEvent ()
   return event;
 }
 
+SCM
+gacela_SDL_GL_SwapBuffers (void)
+{
+  SDL_GL_SwapBuffers ();
+  return SCM_UNSPECIFIED;
+}
+
+SCM
+gacela_SDL_EnableKeyRepeat (SCM delay, SCM interval)
+{
+  return scm_from_int (SDL_EnableKeyRepeat (scm_to_int (delay), scm_to_int (interval)));
+}
+
+SCM
+gacela_Mix_OpenAudio (SCM frequency, SCM format, SCM channels, SCM chunksize)
+{
+  return scm_from_int (Mix_OpenAudio (scm_to_int (frequency), scm_to_int (format), scm_to_int (channels), scm_to_int (chunksize)));
+}
+
+SCM
+gacela_Mix_LoadMUS (SCM file)
+{
+  return scm_from_int ((int)Mix_LoadMUS (scm_to_locale_string (file)));
+}
+
+SCM
+gacela_Mix_LoadWAV (SCM file)
+{
+  return scm_from_int ((int)Mix_LoadWAV (scm_to_locale_string (file)));
+}
+
+SCM
+gacela_Mix_PlayChannel (SCM channel, SCM chunk, SCM loops)
+{
+  return scm_from_int (Mix_PlayChannel (scm_to_int (channel), (Mix_Chunk *)scm_to_int (chunk), scm_to_int (loops)));
+}
+
+SCM
+gacela_Mix_PlayMusic (SCM music, SCM loops)
+{
+  return scm_from_int (Mix_PlayMusic ((Mix_Music *)scm_to_int (music), scm_to_int (loops)));
+}
+
+SCM
+gacela_Mix_PlayingMusic (void)
+{
+  return scm_from_int (Mix_PlayingMusic ());
+}
+
+SCM
+gacela_Mix_PausedMusic (void)
+{
+  return scm_from_int (Mix_PausedMusic ());
+}
+
+SCM
+gacela_Mix_PauseMusic (void)
+{
+  Mix_PauseMusic ();
+  return SCM_UNSPECIFIED;
+}
+
+SCM
+gacela_Mix_ResumeMusic (void)
+{
+  Mix_ResumeMusic ();
+  return SCM_UNSPECIFIED;
+}
+
+SCM
+gacela_Mix_HaltMusic (void)
+{
+  return scm_from_int (Mix_HaltMusic ());
+}
+
+SCM
+gacela_Mix_FreeMusic (SCM music)
+{
+  Mix_FreeMusic ((Mix_Music *)scm_to_int (music));
+  return SCM_UNSPECIFIED;
+}
+
+SCM
+gacela_Mix_FreeChunk (SCM chunk)
+{
+  Mix_FreeChunk ((Mix_Chunk *)scm_to_int (chunk));
+  return SCM_UNSPECIFIED;
+}
+
+SCM
+gacela_Mix_CloseAudio (void)
+{
+  Mix_CloseAudio ();
+  return SCM_UNSPECIFIED;
+}
+
 
 void*
 SDL_register_functions (void* data)
 {
-  scm_c_define ("SDL_INIT_TIMER", scm_from_int(SDL_INIT_TIMER));
-  scm_c_define ("SDL_INIT_AUDIO", scm_from_int(SDL_INIT_AUDIO));
-  scm_c_define ("SDL_INIT_VIDEO", scm_from_int(SDL_INIT_VIDEO));
-  scm_c_define ("SDL_INIT_CDROM", scm_from_int(SDL_INIT_CDROM));
-  scm_c_define ("SDL_INIT_JOYSTICK", scm_from_int(SDL_INIT_JOYSTICK));
-  scm_c_define ("SDL_INIT_NOPARACHUTE", scm_from_int(SDL_INIT_NOPARACHUTE));
-  scm_c_define ("SDL_INIT_EVENTTHREAD", scm_from_int(SDL_INIT_EVENTTHREAD));
-  scm_c_define ("SDL_INIT_EVERYTHING", scm_from_int(SDL_INIT_EVERYTHING));
+  scm_c_define ("SDL_INIT_TIMER", scm_from_int (SDL_INIT_TIMER));
+  scm_c_define ("SDL_INIT_AUDIO", scm_from_int (SDL_INIT_AUDIO));
+  scm_c_define ("SDL_INIT_VIDEO", scm_from_int (SDL_INIT_VIDEO));
+  scm_c_define ("SDL_INIT_CDROM", scm_from_int (SDL_INIT_CDROM));
+  scm_c_define ("SDL_INIT_JOYSTICK", scm_from_int (SDL_INIT_JOYSTICK));
+  scm_c_define ("SDL_INIT_NOPARACHUTE", scm_from_int (SDL_INIT_NOPARACHUTE));
+  scm_c_define ("SDL_INIT_EVENTTHREAD", scm_from_int (SDL_INIT_EVENTTHREAD));
+  scm_c_define ("SDL_INIT_EVERYTHING", scm_from_int (SDL_INIT_EVERYTHING));
 
-  scm_c_define ("SDL_SWSURFACE", scm_from_int(SDL_SWSURFACE));
-  scm_c_define ("SDL_HWSURFACE", scm_from_int(SDL_HWSURFACE));
-  scm_c_define ("SDL_ASYNCBLIT", scm_from_int(SDL_ASYNCBLIT));
+  scm_c_define ("SDL_SWSURFACE", scm_from_int (SDL_SWSURFACE));
+  scm_c_define ("SDL_HWSURFACE", scm_from_int (SDL_HWSURFACE));
+  scm_c_define ("SDL_ASYNCBLIT", scm_from_int (SDL_ASYNCBLIT));
 
-  scm_c_define ("SDL_ANYFORMAT", scm_from_int(SDL_ANYFORMAT));
-  scm_c_define ("SDL_HWPALETTE", scm_from_int(SDL_HWPALETTE));
-  scm_c_define ("SDL_DOUBLEBUF", scm_from_int(SDL_DOUBLEBUF));
-  scm_c_define ("SDL_FULLSCREEN", scm_from_int(SDL_FULLSCREEN));
-  scm_c_define ("SDL_OPENGL", scm_from_int(SDL_OPENGL));
-  scm_c_define ("SDL_OPENGLBLIT", scm_from_int(SDL_OPENGLBLIT));
-  scm_c_define ("SDL_RESIZABLE", scm_from_int(SDL_RESIZABLE));
-  scm_c_define ("SDL_NOFRAME", scm_from_int(SDL_NOFRAME));
+  scm_c_define ("SDL_ANYFORMAT", scm_from_int (SDL_ANYFORMAT));
+  scm_c_define ("SDL_HWPALETTE", scm_from_int (SDL_HWPALETTE));
+  scm_c_define ("SDL_DOUBLEBUF", scm_from_int (SDL_DOUBLEBUF));
+  scm_c_define ("SDL_FULLSCREEN", scm_from_int (SDL_FULLSCREEN));
+  scm_c_define ("SDL_OPENGL", scm_from_int (SDL_OPENGL));
+  scm_c_define ("SDL_OPENGLBLIT", scm_from_int (SDL_OPENGLBLIT));
+  scm_c_define ("SDL_RESIZABLE", scm_from_int (SDL_RESIZABLE));
+  scm_c_define ("SDL_NOFRAME", scm_from_int (SDL_NOFRAME));
 
-  scm_c_define ("SDL_HWACCEL", scm_from_int(SDL_HWACCEL));
-  scm_c_define ("SDL_SRCCOLORKEY", scm_from_int(SDL_SRCCOLORKEY));
+  scm_c_define ("SDL_HWACCEL", scm_from_int (SDL_HWACCEL));
+  scm_c_define ("SDL_SRCCOLORKEY", scm_from_int (SDL_SRCCOLORKEY));
 
-  scm_c_define ("SDL_GL_DOUBLEBUFFER", scm_from_int(SDL_GL_DOUBLEBUFFER));
+  scm_c_define ("SDL_GL_DOUBLEBUFFER", scm_from_int (SDL_GL_DOUBLEBUFFER));
 
-  scm_c_define ("SDL_DEFAULT_REPEAT_DELAY", scm_from_int(SDL_DEFAULT_REPEAT_DELAY));
-  scm_c_define ("SDL_DEFAULT_REPEAT_INTERVAL", scm_from_int(SDL_DEFAULT_REPEAT_INTERVAL));
+  scm_c_define ("SDL_DEFAULT_REPEAT_DELAY", scm_from_int (SDL_DEFAULT_REPEAT_DELAY));
+  scm_c_define ("SDL_DEFAULT_REPEAT_INTERVAL", scm_from_int (SDL_DEFAULT_REPEAT_INTERVAL));
 
-  scm_c_define ("SDL_LIL_ENDIAN", scm_from_int(SDL_LIL_ENDIAN));
-  scm_c_define ("SDL_BIG_ENDIAN", scm_from_int(SDL_BIG_ENDIAN));
+  scm_c_define ("SDL_LIL_ENDIAN", scm_from_int (SDL_LIL_ENDIAN));
+  scm_c_define ("SDL_BIG_ENDIAN", scm_from_int (SDL_BIG_ENDIAN));
+  scm_c_define ("SDL_BYTEORDER", scm_from_int (SDL_BYTEORDER));
 
-  scm_c_define ("MIX_DEFAULT_FORMAT", scm_from_int(MIX_DEFAULT_FORMAT));
+  scm_c_define ("MIX_DEFAULT_FORMAT", scm_from_int (MIX_DEFAULT_FORMAT));
 
   scm_c_define_gsubr ("SDL_Init", 1, 0, 0, gacela_SDL_Init);
   scm_c_define_gsubr ("SDL_Quit", 0, 0, 0, gacela_SDL_Quit);
@@ -184,6 +298,21 @@ SDL_register_functions (void* data)
   scm_c_define_gsubr ("SDL_GetVideoInfo", 0, 0, 0, gacela_SDL_GetVideoInfo);
   scm_c_define_gsubr ("SDL_GL_SetAttribute", 2, 0, 0, gacela_SDL_GL_SetAttribute);
   scm_c_define_gsubr ("SDL_PollEvent", 0, 0, 0, gacela_SDL_PollEvent);
+  scm_c_define_gsubr ("SDL_GL_SwapBuffers", 0, 0, 0, gacela_SDL_GL_SwapBuffers);
+  scm_c_define_gsubr ("SDL_EnableKeyRepeat", 2, 0, 0, gacela_SDL_EnableKeyRepeat);
+  scm_c_define_gsubr ("Mix_OpenAudio", 4, 0, 0, gacela_Mix_OpenAudio);
+  scm_c_define_gsubr ("Mix_LoadMUS", 1, 0, 0, gacela_Mix_LoadMUS);
+  scm_c_define_gsubr ("Mix_LoadWAV", 1, 0, 0, gacela_Mix_LoadWAV);
+  scm_c_define_gsubr ("Mix_PlayChannel", 3, 0, 0, gacela_Mix_PlayChannel);
+  scm_c_define_gsubr ("Mix_PlayMusic", 2, 0, 0, gacela_Mix_PlayMusic);
+  scm_c_define_gsubr ("Mix_PlayingMusic", 0, 0, 0, gacela_Mix_PlayingMusic);
+  scm_c_define_gsubr ("Mix_PausedMusic", 0, 0, 0, gacela_Mix_PausedMusic);
+  scm_c_define_gsubr ("Mix_PauseMusic", 0, 0, 0, gacela_Mix_PauseMusic);
+  scm_c_define_gsubr ("Mix_ResumeMusic", 0, 0, 0, gacela_Mix_ResumeMusic);
+  scm_c_define_gsubr ("Mix_HaltMusic", 0, 0, 0, gacela_Mix_HaltMusic);
+  scm_c_define_gsubr ("Mix_FreeMusic", 1, 0, 0, gacela_Mix_FreeMusic);
+  scm_c_define_gsubr ("Mix_FreeChunk", 1, 0, 0, gacela_Mix_FreeChunk);
+  scm_c_define_gsubr ("Mix_CloseAudio", 0, 0, 0, gacela_Mix_CloseAudio);
 
   return NULL;
 }
