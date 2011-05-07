@@ -94,10 +94,41 @@ gacela_SDL_GetVideoInfo ()
   SCM vi;
 
   info = SDL_GetVideoInfo ();
-  ('nil vi)
-  ((cons (int info->blit_hw) vi) vi) (':blit_hw label) ((cons label vi) vi)
-  ((cons (int info->hw_available) vi) vi) (':hw_available label) ((cons label vi) vi)
-  "return vi;")
+  vi = scm_list_n (SCM_UNDEFINED);
+
+  vi = scm_cons (scm_cons (scm_from_locale_symbol ("blit_hw"), scm_from_int (info->blit_hw)), vi);
+  vi = scm_cons (scm_cons (scm_from_locale_symbol ("hw_available"), scm_from_int (info->hw_available)), vi);
+
+  return vi;
+}
+
+SCM
+gacela_SDL_GL_SetAttribute (SCM attr, SCM value)
+{
+  return scm_from_int (SDL_GL_SetAttribute (scm_to_int (attr), scm_to_int (value)));
+}
+
+SCM
+gacela_SDL_PollEvent ()
+{
+  SDL_Event sdl_event;
+  SCM event;
+
+  event = scm_list_n (SCM_UNDEFINED);
+
+  if (SDL_PollEvent (&sdl_event)) {
+    switch (sdl_event.type) {
+    case SDL_KEYDOWN:
+    case SDL_KEYUP:
+      event = scm_cons (scm_cons (scm_from_locale_symbol ("key.keysym.sym"), scm_from_int (sdl_event.key.keysym.sym)), event);
+      break;
+    }
+    event = scm_cons (scm_cons (scm_from_locale_symbol ("type"), scm_from_int (sdl_event.type)), event);
+  }
+
+  return event;
+}
+
 
 void*
 SDL_register_functions (void* data)
@@ -150,6 +181,9 @@ SDL_register_functions (void* data)
   scm_c_define_gsubr ("SDL_SetColorKey", 3, 0, 0, gacela_SDL_SetColorKey);
   scm_c_define_gsubr ("SDL_LoadBMP", 1, 0, 0, gacela_SDL_LoadBMP);
   scm_c_define_gsubr ("IMG_Load", 1, 0, 0, gacela_IMG_Load);
+  scm_c_define_gsubr ("SDL_GetVideoInfo", 0, 0, 0, gacela_SDL_GetVideoInfo);
+  scm_c_define_gsubr ("SDL_GL_SetAttribute", 2, 0, 0, gacela_SDL_GL_SetAttribute);
+  scm_c_define_gsubr ("SDL_PollEvent", 0, 0, 0, gacela_SDL_PollEvent);
 
   return NULL;
 }
