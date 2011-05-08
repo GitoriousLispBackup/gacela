@@ -27,6 +27,12 @@ register_functions (void* data)
   return NULL;
 }
 
+void
+load_scheme_files (void)
+{
+  scm_c_primitive_load ("gacela.scm");
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -35,5 +41,6 @@ main (int argc, char *argv[])
   scm_c_eval_string ("(set-repl-prompt! \"gacela>\")");
   scm_c_eval_string ("(use-modules (ice-9 readline))");
   scm_c_eval_string ("(activate-readline)");
+  load_scheme_files ();
   scm_shell (argc, argv);
 }
