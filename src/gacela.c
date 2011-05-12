@@ -30,7 +30,7 @@ register_functions (void* data)
 void
 load_scheme_files (void)
 {
-  scm_c_primitive_load ("gacela.scm");
+//  scm_c_primitive_load ("gacela.scm");
 }
 
 int
