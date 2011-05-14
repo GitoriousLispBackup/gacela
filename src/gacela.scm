@@ -22,42 +22,60 @@
 (define *frames-per-second* 20)
 
 ;;; SDL Initialization Subsystem
-(let (initialized)
+(define init-sdl #f)
+(define quit-sdl #f)
 
-  (define (init-sdl)
-    (cond ((null initialized) (set! initialized (SDL_Init SDL_INIT_EVERYTHING)))
-	  (#t initialized)))
+(let ((initialized #f))
+  (set! init-sdl
+	(lambda ()
+	  (cond ((not initialized) (SDL_Init SDL_INIT_EVERYTHING) (set! initialized #t))
+		(else initialized))))
 
-  (define (quit-sdl)
-    (set! initialized (SDL_Quit))))
+  (set! quit-sdl
+	(lambda ()
+	  (SDL_Quit)
+	  (set! initialized #f))))
+
 
 
 ;;; Video Subsystem
-(let (screen flags (current-width *width-screen*) (current-height *height-screen*) current-bpp)
+(define init-video-mode #f)
+(define resize-screen #f)
+(define apply-mode-change #f)
+(define quit-video-mode #f)
 
-  (defun init-video-mode (&key (width current-width) (height current-height) (bpp *bpp-screen*))
-    (cond ((null screen)
-	   (init-sdl)
-	   (SDL_GL_SetAttribute SDL_GL_DOUBLEBUFFER 1)
-	   (setq flags (+ SDL_OPENGL SDL_GL_DOUBLEBUFFER SDL_HWPALETTE SDL_RESIZABLE
-			  (if (= (getf (SDL_GetVideoInfo) :hw_available) 0) SDL_SWSURFACE SDL_HWSURFACE)
-			  (if (= (getf (SDL_GetVideoInfo) :blit_hw) 0) 0 SDL_HWACCEL)))
-	   (setq screen (SDL_SetVideoMode width height bpp flags))
-	   (init-GL)
-	   (resize-screen-GL width height)
-	   (setq current-width width current-height height current-bpp bpp))
-	  (t t)))
+(let ((screen #f) (flags 0) (current-width *width-screen*) (current-height *height-screen*) (current-bpp *bpp-screen*))
+  (set! init-video-mode
+	(lambda (. args)
+	  (let ((width (cond ((assq 'width args
 
-  (defun resize-screen (width height &optional (bpp current-bpp))
-    (cond (screen (setq screen (SDL_SetVideoMode width height bpp flags))
-		  (resize-screen-GL width height)))
-    (setq current-width width current-height height))
+	(lambda (&key (width current-width) (height current-height) (bpp *bpp-screen*))
+	  (cond ((not screen)
+		 (init-sdl)
+		 (SDL_GL_SetAttribute SDL_GL_DOUBLEBUFFER 1)
+		 (set! flags (+ SDL_OPENGL SDL_GL_DOUBLEBUFFER SDL_HWPALETTE SDL_RESIZABLE
+				(if (= (getf (SDL_GetVideoInfo) :hw_available) 0) SDL_SWSURFACE SDL_HWSURFACE)
+				(if (= (getf (SDL_GetVideoInfo) :blit_hw) 0) 0 SDL_HWACCEL)))
+		 (set! screen (SDL_SetVideoMode width height bpp flags))
+		 (init-GL)
+		 (resize-screen-GL width height)
+		 (set! current-width width)
+		 (set! current-height height)
+		 (set! current-bpp bpp))
+		(else #t))))
 
-  (defun apply-mode-change ()
-    (resize-screen-GL current-width current-height))
+  (set! resize-screen
+	(lambda (width height &optional (bpp current-bpp))
+	  (cond (screen (set! screen (SDL_SetVideoMode width height bpp flags))
+			(resize-screen-GL width height)))
+	  (set! current-width width)
+	  (set! current-height height)))
 
-  (defun quit-video-mode ()
-    (setq screen nil)))
+  (set! apply-mode-change
+	(lambda () (resize-screen-GL current-width current-height)))
+
+  (set! quit-video-mode
+	(lambda () (set! screen #f))))
 
 (defun set-2d-mode ()
   (cond ((not (3d-mode?))

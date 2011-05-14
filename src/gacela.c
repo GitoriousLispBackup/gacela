@@ -16,6 +16,7 @@
 */
 
 #include <libguile.h>
+#include <libgen.h>
 #include "gacela_SDL.h"
 #include "gacela_GL.h"
 
@@ -28,9 +29,21 @@ register_functions (void* data)
 }
 
 void
-load_scheme_files (void)
+load_scheme_files (char *path)
 {
-//  scm_c_primitive_load ("gacela.scm");
+  //  load_scheme_file (path, "gacela.scm");
+}
+
+void
+load_scheme_file (char *path, char *filename)
+{
+  char fn[strlen (path) + 1024];
+
+  strcpy (fn, path);
+  strcat (fn, "/");
+  strcat (fn, filename);
+
+  scm_c_primitive_load (fn);
 }
 
 int
@@ -41,6 +54,6 @@ main (int argc, char *argv[])
   scm_c_eval_string ("(set-repl-prompt! \"gacela>\")");
   scm_c_eval_string ("(use-modules (ice-9 readline))");
   scm_c_eval_string ("(activate-readline)");
-  load_scheme_files ();
+  load_scheme_files (dirname (argv[0]));
   scm_shell (argc, argv);
 }
