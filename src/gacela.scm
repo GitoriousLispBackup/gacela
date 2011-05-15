@@ -21,6 +21,7 @@
 (define *bpp-screen* 32)
 (define *frames-per-second* 20)
 
+
 ;;; SDL Initialization Subsystem
 (define init-sdl #f)
 (define quit-sdl #f)
@@ -37,7 +38,6 @@
 	  (set! initialized #f))))
 
 
-
 ;;; Video Subsystem
 (define init-video-mode #f)
 (define resize-screen #f)
@@ -46,10 +46,7 @@
 
 (let ((screen #f) (flags 0) (current-width *width-screen*) (current-height *height-screen*) (current-bpp *bpp-screen*))
   (set! init-video-mode
-	(lambda (. args)
-	  (let ((width (cond ((assq 'width args
-
-	(lambda (&key (width current-width) (height current-height) (bpp *bpp-screen*))
+	(lambda* (#:optional (width current-width) (height current-height) (bpp current-bpp))
 	  (cond ((not screen)
 		 (init-sdl)
 		 (SDL_GL_SetAttribute SDL_GL_DOUBLEBUFFER 1)
@@ -65,7 +62,7 @@
 		(else #t))))
 
   (set! resize-screen
-	(lambda (width height &optional (bpp current-bpp))
+	(lambda* (width height #:optional (bpp current-bpp))
 	  (cond (screen (set! screen (SDL_SetVideoMode width height bpp flags))
 			(resize-screen-GL width height)))
 	  (set! current-width width)
@@ -77,13 +74,13 @@
   (set! quit-video-mode
 	(lambda () (set! screen #f))))
 
-(defun set-2d-mode ()
+(define (set-2d-mode)
   (cond ((not (3d-mode?))
 	 (init-video-mode)
 	 (glDisable GL_DEPTH_TEST)
 	 (apply-mode-change))))
 
-(defun set-3d-mode ()
+(define (set-3d-mode)
   (cond ((3d-mode?)
 	 (init-video-mode)
 	 (glClearDepth 1)
@@ -91,10 +88,10 @@
 	 (glDepthFunc GL_LEQUAL)
 	 (apply-mode-change))))
 
-(defun 3d-mode? ()
-  (eq (getf (get-game-properties) :mode) '3d))
+(define (3d-mode?)
+  (eq? (assoc-ref (get-game-properties) 'mode) '3d))
 
-(defun init-GL ()
+(define (init-GL)
   (glShadeModel GL_SMOOTH)
   (glClearColor 0 0 0 0)
 ;  (glClearDepth 1)
@@ -102,183 +99,112 @@
 ;  (glEnable GL_BLEND)
 ;  (glBlendFunc GL_SRC_ALPHA GL_ONE)
   (glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST)
-  t)
+  #t)
 
-(defun init-lighting ()
+(define (init-lighting)
   (init-video-mode)
   (glEnable GL_LIGHTING))
 
-(defun resize-screen-GL (width height)
+(define (resize-screen-GL width height)
   (glViewPort 0 0 width height)
   (glMatrixMode GL_PROJECTION)
   (glLoadIdentity)
   (cond ((3d-mode?) (let ((ratio (if (= height 0) width (/ width height))))
 		      (gluPerspective 45 ratio 0.1 100))) ;0.1
-	(t (let* ((w (/ width 2)) (-w (neg w)) (h (/ height 2)) (-h (neg h)))
-	     (glOrtho -w w -h h 0 1))))
+	(else (let* ((w (/ width 2)) (-w (neg w)) (h (/ height 2)) (-h (neg h)))
+		(glOrtho -w w -h h 0 1))))
   (glMatrixMode GL_MODELVIEW)
   (glLoadIdentity)
-  t))
+  #t)
+
+(define get-current-color #f)
+(define set-current-color #f)
 
 (let ((current-color '(1 1 1 1)))
-  (defun get-current-color ()
-    current-color)
+  (set! get-current-color
+	(lambda ()
+	  current-color))
 
-  (defun set-current-color (red green blue &optional (alpha 1))
-    (setq current-color (list red green blue alpha))
-    (glColor4f red green blue alpha)))
+  (set! set-current-color
+	(lambda* (red green blue #:optional (alpha 1))
+	  (set! current-color (list red green blue alpha))
+	  (glColor4f red green blue alpha))))
 
-(defun load-image (image-file &key (transparent-color nil))
+(define* (load-image image-file #:key transparent-color)
   (init-video-mode)
   (let ((loaded-image (IMG_Load image-file)))
-    (cond ((= loaded-image 0) nil)
-	  (t (let ((optimized-image (SDL_DisplayFormat loaded-image)))
-	       (SDL_FreeSurface loaded-image)
-	       (cond ((= optimized-image 0) nil)
-		     ((null transparent-color) optimized-image)
-		     (t (SDL_SetColorKey optimized-image
-					 SDL_SRCCOLORKEY
-					 (SDL_MapRGB (surface-format optimized-image)
-						     (car transparent-color)
-						     (cadr transparent-color)
-						     (caddr transparent-color)))
-			optimized-image)))))))
+    (cond ((= loaded-image 0) #f)
+	  (else (let ((optimized-image (SDL_DisplayFormat loaded-image)))
+		  (SDL_FreeSurface loaded-image)
+		  (cond ((= optimized-image 0) #f)
+			((not transparent-color) optimized-image)
+			(else (SDL_SetColorKey optimized-image
+					       SDL_SRCCOLORKEY
+					       (SDL_MapRGB (surface-format optimized-image)
+							   (car transparent-color)
+							   (cadr transparent-color)
+							   (caddr transparent-color)))
+			      optimized-image)))))))
 
 
 ;;; Audio Subsystem
-(let ((audio nil))
+(define init-audio #f)
+(define quit-audio #f)
 
-  (defun init-audio ()
-    (cond ((null audio) (progn (init-sdl) (setq audio (Mix_OpenAudio 22050 MIX_DEFAULT_FORMAT 2 4096))))
-	  (t audio)))
+(let ((audio #f))
+  (set! init-audio
+	(lambda ()
+	  (cond ((not audio) (begin (init-sdl) (set! audio (Mix_OpenAudio 22050 MIX_DEFAULT_FORMAT 2 4096))))
+		(else audio))))
 
-  (defun quit-audio ()
-    (setq audio (Mix_CloseAudio))))
-
-
-;;; Resources Manager
-(defstruct resource plist constructor destructor time)
-
-(defun make-resource-texture (&key filename min-filter mag-filter)
-  `(:type texture :filename ,filename :min-filter ,min-filter :mag-filter ,mag-filter))
-
-(defun make-resource-font (&key filename encoding)
-  `(:type font :filename ,filename :enconding ,encoding))
-
-(defun make-resource-sound (&key filename)
-  `(:type sound :filename ,filename))
-
-(defun make-resource-music (&key filename)
-  `(:type music :filename ,filename))
-
-(defmacro get-rtime (key)
-  `(resource-time (gethash ,key resources-table)))
-
-(defmacro get-rplist (key)
-  `(resource-plist (gethash ,key resources-table)))
-
-(defmacro get-rconstructor (key)
-  `(resource-constructor (gethash ,key resources-table)))
-
-(defmacro get-rdestructor (key)
-  `(resource-destructor (gethash ,key resources-table)))
-
-(let ((resources-table (make-hash-table :test 'equal))
-      (expiration-time 50000))
-
-  (defun set-expiration-time (new-time)
-    (setq expiration-time new-time))
-
-  (defun set-resource (key plist constructor destructor &key static)
-    (expire-resources)
-    (setf (gethash key resources-table)
-	  (make-resource :plist plist
-			 :constructor constructor
-			 :destructor destructor
-			 :time (if static t (SDL_GetTicks)))))
-
-  (defun get-resource (key)
-    (cond ((null (gethash key resources-table)) nil)
-	  (t (let ((time (get-rtime key)))
-	       (cond ((null time) (funcall (get-rconstructor key)))
-		     ((numberp time) (setf (get-rtime key) (SDL_GetTicks))))
-	       (get-rplist key)))))
-
-  (defun free-resource (key)
-    (funcall (get-rdestructor key))
-    (setf (get-rtime key) nil))
-
-  (defun expire-resource (key &optional (now (SDL_GetTicks)))
-    (let ((time (get-rtime key)))
-      (cond ((and (numberp time) (> (- now time) expiration-time)) (free-resource key)))))
-
-  (defun expire-resources ()
-    (maphash (lambda (key res) (expire-resource key)) resources-table))
-
-  (defun free-all-resources ()
-    (maphash (lambda (key res) (free-resource key)) resources-table)))
-
-
-;;; Connection with Gacela Clients
-(let (server-socket clients)
-  (defun start-server (port)
-    (cond ((null server-socket) (setq server-socket (si::socket port :server #'check-connections)))))
-
-  (defun check-connections ()
-    (cond ((and server-socket (listen server-socket)) (setq clients (cons (si::accept server-socket) clients)))))
-
-  (defun eval-from-clients ()
-    (labels ((eval-clients (cli-socks)
-			   (cond (cli-socks
-				  (let ((cli (car cli-socks)))
-				    (cond ((si::listen cli)
-					   (secure-block cli (eval (read cli)))
-					   (si::close cli)
-					   (eval-clients (cdr cli-socks)))
-					  (t
-					   (cons cli (eval-clients (cdr cli-socks))))))))))
-	    (setq clients (eval-clients clients))))
-
-  (defun stop-server ()
-    (cond (server-socket (si::close server-socket) (setq server-socket nil)))
-    (cond (clients
-	   (labels ((close-clients (cli-socks)
-				   (si::close (car cli-socks))
-				   (close-clients (cdr cli-socks))))
-		   (close-clients clients))
-	   (setq clients nil)))))
+  (set! quit-audio
+	(lambda ()
+	  (Mix_CloseAudio)
+	  (set! audio #f))))
 
 
 ;;; GaCeLa Functions
-(let (time (time-per-frame (/ 1000.0 *frames-per-second*)))
-  (defun set-frames-per-second (fps)
-    (setq time-per-frame (/ 1000.0 fps)))
+(define set-frames-per-second #f)
+(define init-frame-time #f)
+(define delay-frame #f)
 
-  (defun init-frame-time ()
-    (setq time (SDL_GetTicks)))
+(let ((time 0) (time-per-frame (/ 1000.0 *frames-per-second*)))
+  (set! set-frames-per-second
+	(lambda (fps)
+	  (set! time-per-frame (/ 1000.0 fps))))
 
-  (defun delay-frame ()
-    (let ((frame-time (- (SDL_GetTicks) time)))
-      (cond ((< frame-time time-per-frame)
-	     (SDL_Delay (- time-per-frame frame-time)))))))
+  (set! init-frame-time
+	(lambda ()
+	  (set! time (SDL_GetTicks))))
 
+  (set! delay-frame
+	(lambda ()
+	  (let ((frame-time (- (SDL_GetTicks) time)))
+	    (cond ((< frame-time time-per-frame)
+		   (SDL_Delay (- time-per-frame frame-time))))))))
+
+
+(define set-game-properties #f)
+(define get-game-properties #f)
 
 (let ((ptitle "") (pwidth *width-screen*) (pheight *height-screen*) (pbpp *bpp-screen*) (pfps *frames-per-second*) (pmode '2d))
-  (defun set-game-properties (&key title width height bpp fps mode)
-    (init-video-mode)
-    (when title (progn (setq ptitle title) (SDL_WM_SetCaption title "")))
-    (when (or width height bpp)
-      (progn
-	(when width (setq pwidth width))
-	(when height (setq pheight height))
-	(when bpp (setq pbpp bpp))
-	(resize-screen pwidth pheight pbpp)))
-    (when fps (progn (setq pfps fps) (set-frames-per-second fps)))
-    (when mode (progn (setq pmode mode) (if (eq mode '3d) (set-3d-mode) (set-2d-mode))))
-    (get-game-properties))
+  (set! set-game-properties
+	(lambda* (#:key title width height bpp fps mode)
+	  (init-video-mode)
+	  (if title (begin (set! ptitle title) (SDL_WM_SetCaption title "")))
+	  (if (or width height bpp)
+	      (begin
+		(if width (set! pwidth width))
+		(if height (set! pheight height))
+		(if bpp (set! pbpp bpp))
+		(resize-screen pwidth pheight pbpp)))
+	  (if fps (begin (set! pfps fps) (set-frames-per-second fps)))
+	  (if mode (begin (set! pmode mode) (if (eq? mode '3d) (set-3d-mode) (set-2d-mode))))
+	  (get-game-properties)))
 
-  (defun get-game-properties ()
-    (list :title ptitle :width pwidth :height pheight :bpp pbpp :fps pfps :mode pmode)))
+  (set! get-game-properties
+	(lambda ()
+	  (list :title ptitle :width pwidth :height pheight :bpp pbpp :fps pfps :mode pmode)))
 
 
 (defmacro run-game (&body code)

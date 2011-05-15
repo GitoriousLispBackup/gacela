@@ -54,6 +54,7 @@ main (int argc, char *argv[])
   scm_c_eval_string ("(set-repl-prompt! \"gacela>\")");
   scm_c_eval_string ("(use-modules (ice-9 readline))");
   scm_c_eval_string ("(activate-readline)");
+  scm_c_eval_string ("(use-modules (ice-9 optargs))");
   load_scheme_files (dirname (argv[0]));
   scm_shell (argc, argv);
 }
