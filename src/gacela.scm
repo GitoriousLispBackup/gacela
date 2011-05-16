@@ -106,13 +106,13 @@
   (glEnable GL_LIGHTING))
 
 (define (resize-screen-GL width height)
-  (glViewPort 0 0 width height)
+  (glViewport 0 0 width height)
   (glMatrixMode GL_PROJECTION)
   (glLoadIdentity)
   (cond ((3d-mode?) (let ((ratio (if (= height 0) width (/ width height))))
 		      (gluPerspective 45 ratio 0.1 100))) ;0.1
-	(else (let* ((w (/ width 2)) (-w (neg w)) (h (/ height 2)) (-h (neg h)))
-		(glOrtho -w w -h h 0 1))))
+	(else (let* ((w (/ width 2)) (h (/ height 2)))
+		(glOrtho (- w) w (- h) h 0 1))))
   (glMatrixMode GL_MODELVIEW)
   (glLoadIdentity)
   #t)
