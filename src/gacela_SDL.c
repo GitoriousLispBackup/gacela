@@ -21,6 +21,30 @@
 #include <SDL/SDL_mixer.h>
 #include "gacela_SDL.h"
 
+struct surface
+{
+  SCM name;
+};
+
+static scm_t_bits surface_tag;
+
+SCM
+gacela_make_surface (SCM name)
+{
+  SCM smob;
+  struct surface *surface;
+
+  surface = (struct surface *) scm_gc_malloc (sizeof (struct surface), "surface");
+
+  surface->name = SCM_BOOL_F;
+
+  SCM_NEWSMOB (smob, surface_tag, surface);
+
+  surface->name = name;
+
+  return smob;
+}
+
 SCM
 gacela_SDL_Init (SCM flags)
 {
@@ -246,6 +270,12 @@ gacela_Mix_CloseAudio (void)
 void*
 SDL_register_functions (void* data)
 {
+  surface_tag = scm_make_smob_type ("surface", sizeof (struct surface));
+  //  scm_set_smob_mark (surface_tag, mark_surface);
+  //  scm_set_smob_free (surface_tag, free_surface);
+  //  scm_set_smob_print (surface_tag, print_surface);
+  //  scm_set_smob_equalp (surface_tag, equalp_surface);
+
   scm_c_define ("SDL_INIT_TIMER", scm_from_int (SDL_INIT_TIMER));
   scm_c_define ("SDL_INIT_AUDIO", scm_from_int (SDL_INIT_AUDIO));
   scm_c_define ("SDL_INIT_VIDEO", scm_from_int (SDL_INIT_VIDEO));
@@ -313,6 +343,7 @@ SDL_register_functions (void* data)
   scm_c_define_gsubr ("Mix_FreeMusic", 1, 0, 0, gacela_Mix_FreeMusic);
   scm_c_define_gsubr ("Mix_FreeChunk", 1, 0, 0, gacela_Mix_FreeChunk);
   scm_c_define_gsubr ("Mix_CloseAudio", 0, 0, 0, gacela_Mix_CloseAudio);
+  scm_c_define_gsubr ("make-surface", 1, 0, 0, gacela_make_surface);
 
   return NULL;
 }
