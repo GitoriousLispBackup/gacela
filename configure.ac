@@ -2,6 +2,7 @@ AC_INIT([gacela], [0.5], [jsf@jsancho.org])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC
 GUILE_FLAGS
+CFLAGS="$CFLAGS -I/usr/include/freetype2"
 AC_CHECK_LIB(SDL,
 	main,
 	LIBS="$LIBS -lSDL",
@@ -26,6 +27,11 @@ AC_CHECK_LIB(GLU,
 	main,
 	LIBS="$LIBS -lGLU",
 	AC_MSG_ERROR([*** GLU library not found!])
+)
+AC_CHECK_LIB(ftgl,
+	main,
+	LIBS="$LIBS -lftgl",
+	AC_MSG_ERROR([*** FTGL library not found!])
 )
 AC_CONFIG_SRCDIR([src/gacela_SDL.h])
 AC_CONFIG_HEADERS([config.h])

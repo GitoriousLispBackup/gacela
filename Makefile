@@ -86,7 +86,7 @@ AUTOMAKE = ${SHELL} /home/jsancho/proyectos/gacela/trunk/missing --run automake-
 AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
-CFLAGS = -g -O2
+CFLAGS = -g -O2 -I/usr/include/freetype2
 CPPFLAGS = 
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
@@ -107,7 +107,7 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LDFLAGS = 
 LIBOBJS = 
-LIBS =  -lSDL -lSDL_image -lSDL_mixer -lGL -lGLU
+LIBS =  -lSDL -lSDL_image -lSDL_mixer -lGL -lGLU -lftgl
 LTLIBOBJS = 
 MAKEINFO = ${SHELL} /home/jsancho/proyectos/gacela/trunk/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p

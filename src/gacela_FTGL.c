@@ -1,0 +1,103 @@
+/* Gacela, a GNU Guile extension for fast games development
+   Copyright (C) 2009 by Javier Sancho Fernandez <jsf at jsancho dot org>
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include <libguile.h>
+#include <FTGL/ftgl.h>
+#include "gacela_FTGL.h"
+
+struct font
+{
+  SCM filename;
+  FTGLfont *font_address;
+};
+
+static scm_t_bits font_tag;
+
+
+SCM
+gacela_ftglCreateTextureFont (SCM file)
+{
+  SCM smob;
+  struct font *font;
+  FTGLfont *font_address = NULL;
+
+  font_address = ftglCreateTextureFont (scm_to_locale_string (file));
+
+  if (font_address) {
+    font = (struct font *) scm_gc_malloc (sizeof (struct font), "font");
+
+    font->filename = SCM_BOOL_F;
+    font->font_address = NULL;
+
+    SCM_NEWSMOB (smob, font_tag, font);
+
+    font->filename = file;
+    font->font_address = font_address;
+
+    return smob;
+  }
+  else {
+    return SCM_UNSPECIFIED;
+  }
+}
+
+SCM
+gacela_ftglSetFontFaceSize (SCM font, SCM size, SCM res)
+{
+  return scm_from_int (ftglSetFontFaceSize ((FTGLfont *)scm_to_int (font), scm_to_int (size), scm_to_int (res)));
+}
+
+SCM
+gacela_ftglSetFontCharMap (SCM font, SCM encoding)
+{
+  return scm_from_int (ftglSetFontCharMap ((FTGLfont *)scm_to_int (font), scm_to_int (encoding)));
+}
+
+SCM
+gacela_ftglRenderFont (SCM font, SCM string, SCM mode)
+{
+  ftglRenderFont ((FTGLfont *)scm_to_int (font), scm_to_locale_string(string), scm_to_int (mode));
+  return SCM_UNSPECIFIED;
+}
+
+SCM
+gacela_ftglDestroyFont (SCM font)
+{
+  ftglDestroyFont ((FTGLfont *)scm_to_int (font));
+  return SCM_UNSPECIFIED;
+}
+
+void*
+FTGL_register_functions (void* data)
+{
+  font_tag = scm_make_smob_type ("font", sizeof (struct font));
+  //  scm_set_smob_mark (surface_tag, mark_surface);
+  //  scm_set_smob_free (surface_tag, free_surface);
+  //  scm_set_smob_print (surface_tag, print_surface);
+  //  scm_set_smob_equalp (surface_tag, equalp_surface);
+
+  scm_c_define ("ft_encoding_unicode", scm_from_int (ft_encoding_unicode));
+  scm_c_define ("FTGL_RENDER_ALL", scm_from_int (FTGL_RENDER_ALL));
+
+  scm_c_define_gsubr ("ftglCreateTextureFont", 1, 0, 0, gacela_ftglCreateTextureFont);
+  scm_c_define_gsubr ("ftglSetFontFaceSize", 3, 0, 0, gacela_ftglSetFontFaceSize);
+  scm_c_define_gsubr ("ftglSetFontCharMap", 2, 0, 0, gacela_ftglSetFontCharMap);
+  scm_c_define_gsubr ("ftglRenderFont", 3, 0, 0, gacela_ftglRenderFont);
+  scm_c_define_gsubr ("ftglDestroyFont", 1, 0, 0, gacela_ftglDestroyFont);
+
+  return NULL;
+}

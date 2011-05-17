@@ -19,19 +19,15 @@
 #include <libgen.h>
 #include "gacela_SDL.h"
 #include "gacela_GL.h"
+#include "gacela_FTGL.h"
 
 static void*
 register_functions (void* data)
 {
   SDL_register_functions (NULL);
   GL_register_functions (NULL);
+  FTGL_register_functions (NULL);
   return NULL;
-}
-
-void
-load_scheme_files (char *path)
-{
-  load_scheme_file (path, "gacela.scm");
 }
 
 void
@@ -44,6 +40,12 @@ load_scheme_file (char *path, char *filename)
   strcat (fn, filename);
 
   scm_c_primitive_load (fn);
+}
+
+void
+load_scheme_files (char *path)
+{
+  load_scheme_file (path, "gacela.scm");
 }
 
 int
