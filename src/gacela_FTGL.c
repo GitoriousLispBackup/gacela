@@ -57,6 +57,41 @@ get_font_address (SCM font_smob)
 }
 
 SCM
+mark_font (SCM font_smob)
+{
+  struct font *font = (struct font *) SCM_SMOB_DATA (font_smob);
+
+  scm_gc_mark (font->filename);
+     
+  return SCM_BOOL_F;
+}
+
+size_t
+free_font (SCM font_smob)
+{
+  struct font *font = (struct font *) SCM_SMOB_DATA (font_smob);
+
+  ftglDestroyFont (font->font_address);
+  scm_gc_free (font, sizeof (struct font), "font");
+
+  return 0;
+}
+
+static int
+print_font (SCM font_smob, SCM port, scm_print_state *pstate)
+{
+  struct font *font = (struct font *) SCM_SMOB_DATA (font_smob);
+
+  scm_puts ("#<font \"", port);
+  scm_display (font->filename, port);
+  scm_puts ("\">", port);
+
+  /* non-zero means success */
+  return 1;
+}
+
+
+SCM
 gacela_ftglCreateTextureFont (SCM file)
 {
   FTGLfont *font_address = NULL;
@@ -80,30 +115,24 @@ gacela_ftglSetFontFaceSize (SCM font, SCM size, SCM res)
 SCM
 gacela_ftglSetFontCharMap (SCM font, SCM encoding)
 {
-  return scm_from_int (ftglSetFontCharMap ((FTGLfont *)scm_to_int (font), scm_to_int (encoding)));
+  return scm_from_int (ftglSetFontCharMap (get_font_address (font), scm_to_int (encoding)));
 }
 
 SCM
 gacela_ftglRenderFont (SCM font, SCM string, SCM mode)
 {
-  ftglRenderFont ((FTGLfont *)scm_to_int (font), scm_to_locale_string(string), scm_to_int (mode));
+  ftglRenderFont (get_font_address (font), scm_to_locale_string(string), scm_to_int (mode));
   return SCM_UNSPECIFIED;
 }
 
-SCM
-gacela_ftglDestroyFont (SCM font)
-{
-  ftglDestroyFont ((FTGLfont *)scm_to_int (font));
-  return SCM_UNSPECIFIED;
-}
 
 void*
 FTGL_register_functions (void* data)
 {
   font_tag = scm_make_smob_type ("font", sizeof (struct font));
-  //  scm_set_smob_mark (surface_tag, mark_surface);
-  //  scm_set_smob_free (surface_tag, free_surface);
-  //  scm_set_smob_print (surface_tag, print_surface);
+  scm_set_smob_mark (font_tag, mark_font);
+  scm_set_smob_free (font_tag, free_font);
+  scm_set_smob_print (font_tag, print_font);
   //  scm_set_smob_equalp (surface_tag, equalp_surface);
 
   scm_c_define ("ft_encoding_unicode", scm_from_int (ft_encoding_unicode));
@@ -113,7 +142,6 @@ FTGL_register_functions (void* data)
   scm_c_define_gsubr ("ftglSetFontFaceSize", 3, 0, 0, gacela_ftglSetFontFaceSize);
   scm_c_define_gsubr ("ftglSetFontCharMap", 2, 0, 0, gacela_ftglSetFontCharMap);
   scm_c_define_gsubr ("ftglRenderFont", 3, 0, 0, gacela_ftglRenderFont);
-  scm_c_define_gsubr ("ftglDestroyFont", 1, 0, 0, gacela_ftglDestroyFont);
 
   return NULL;
 }
