@@ -27,28 +27,44 @@ struct font
 
 static scm_t_bits font_tag;
 
+SCM
+make_font (SCM file, FTGLfont *font_address)
+{
+  SCM smob;
+  struct font *font;
+
+  font = (struct font *) scm_gc_malloc (sizeof (struct font), "font");
+
+  font->filename = SCM_BOOL_F;
+  font->font_address = NULL;
+
+  SCM_NEWSMOB (smob, font_tag, font);
+
+  font->filename = file;
+  font->font_address = font_address;
+
+  return smob;
+}
+
+FTGLfont *
+get_font_address (SCM font_smob)
+{
+  struct font *font;
+
+  scm_assert_smob_type (font_tag, font_smob);
+  font = (struct font *) SCM_SMOB_DATA (font_smob);
+  return font->font_address;
+}
 
 SCM
 gacela_ftglCreateTextureFont (SCM file)
 {
-  SCM smob;
-  struct font *font;
   FTGLfont *font_address = NULL;
 
   font_address = ftglCreateTextureFont (scm_to_locale_string (file));
 
   if (font_address) {
-    font = (struct font *) scm_gc_malloc (sizeof (struct font), "font");
-
-    font->filename = SCM_BOOL_F;
-    font->font_address = NULL;
-
-    SCM_NEWSMOB (smob, font_tag, font);
-
-    font->filename = file;
-    font->font_address = font_address;
-
-    return smob;
+    return make_font (file, font_address);
   }
   else {
     return SCM_UNSPECIFIED;
@@ -58,7 +74,7 @@ gacela_ftglCreateTextureFont (SCM file)
 SCM
 gacela_ftglSetFontFaceSize (SCM font, SCM size, SCM res)
 {
-  return scm_from_int (ftglSetFontFaceSize ((FTGLfont *)scm_to_int (font), scm_to_int (size), scm_to_int (res)));
+  return scm_from_int (ftglSetFontFaceSize (get_font_address (font), scm_to_int (size), scm_to_int (res)));
 }
 
 SCM
