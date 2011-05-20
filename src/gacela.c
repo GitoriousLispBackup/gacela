@@ -46,6 +46,7 @@ void
 load_scheme_files (char *path)
 {
   load_scheme_file (path, "gacela.scm");
+  load_scheme_file (path, "gacela_ttf.scm");
 }
 
 int
