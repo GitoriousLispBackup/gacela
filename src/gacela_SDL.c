@@ -88,7 +88,7 @@ gacela_SDL_FreeSurface (SCM surface)
 SCM
 gacela_SDL_Delay (SCM ms)
 {
-  SDL_Delay (scm_to_int (ms));
+  SDL_Delay ((int)scm_to_double (ms));
   return SCM_UNSPECIFIED;
 }
 
