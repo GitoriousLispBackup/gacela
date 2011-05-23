@@ -94,15 +94,14 @@ print_font (SCM font_smob, SCM port, scm_print_state *pstate)
 SCM
 gacela_ftglCreateTextureFont (SCM file)
 {
-  FTGLfont *font_address = NULL;
-
-  font_address = ftglCreateTextureFont (scm_to_locale_string (file));
+  FTGLfont *font_address = ftglCreateTextureFont (scm_to_locale_string (file));
 
   if (font_address) {
     return make_font (file, font_address);
   }
   else {
-    return SCM_UNSPECIFIED;
+    //    return SCM_UNSPECIFIED;
+    return SCM_UNDEFINED;
   }
 }
 

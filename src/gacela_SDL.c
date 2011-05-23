@@ -17,33 +17,98 @@
 
 #include <libguile.h>
 #include <SDL/SDL.h>
+#include <SDL/SDL_events.h>
 #include <SDL/SDL_image.h>
 #include <SDL/SDL_mixer.h>
 #include "gacela_SDL.h"
 
 struct surface
 {
-  SCM name;
+  SCM filename;
+  SDL_Surface *surface_address;
 };
 
 static scm_t_bits surface_tag;
 
 SCM
-gacela_make_surface (SCM name)
+make_surface (SCM file, SDL_Surface *surface_address)
 {
   SCM smob;
   struct surface *surface;
 
   surface = (struct surface *) scm_gc_malloc (sizeof (struct surface), "surface");
 
-  surface->name = SCM_BOOL_F;
+  surface->filename = SCM_BOOL_F;
+  surface->surface_address = NULL;
 
   SCM_NEWSMOB (smob, surface_tag, surface);
 
-  surface->name = name;
+  surface->filename = file;
+  surface->surface_address = surface_address;
 
   return smob;
 }
+
+SDL_Surface *
+get_surface_address (SCM surface_smob)
+{
+  struct surface *surface;
+
+  scm_assert_smob_type (surface_tag, surface_smob);
+  surface = (struct surface *) SCM_SMOB_DATA (surface_smob);
+  return surface->surface_address;
+}
+
+SCM
+get_surface_width (SCM surface_smob)
+{
+  SDL_Surface *surface = get_surface_address (surface_smob);
+
+  return scm_from_int (surface->w);
+}
+
+SCM
+get_surface_height (SCM surface_smob)
+{
+  SDL_Surface *surface = get_surface_address (surface_smob);
+
+  return scm_from_int (surface->h);
+}
+
+SCM
+mark_surface (SCM surface_smob)
+{
+  struct surface *surface = (struct surface *) SCM_SMOB_DATA (surface_smob);
+
+  scm_gc_mark (surface->filename);
+     
+  return SCM_BOOL_F;
+}
+
+size_t
+free_surface (SCM surface_smob)
+{
+  struct surface *surface = (struct surface *) SCM_SMOB_DATA (surface_smob);
+
+  SDL_FreeSurface (surface->surface_address);
+  scm_gc_free (surface, sizeof (struct surface), "surface");
+
+  return 0;
+}
+
+static int
+print_surface (SCM surface_smob, SCM port, scm_print_state *pstate)
+{
+  struct surface *surface = (struct surface *) SCM_SMOB_DATA (surface_smob);
+
+  scm_puts ("#<surface \"", port);
+  scm_display (surface->filename, port);
+  scm_puts ("\">", port);
+
+  /* non-zero means success */
+  return 1;
+}
+
 
 SCM
 gacela_SDL_Init (SCM flags)
@@ -61,8 +126,15 @@ gacela_SDL_Quit (void)
 SCM
 gacela_SDL_SetVideoMode (SCM width, SCM height, SCM bpp, SCM flags)
 {
-  return scm_from_int ((int)SDL_SetVideoMode (scm_to_int (width), scm_to_int (height), \
-					      scm_to_int (bpp), scm_to_int (flags)));
+  SDL_Surface *screen = SDL_SetVideoMode (scm_to_int (width), scm_to_int (height), \
+					  scm_to_int (bpp), scm_to_int (flags));
+
+  if (screen) {
+    return make_surface (scm_from_locale_string ("screen"), screen);
+  }
+  else {
+    return SCM_UNSPECIFIED;
+  }
 }
 
 SCM
@@ -75,14 +147,7 @@ gacela_SDL_WM_SetCaption (SCM title, SCM icon)
 SCM
 gacela_SDL_Flip (SCM screen)
 {
-  return scm_from_int (SDL_Flip ((SDL_Surface *)scm_to_int (screen)));
-}
-
-SCM
-gacela_SDL_FreeSurface (SCM surface)
-{
-  SDL_FreeSurface ((SDL_Surface *)scm_to_int (surface));
-  return SCM_UNSPECIFIED;
+  return scm_from_int (SDL_Flip (get_surface_address (screen)));
 }
 
 SCM
@@ -101,7 +166,7 @@ gacela_SDL_GetTicks (void)
 SCM
 gacela_SDL_DisplayFormat (SCM surface)
 {
-  return scm_from_int ((int)SDL_DisplayFormat ((SDL_Surface *)scm_to_int (surface)));
+  return scm_from_int ((int)SDL_DisplayFormat (get_surface_address (surface)));
 }
 
 SCM
@@ -113,19 +178,33 @@ gacela_SDL_MapRGB (SCM format, SCM r, SCM g, SCM b)
 SCM
 gacela_SDL_SetColorKey (SCM surface, SCM flag, SCM key)
 {
-  return scm_from_int (SDL_SetColorKey ((SDL_Surface *)scm_to_int (surface), scm_to_int (flag), scm_to_int (key)));
+  return scm_from_int (SDL_SetColorKey (get_surface_address (surface), scm_to_int (flag), scm_to_int (key)));
 }
 
 SCM
 gacela_SDL_LoadBMP (SCM file)
 {
-  return scm_from_int ((int)SDL_LoadBMP (scm_to_locale_string (file)));
+  SDL_Surface *image = SDL_LoadBMP (scm_to_locale_string (file));
+
+  if (image) {
+    return make_surface (file, image);
+  }
+  else {
+    return SCM_UNSPECIFIED;
+  }
 }
 
 SCM
 gacela_IMG_Load (SCM filename)
 {
-  return scm_from_int ((int)IMG_Load (scm_to_locale_string (filename)));
+  SDL_Surface *image = IMG_Load (scm_to_locale_string (filename));
+
+  if (image) {
+    return make_surface (filename, image);
+  }
+  else {
+    return SCM_UNSPECIFIED;
+  }
 }
 
 SCM
@@ -271,10 +350,11 @@ void*
 SDL_register_functions (void* data)
 {
   surface_tag = scm_make_smob_type ("surface", sizeof (struct surface));
-  //  scm_set_smob_mark (surface_tag, mark_surface);
-  //  scm_set_smob_free (surface_tag, free_surface);
-  //  scm_set_smob_print (surface_tag, print_surface);
-  //  scm_set_smob_equalp (surface_tag, equalp_surface);
+  scm_set_smob_mark (surface_tag, mark_surface);
+  scm_set_smob_free (surface_tag, free_surface);
+  scm_set_smob_print (surface_tag, print_surface);
+  scm_c_define_gsubr ("surface-w", 1, 0, 0, get_surface_width);
+  scm_c_define_gsubr ("surface-h", 1, 0, 0, get_surface_height);
 
   scm_c_define ("SDL_INIT_TIMER", scm_from_int (SDL_INIT_TIMER));
   scm_c_define ("SDL_INIT_AUDIO", scm_from_int (SDL_INIT_AUDIO));
@@ -312,12 +392,38 @@ SDL_register_functions (void* data)
 
   scm_c_define ("MIX_DEFAULT_FORMAT", scm_from_int (MIX_DEFAULT_FORMAT));
 
+  scm_c_define ("SDL_NOEVENT", scm_from_int (SDL_NOEVENT));
+  scm_c_define ("SDL_ACTIVEEVENT", scm_from_int (SDL_ACTIVEEVENT));
+  scm_c_define ("SDL_KEYDOWN", scm_from_int (SDL_KEYDOWN));
+  scm_c_define ("SDL_KEYUP", scm_from_int (SDL_KEYUP));
+  scm_c_define ("SDL_MOUSEMOTION", scm_from_int (SDL_MOUSEMOTION));
+  scm_c_define ("SDL_MOUSEBUTTONDOWN", scm_from_int (SDL_MOUSEBUTTONDOWN));
+  scm_c_define ("SDL_MOUSEBUTTONUP", scm_from_int (SDL_MOUSEBUTTONUP));
+  scm_c_define ("SDL_JOYAXISMOTION", scm_from_int (SDL_JOYAXISMOTION));
+  scm_c_define ("SDL_JOYBALLMOTION", scm_from_int (SDL_JOYBALLMOTION));
+  scm_c_define ("SDL_JOYHATMOTION", scm_from_int (SDL_JOYHATMOTION));
+  scm_c_define ("SDL_JOYBUTTONDOWN", scm_from_int (SDL_JOYBUTTONDOWN));
+  scm_c_define ("SDL_JOYBUTTONUP", scm_from_int (SDL_JOYBUTTONUP));
+  scm_c_define ("SDL_QUIT", scm_from_int (SDL_QUIT));
+  scm_c_define ("SDL_SYSWMEVENT", scm_from_int (SDL_SYSWMEVENT));
+  scm_c_define ("SDL_EVENT_RESERVEDA", scm_from_int (SDL_EVENT_RESERVEDA));
+  scm_c_define ("SDL_EVENT_RESERVEDB", scm_from_int (SDL_EVENT_RESERVEDB));
+  scm_c_define ("SDL_VIDEORESIZE", scm_from_int (SDL_VIDEORESIZE));
+  scm_c_define ("SDL_VIDEOEXPOSE", scm_from_int (SDL_VIDEOEXPOSE));
+  scm_c_define ("SDL_EVENT_RESERVED2", scm_from_int (SDL_EVENT_RESERVED2));
+  scm_c_define ("SDL_EVENT_RESERVED3", scm_from_int (SDL_EVENT_RESERVED3));
+  scm_c_define ("SDL_EVENT_RESERVED4", scm_from_int (SDL_EVENT_RESERVED4));
+  scm_c_define ("SDL_EVENT_RESERVED5", scm_from_int (SDL_EVENT_RESERVED5));
+  scm_c_define ("SDL_EVENT_RESERVED6", scm_from_int (SDL_EVENT_RESERVED6));
+  scm_c_define ("SDL_EVENT_RESERVED7", scm_from_int (SDL_EVENT_RESERVED7));
+  scm_c_define ("SDL_USEREVENT", scm_from_int (SDL_USEREVENT));
+  scm_c_define ("SDL_NUMEVENTS", scm_from_int (SDL_NUMEVENTS));
+
   scm_c_define_gsubr ("SDL_Init", 1, 0, 0, gacela_SDL_Init);
   scm_c_define_gsubr ("SDL_Quit", 0, 0, 0, gacela_SDL_Quit);
   scm_c_define_gsubr ("SDL_SetVideoMode", 4, 0, 0, gacela_SDL_SetVideoMode);
   scm_c_define_gsubr ("SDL_WM_SetCaption", 2, 0, 0, gacela_SDL_WM_SetCaption);
   scm_c_define_gsubr ("SDL_Flip", 1, 0, 0, gacela_SDL_Flip);
-  scm_c_define_gsubr ("SDL_FreeSurface", 1, 0, 0, gacela_SDL_FreeSurface);
   scm_c_define_gsubr ("SDL_Delay", 1, 0, 0, gacela_SDL_Delay);
   scm_c_define_gsubr ("SDL_GetTicks", 0, 0, 0, gacela_SDL_GetTicks);
   scm_c_define_gsubr ("SDL_DisplayFormat", 1, 0, 0, gacela_SDL_DisplayFormat);
@@ -343,7 +449,6 @@ SDL_register_functions (void* data)
   scm_c_define_gsubr ("Mix_FreeMusic", 1, 0, 0, gacela_Mix_FreeMusic);
   scm_c_define_gsubr ("Mix_FreeChunk", 1, 0, 0, gacela_Mix_FreeChunk);
   scm_c_define_gsubr ("Mix_CloseAudio", 0, 0, 0, gacela_Mix_CloseAudio);
-  scm_c_define_gsubr ("make-surface", 1, 0, 0, gacela_make_surface);
 
   return NULL;
 }
