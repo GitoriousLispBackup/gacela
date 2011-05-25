@@ -133,7 +133,7 @@ gacela_SDL_SetVideoMode (SCM width, SCM height, SCM bpp, SCM flags)
     return make_surface (scm_from_locale_string ("screen"), screen);
   }
   else {
-    return SCM_UNSPECIFIED;
+    return SCM_BOOL_F;
   }
 }
 
@@ -190,7 +190,7 @@ gacela_SDL_LoadBMP (SCM file)
     return make_surface (file, image);
   }
   else {
-    return SCM_UNSPECIFIED;
+    return SCM_BOOL_F;
   }
 }
 
@@ -203,7 +203,7 @@ gacela_IMG_Load (SCM filename)
     return make_surface (filename, image);
   }
   else {
-    return SCM_UNSPECIFIED;
+    return SCM_BOOL_F;
   }
 }
 

@@ -100,8 +100,7 @@ gacela_ftglCreateTextureFont (SCM file)
     return make_font (file, font_address);
   }
   else {
-    //    return SCM_UNSPECIFIED;
-    return SCM_UNDEFINED;
+    return SCM_BOOL_F;
   }
 }
 

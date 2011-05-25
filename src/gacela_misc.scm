@@ -15,3 +15,8 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+(define (nearest-power-of-two n)
+  (define (power p n)
+    (cond ((> (* p 2) n) p)
+	  (else (power (* p 2) n))))
+  (power 1 n))

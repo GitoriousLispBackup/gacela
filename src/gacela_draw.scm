@@ -62,40 +62,33 @@
 (define (load-image-for-texture filename)
   (init-video-mode)
   (let ((image (IMG_Load filename)))
-    (cond ((not (= image 0))
-	   (let* ((width (surface-w image)) (height (surface-h image))
+    (cond (image
+	   (let* ((width (get-surface-width image)) (height (get-surface-height image))
 		  (power-2 (nearest-power-of-two (min width height)))
-		  resized-image)
+		  (resized-image #f))
 	     (cond ((and (= width power-2) (= height power-2)) (values image width height))
-		   (t (setq resized-image (resize-surface image power-2 power-2))
-		      (SDL_FreeSurface image)
-		      (cond ((/= resized-image 0) (values resized-image width height))))))))))
+		   (else (set! resized-image (resize-surface image power-2 power-2))
+			 (if resized-image (values resized-image width height)))))))))
 
-(defun resize-surface (surface width height)
-  (let ((old-width (surface-w surface)) (old-height (surface-h surface)))
+(define (resize-surface surface width height)
+  (let ((old-width (get-surface-width surface)) (old-height (get-surface-height surface)))
     (cond ((and (= width old-width) (= height old-height)) surface)
-	  (t (let ((zoomx (/ (+ width 0.5) old-width)) (zoomy (/ (+ height 0.5) old-height)))
+	  (else (let ((zoomx (/ (+ width 0.5) old-width)) (zoomy (/ (+ height 0.5) old-height)))
 	       (zoomSurface surface zoomx zoomy 0))))))
 
-(defun load-texture (filename &key (min-filter GL_LINEAR) (mag-filter GL_LINEAR) static)
-  (let ((key (make-resource-texture :filename filename :min-filter min-filter :mag-filter mag-filter)))
-    (cond ((get-resource key) key)
-	  (t (true-load-texture filename min-filter mag-filter static)))))
-
-(defun true-load-texture (filename min-filter mag-filter static)
-  (let ((key (make-resource-texture :filename filename :min-filter min-filter :mag-filter mag-filter)))
-    (progn-textures
-     (multiple-value-bind
-      (image real-w real-h) (load-image-for-texture filename)
-      (cond (image
-	     (let ((width (surface-w image)) (height (surface-h image))
-		   (byteorder (if (= (SDL_ByteOrder) SDL_LIL_ENDIAN)
+(define* (load-texture filename #:key (min-filter GL_LINEAR) (mag-filter GL_LINEAR))
+  (progn-textures
+   (receive
+    (image real-w real-h) (load-image-for-texture filename)
+    (cond (image
+	   (let ((width (get-surface-width image)) (height (get-surface-height image))
+		 (byteorder (if (= (SDL_ByteOrder) SDL_LIL_ENDIAN)
 				(if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)
 				(if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)))
-		   (texture (car (glGenTextures 1))))
+		 (texture (car (glGenTextures 1))))
 
-	       (glBindTexture GL_TEXTURE_2D texture)
-	       (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
+	     (glBindTexture GL_TEXTURE_2D texture)
+	     (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
 	       (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
 	       (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
 	       (SDL_FreeSurface image)
