@@ -20,6 +20,55 @@
 #include <GL/glu.h>
 #include "gacela_GL.h"
 
+
+struct glTexture
+{
+  GLuint texture_id;
+};
+
+static scm_t_bits glTexture_tag;
+
+SCM
+make_glTexture (GLuint texture_id)
+{
+  SCM smob;
+  struct glTexture *glTexture;
+
+  glTexture = (struct glTexture *) scm_gc_malloc (sizeof (struct glTexture), "glTexture");
+
+  glTexture->texture_id = 0;
+
+  SCM_NEWSMOB (smob, glTexture_tag, glTexture);
+
+  glTexture->texture_id = texture_id;
+
+  return smob;
+}
+
+GLuint
+get_glTexture_id (SCM glTexture_smob)
+{
+  struct glTexture *glTexture;
+
+  scm_assert_smob_type (glTexture_tag, glTexture_smob);
+  glTexture = (struct glTexture *) SCM_SMOB_DATA (glTexture_smob);
+  return glTexture->texture_id;
+}
+
+size_t
+free_glTexture (SCM glTexture_smob)
+{
+  struct glTexture *glTexture = (struct glTexture *) SCM_SMOB_DATA (glTexture_smob);
+  GLuint text[1];
+
+  text[0] = glTexture->texture_id;
+  glDeleteTextures (1, &text[0]);
+  scm_gc_free (glTexture, sizeof (struct glTexture), "glTexture");
+
+  return 0;
+}
+
+
 SCM
 gacela_glBegin (SCM mode)
 {
@@ -295,6 +344,9 @@ gacela_gluLookAt (SCM eyeX, SCM eyeY, SCM eyeZ, SCM centerX, SCM centerY, SCM ce
 void*
 GL_register_functions (void* data)
 {
+  glTexture_tag = scm_make_smob_type ("glTexture", sizeof (struct glTexture));
+  scm_set_smob_free (glTexture_tag, free_glTexture);
+
   // Data types
   scm_c_define ("GL_UNSIGNED_BYTE", scm_from_int (GL_UNSIGNED_BYTE));
 
