@@ -76,6 +76,22 @@ get_surface_height (SCM surface_smob)
 }
 
 SCM
+get_surface_pixels (SCM surface_smob)
+{
+  SDL_Surface *surface = get_surface_address (surface_smob);
+
+  return scm_from_int (surface->pixels);
+}
+
+SCM
+get_surface_format_BytesPerPixel (SCM surface_smob)
+{
+  SDL_Surface *surface = get_surface_address (surface_smob);
+
+  return scm_from_int (surface->format->BytesPerPixel);
+}
+
+SCM
 mark_surface (SCM surface_smob)
 {
   struct surface *surface = (struct surface *) SCM_SMOB_DATA (surface_smob);
@@ -355,6 +371,8 @@ SDL_register_functions (void* data)
   scm_set_smob_print (surface_tag, print_surface);
   scm_c_define_gsubr ("surface-w", 1, 0, 0, get_surface_width);
   scm_c_define_gsubr ("surface-h", 1, 0, 0, get_surface_height);
+  scm_c_define_gsubr ("surface-pixels", 1, 0, 0, get_surface_pixels);
+  scm_c_define_gsubr ("surface-format-BytesPerPixel", 1, 0, 0, get_surface_format_BytesPerPixel);
 
   scm_c_define ("SDL_INIT_TIMER", scm_from_int (SDL_INIT_TIMER));
   scm_c_define ("SDL_INIT_AUDIO", scm_from_int (SDL_INIT_AUDIO));

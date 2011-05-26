@@ -63,7 +63,7 @@
   (init-video-mode)
   (let ((image (IMG_Load filename)))
     (cond (image
-	   (let* ((width (get-surface-width image)) (height (get-surface-height image))
+	   (let* ((width (surface-w image)) (height (surface-h image))
 		  (power-2 (nearest-power-of-two (min width height)))
 		  (resized-image #f))
 	     (cond ((and (= width power-2) (= height power-2)) (values image width height))
@@ -71,7 +71,7 @@
 			 (if resized-image (values resized-image width height)))))))))
 
 (define (resize-surface surface width height)
-  (let ((old-width (get-surface-width surface)) (old-height (get-surface-height surface)))
+  (let ((old-width (surface-w surface)) (old-height (surface-h surface)))
     (cond ((and (= width old-width) (= height old-height)) surface)
 	  (else (let ((zoomx (/ (+ width 0.5) old-width)) (zoomy (/ (+ height 0.5) old-height)))
 	       (zoomSurface surface zoomx zoomy 0))))))
@@ -89,9 +89,8 @@
 
 	     (glBindTexture GL_TEXTURE_2D texture)
 	     (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
-	       (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
-	       (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
-	       (SDL_FreeSurface image)
+	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
+	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
 	       (set-resource key
 			     `(:id-texture ,texture :width ,real-w :height ,real-h)
 			     (lambda () (true-load-texture filename min-filter mag-filter static))
