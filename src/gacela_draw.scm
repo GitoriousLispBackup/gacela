@@ -91,22 +91,17 @@
 	     (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
 	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
 	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
-	       (set-resource key
-			     `(:id-texture ,texture :width ,real-w :height ,real-h)
-			     (lambda () (true-load-texture filename min-filter mag-filter static))
-			     (lambda () (glDeleteTextures 1 `(,texture)))
-			     :static static)
-	       key)))))))
+	     texture))))))
 
-(defun draw-image (filename &ptional (zoom 1))
+(define* (draw-image filename #:optional (zoom 1))
   (let ((texture (load-texture filename)))
     (cond (texture (draw-texture texture zoom)))))
 
-(defun draw-texture (texture &optional (zoom 1))
+(define* (draw-texture texture #:optional (zoom 1))
   (cond (texture
-	 (let ((width (getf (get-resource texture) :width))
-	       (height (getf (get-resource texture) :height)))
-	   (draw-rectangle (* zoom width) (* zoom height) :texture texture)))))
+	 (let ((width (texture-w texture))
+	       (height (texture-h texture)))
+	   (draw-rectangle (* zoom width) (* zoom height) #:texture texture)))))
 
 (defun draw-quad (v1 v2 v3 v4 &key texture)
   (let ((id-texture (getf (get-resource texture) :id-texture)))

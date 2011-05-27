@@ -24,6 +24,7 @@
 struct glTexture
 {
   GLuint texture_id;
+  int width, height;
 };
 
 static scm_t_bits glTexture_tag;
@@ -53,6 +54,26 @@ get_glTexture_id (SCM glTexture_smob)
   scm_assert_smob_type (glTexture_tag, glTexture_smob);
   glTexture = (struct glTexture *) SCM_SMOB_DATA (glTexture_smob);
   return glTexture->texture_id;
+}
+
+SCM
+get_glTexture_width (SCM glTexture_smob)
+{
+  struct glTexture *glTexture;
+
+  scm_assert_smob_type (glTexture_tag, glTexture_smob);
+  glTexture = (struct glTexture *) SCM_SMOB_DATA (glTexture_smob);
+  return scm_from_int (glTexture->width);
+}
+
+SCM
+get_glTexture_height (SCM glTexture_smob)
+{
+  struct glTexture *glTexture;
+
+  scm_assert_smob_type (glTexture_tag, glTexture_smob);
+  glTexture = (struct glTexture *) SCM_SMOB_DATA (glTexture_smob);
+  return scm_from_int (glTexture->height);
 }
 
 size_t
@@ -238,7 +259,7 @@ gacela_glDeleteTextures (SCM n, SCM textures)
 SCM
 gacela_glBindTexture (SCM target, SCM texture)
 {
-  glBindTexture (scm_to_int (target), scm_to_int (texture));
+  glBindTexture (scm_to_int (target), get_glTexture_id (texture));
   return SCM_UNSPECIFIED;
 }
 
@@ -346,6 +367,8 @@ GL_register_functions (void* data)
 {
   glTexture_tag = scm_make_smob_type ("glTexture", sizeof (struct glTexture));
   scm_set_smob_free (glTexture_tag, free_glTexture);
+  scm_c_define_gsubr ("texture-w", 1, 0, 0, get_glTexture_width);
+  scm_c_define_gsubr ("texture-h", 1, 0, 0, get_glTexture_height);
 
   // Data types
   scm_c_define ("GL_UNSIGNED_BYTE", scm_from_int (GL_UNSIGNED_BYTE));
