@@ -103,44 +103,51 @@
 	       (height (texture-h texture)))
 	   (draw-rectangle (* zoom width) (* zoom height) #:texture texture)))))
 
-(defun draw-quad (v1 v2 v3 v4 &key texture)
-  (let ((id-texture (getf (get-resource texture) :id-texture)))
-    (cond (id-texture
-	   (progn-textures
-	    (glBindTexture GL_TEXTURE_2D id-texture)
-	    (begin-draw 4)
-	    (draw-vertex v1 :texture-coord '(0 0))
-	    (draw-vertex v2 :texture-coord '(1 0))
-	    (draw-vertex v3 :texture-coord '(1 1))
-	    (draw-vertex v4 :texture-coord '(0 1))
-	    (glEnd)))
-	  ((consp texture) (with-color texture (draw v1 v2 v3 v4)))
-	  (t (draw v1 v2 v3 v4)))))
+(define* (draw-quad v1 v2 v3 v4 #:key texture color)
+  (cond (texture
+	 (progn-textures
+	  (glBindTexture GL_TEXTURE_2D texture)
+	  (begin-draw 4)
+	  (draw-vertex v1 #:texture-coord '(0 0))
+	  (draw-vertex v2 #:texture-coord '(1 0))
+	  (draw-vertex v3 #:texture-coord '(1 1))
+	  (draw-vertex v4 #:texture-coord '(0 1))
+	  (glEnd)))
+	(color
+	 (with-color color (draw v1 v2 v3 v4)))
+	(else
+	 (draw v1 v2 v3 v4))))
 
-(defun draw-rectangle (width height &key texture)
-  (let* ((w (/ width 2)) (-w (neg w)) (h (/ height 2)) (-h (neg h)))
-    (draw-quad (list -w h 0) (list w h 0) (list w -h 0) (list -w -h 0) :texture texture)))
+(define* (draw-rectangle width height #:key texture color)
+  (draw-quad (list (- width) height 0)
+	     (list width height 0)
+	     (list width (- height) 0)
+	     (list (- width) (- height) 0)
+	     #:texture texture
+	     #:color color))
 
-(defun draw-square (&key (size 1) texture)
-  (draw-rectangle size size :texture texture))
+(define* (draw-square #:key (size 1) texture color)
+  (draw-rectangle size size #:texture texture #:color color))
 
-(defun draw-cube (&key (size 1) texture texture-1 texture-2 texture-3 texture-4 texture-5 texture-6)
-  (let ((-size (neg size)))
+(define* (draw-cube #:key (size 1)
+		   texture texture-1 texture-2 texture-3 texture-4 texture-5 texture-6
+		   color color-1 color-2 color-3 color-4 color-5 color-6)
+  (let ((-size (- size)))
     (progn-textures
      (glNormal3f 0 0 1)
-     (draw-quad (list -size size size) (list size size size) (list size -size size) (list -size -size size) :texture (or texture-1 texture))
+     (draw-quad (list -size size size) (list size size size) (list size -size size) (list -size -size size) #:texture (or texture-1 texture) #:color (or color-1 color))
      (glNormal3f 0 0 -1)
-     (draw-quad (list -size -size -size) (list size -size -size) (list size size -size) (list -size size -size) :texture (or texture-2 texture))
+     (draw-quad (list -size -size -size) (list size -size -size) (list size size -size) (list -size size -size) #:texture (or texture-2 texture) #:color (or color-2 color))
      (glNormal3f 0 1 0)
-     (draw-quad (list size size size) (list -size size size) (list -size size -size) (list size size -size) :texture (or texture-3 texture))
+     (draw-quad (list size size size) (list -size size size) (list -size size -size) (list size size -size) #:texture (or texture-3 texture) #:color (or color-3 color))
      (glNormal3f 0 -1 0)
-     (draw-quad (list -size -size size) (list size -size size) (list size -size -size) (list -size -size -size) :texture (or texture-4 texture))
+     (draw-quad (list -size -size size) (list size -size size) (list size -size -size) (list -size -size -size) :texture (or texture-4 texture) #:color (or color-4 color))
      (glNormal3f 1 0 0)
-     (draw-quad (list size -size -size) (list size -size size) (list size size size) (list size size -size) :texture (or texture-5 texture))
+     (draw-quad (list size -size -size) (list size -size size) (list size size size) (list size size -size) :texture (or texture-5 texture) #:color (or color-5 color))
      (glNormal3f -1 0 0)
-     (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) :texture (or texture-6 texture)))))
+     (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) :texture (or texture-6 texture) #:color (or color-6 color)))))
 
-(defun add-light (&key light position ambient (id GL_LIGHT1) (turn-on t))
+(define* (add-light #:key light position ambient (id GL_LIGHT1) (turn-on t))
   (init-lighting)
   (and light (glLightfv id GL_DIFFUSE (first light) (second light) (third light) (fourth light)))
   (and light position (glLightfv GL_POSITION (first position) (second position) (third position) (fourth position)))
@@ -148,30 +155,35 @@
   (and turn-on (glEnable id))
   id)
 
-(defun translate (x y &optional (z 0))
+(define* (translate x y #:optional (z 0))
   (glTranslatef x y z))
 
-(defun rotate (&rest rot)
-  (cond ((3d-mode?) (apply #'3d-rotate rot))
-	(t (apply #'2d-rotate rot))))
+(define* (rotate #:rest rot)
+  (cond ((3d-mode?) (apply 3d-rotate rot))
+	(else (apply 2d-rotate rot))))
 
-(defun 3d-rotate (xrot yrot zrot)
+(define (3d-rotate xrot yrot zrot)
   (glRotatef xrot 1 0 0)
   (glRotatef yrot 0 1 0)
   (glRotatef zrot 0 0 1))
 
-(defun 2d-rotate (rot)
+(define (2d-rotate rot)
   (glRotatef rot 0 0 1))
 
-(defun to-origin ()
+(define (to-origin)
   (glLoadIdentity)
   (cond ((3d-mode?) (camera-look))))
 
-(let ((camera-eye '(0 0 0)) (camera-center '(0 0 -100)) (camera-up '(0 1 0)))
-  (defun set-camera (&key eye center up)
-    (cond (eye (setq camera-eye eye)))
-    (cond (center (setq camera-center center)))
-    (cond (up (setq camera-up up))))
+(define set-camera #f)
+(define camera-look #f)
 
-  (defun camera-look ()
-    (apply #'gluLookAt (concatenate 'list camera-eye camera-center camera-up))))
+(let ((camera-eye '(0 0 0)) (camera-center '(0 0 -100)) (camera-up '(0 1 0)))
+  (set! set-camera
+	(lambda* (#:key eye center up)
+	  (cond (eye (set! camera-eye eye)))
+	  (cond (center (set! camera-center center)))
+	  (cond (up (set! camera-up up)))))
+
+  (set! camera-look
+	(lambda ()
+	  (apply gluLookAt (append camera-eye camera-center camera-up)))))
