@@ -50,7 +50,7 @@
 	    (cond ((null? mobs) #f)
 		  (else
 		   (cond (function (function)))
-		   (secure-block #f (apply (car mobs) (cons option args)))
+		   (catch #t (lambda () (apply (car mobs) (cons option args))) (lambda (key . args) #f))
 		   (or #t (run-mobs-rec (cdr mobs))))))))
 
   (set! mob-off
