@@ -22,11 +22,20 @@
 #include "gacela_FTGL.h"
 
 static void*
-register_functions (void* data)
+init_gacela (void *data, int argc, char **argv)
 {
+  // Guile configuration
+  scm_c_eval_string ("(set-repl-prompt! \"gacela>\")");
+  scm_c_eval_string ("(use-modules (ice-9 readline))");
+  scm_c_eval_string ("(activate-readline)");
+  scm_c_eval_string ("(use-modules (ice-9 optargs))");
+  scm_c_eval_string ("(use-modules (ice-9 receive))");
+
+  // Bindings for C functions and structs
   SDL_register_functions (NULL);
   GL_register_functions (NULL);
   FTGL_register_functions (NULL);
+
   return NULL;
 }
 
@@ -54,13 +63,6 @@ load_scheme_files (char *path)
 int
 main (int argc, char *argv[])
 {
-  scm_with_guile (&register_functions, NULL);
-  scm_init_guile ();
-  scm_c_eval_string ("(set-repl-prompt! \"gacela>\")");
-  scm_c_eval_string ("(use-modules (ice-9 readline))");
-  scm_c_eval_string ("(activate-readline)");
-  scm_c_eval_string ("(use-modules (ice-9 optargs))");
-  scm_c_eval_string ("(use-modules (ice-9 receive))");
-  load_scheme_files (dirname (argv[0]));
+  scm_with_guile (&init_gacela, NULL);
   scm_shell (argc, argv);
 }
