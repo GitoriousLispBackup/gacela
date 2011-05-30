@@ -40,29 +40,19 @@ init_gacela (void *data, int argc, char **argv)
 }
 
 void
-load_scheme_file (char *path, char *filename)
-{
-  char fn[strlen (path) + 1024];
-
-  strcpy (fn, path);
-  strcat (fn, "/");
-  strcat (fn, filename);
-
-  scm_c_primitive_load (fn);
-}
-
-void
 load_scheme_files (char *path)
 {
-  load_scheme_file (path, "gacela.scm");
-  load_scheme_file (path, "gacela_events.scm");
-  load_scheme_file (path, "gacela_draw.scm");
-  load_scheme_file (path, "gacela_ttf.scm");
+  char load_path[strlen (path) + 1024];
+
+  sprintf (load_path, "(set! %%load-path (cons \"%s\" %%load-path))", path);
+  scm_c_eval_string (load_path);
+  scm_primitive_load_path (scm_from_locale_string ("gacela_loader.scm"));
 }
 
 int
 main (int argc, char *argv[])
 {
   scm_with_guile (&init_gacela, NULL);
+  load_scheme_files (dirname (argv[0]));
   scm_shell (argc, argv);
 }
