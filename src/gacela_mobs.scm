@@ -17,12 +17,16 @@
 
 (use-modules (srfi srfi-1))
 
+;;; Actions for mobs
+
+
+
 ;;; Mob Factory
 
 (define-macro (makemob name . methods)
   `(define* (,name . args)
      (let ((option (car args)))
-       ,(union
+       ,(lset-union eq?
 	 `(case option
 	    (:on (mob-on ',name))
 	    (:off (mob-off ',name)))
@@ -31,6 +35,20 @@
 	     (cond ((null? m) '())
 		   (else (cons (list option `(apply ,body (cdr args))) (options (cddr m)))))))
 	 (options methods)))))
+
+(define-macro (makemob name . methods)
+  (define (options m)
+    (cond ((null? m) '((else #f)))
+	  (else
+	   (let ((option (caar m)) (body (cadar m)))
+	     (cons `((,option) (apply ,body (cdr args))) (options (cdr m)))))))
+  (let ((m (options methods)))
+    `(define (,name . args)
+       (let ((option (car args)))
+	 (case option
+	   ((#:on) (mob-on ',name))
+	   ((#:off) (mob-off ',name))
+	   ,@m)))))
 
 
 (define mob-on #f)
@@ -51,7 +69,8 @@
 		  (else
 		   (cond (function (function)))
 		   (catch #t (lambda () (apply (car mobs) (cons option args))) (lambda (key . args) #f))
-		   (or #t (run-mobs-rec (cdr mobs))))))))
+		   (or #t (run-mobs-rec (cdr mobs))))))
+	  (run-mobs-rec running-mobs)))
 
   (set! mob-off
 	(lambda (mob)
@@ -61,7 +80,7 @@
 	(lambda ()
 	  (do ((mob (pop mobs-to-add) (pop mobs-to-add))) ((null? mob))
 	    (push mob running-mobs)
-	    (secure-block nil (mob #:init)))
+	    (catch #t (lambda () (mob #:init)) (lambda (key . args) #f)))
 	  (set! running-mobs (reverse (lset-difference eq? running-mobs mobs-to-quit)))
 	  (set! mobs-to-quit '())))
 
