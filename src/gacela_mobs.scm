@@ -19,6 +19,19 @@
 
 ;;; Actions for mobs
 
+(define-macro (define-action name attr . code)
+  `(define (,name mob-attr)
+     (let ,attr
+       ,@code
+       ,(cons 'begin (map #'attribute-save (reverse attr)))
+       mob-attr)))
+
+(defun attribute-save (attribute)
+  (let* ((name (cond ((listp attribute) (car attribute))
+		     (t attribute)))
+	 (pname (attribute-name name)))
+    `(setf (getf object-attr ,pname) ,name)))
+
 
 
 ;;; Mob Factory
