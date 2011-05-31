@@ -19,3 +19,4 @@
 (primitive-load-path "gacela_events.scm")
 (primitive-load-path "gacela_draw.scm")
 (primitive-load-path "gacela_ttf.scm")
+(primitive-load-path "gacela_mobs.scm")
