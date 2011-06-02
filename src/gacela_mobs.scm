@@ -19,18 +19,16 @@
 
 ;;; Actions for mobs
 
-(define-macro (define-action name attr . code)
+(define-macro (define-action action-def . code)
+  `(define (,name mob-attr)
+     ,@code))
+
+(define-macro (define-action2 name attr . code)
   `(define (,name mob-attr)
      (let ,attr
        ,@code
        ,(cons 'begin (map #'attribute-save (reverse attr)))
        mob-attr)))
-
-(defun attribute-save (attribute)
-  (let* ((name (cond ((listp attribute) (car attribute))
-		     (t attribute)))
-	 (pname (attribute-name name)))
-    `(setf (getf object-attr ,pname) ,name)))
 
 
 
