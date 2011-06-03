@@ -20,16 +20,20 @@
 ;;; Actions for mobs
 
 (define-macro (define-action action-def . code)
-  `(define (,name mob-attr)
-     ,@code))
+  (let ((name (car action-def)) (attr (cdr action-def)))
+    `(define (,name mob-attr)
+       (let ,(map attribute-definition attr)
+	 ,@code
+	 ,(cons 'list (map attribute-result attr))))))
 
-(define-macro (define-action2 name attr . code)
-  `(define (,name mob-attr)
-     (let ,attr
-       ,@code
-       ,(cons 'begin (map #'attribute-save (reverse attr)))
-       mob-attr)))
+(define (attribute-definition attribute)
+  (let ((name (if (list? attribute) (car attribute) attribute))
+	(value (if (list? attribute) (cadr attribute) #f)))
+    `(,name (let ((v (assoc-ref mob-attr ',name))) (if v (cdr v) ,value)))))
 
+(define (attribute-result attribute)
+  (let ((name (if (list? attribute) (car attribute) attribute)))
+    `(list ',name ,name)))
 
 
 ;;; Mob Factory
