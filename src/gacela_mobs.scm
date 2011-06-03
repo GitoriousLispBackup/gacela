@@ -38,6 +38,50 @@
 
 ;;; Mob Factory
 
+(define add-mob #f)
+(define kill-mob #f)
+(define kill-all-mobs #f)
+(define refresh-active-mobs #f)
+(define action-mobs #f)
+(define render-mobs #f)
+
+(let ((active-mobs '()) (mobs-to-add '()) (mobs-to-kill '())
+  (set! add-mob
+	(lambda (mob)
+	  (pushnew mob mobs-to-add)))
+
+  (set! kill-mob
+	(lambda (mob)
+	  (pushnew mob mobs-to-kill))
+
+  (set! kill-all-mobs
+	(lambda ()
+	  (set! active-mobs '())
+	  (set! mobs-to-add '())
+	  (set! mobs-to-kill '())))
+
+  (set! refresh-active-mobs
+	(lambda ()
+	  (define (add active to-add)
+	    (cond ((null? to-add) active)
+		  (else
+		   (pushnew (car to-add) active)
+		   (add active (cdr to-add)))))
+
+	  (add active-mobs mobs-to-add)
+	  (set! mobs-to-add '())
+	  (set! active-mobs (reverse (lset-difference eq? active-mobs mobs-to-kill)))
+	  (set! mobs-to-kill '())))
+
+  (set! action-mobs
+	(lambda ()
+	  (map (lambda (m) (m #:action)) active-mobs)))
+
+  (set! render-mobs
+	(lambda ()
+	  (map (lambda (m) (m #:render)) active-mobs))))
+
+
 (define-macro (makemob name . methods)
   `(define* (,name . args)
      (let ((option (car args)))

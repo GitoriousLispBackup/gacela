@@ -20,3 +20,7 @@
     (cond ((> (* p 2) n) p)
 	  (else (power (* p 2) n))))
   (power 1 n))
+
+(define-macro (pushnew elem list)
+  `(cond ((not (find (lambda (e) (eq? e ,elem)) ,list))
+	  (set! ,list (cons ,elem ,list)))))
