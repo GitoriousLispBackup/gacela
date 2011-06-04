@@ -15,143 +15,38 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-(use-modules (srfi srfi-1))
+;;; Mobs Factory
 
-;;; Actions for mobs
+(define-macro (hash-add-mob hash-table mob)
+  `(hash-set! ,hash-table (procedure-name ,mob) (lambda () (,mob))))
 
-(define-macro (define-action action-def . code)
-  (let ((name (car action-def)) (attr (cdr action-def)))
-    `(define (,name mob-attr)
-       (let ,(map attribute-definition attr)
-	 ,@code
-	 ,(cons 'list (map attribute-result attr))))))
+(define-macro (hash-remove-mob hash-table mob)
+  `(hash-remove! ,hash-table (procedure-name ,mob)))
 
-(define (attribute-definition attribute)
-  (let ((name (if (list? attribute) (car attribute) attribute))
-	(value (if (list? attribute) (cadr attribute) #f)))
-    `(,name (let ((v (assoc-ref mob-attr ',name))) (if v (cdr v) ,value)))))
-
-(define (attribute-result attribute)
-  (let ((name (if (list? attribute) (car attribute) attribute)))
-    `(list ',name ,name)))
-
-
-;;; Mob Factory
 
 (define add-mob #f)
 (define kill-mob #f)
-(define kill-all-mobs #f)
-(define refresh-active-mobs #f)
-(define action-mobs #f)
-(define render-mobs #f)
+(define get-mob-world #f)
+(define mobs #f)
+(define vreload #f)
 
-(let ((active-mobs '()) (mobs-to-add '()) (mobs-to-kill '())
+(let ((active-mobs (make-hash-table)) (reload #f))
   (set! add-mob
 	(lambda (mob)
-	  (pushnew mob mobs-to-add)))
+	  (hash-add-mob active-mobs mob)
+	  (set! reload #t)))
 
   (set! kill-mob
 	(lambda (mob)
-	  (pushnew mob mobs-to-kill))
+	  (hash-remove-mob active-mobs mob)
+	  (set! reload #t)))
 
-  (set! kill-all-mobs
+  (set! get-mob-world
 	(lambda ()
-	  (set! active-mobs '())
-	  (set! mobs-to-add '())
-	  (set! mobs-to-kill '())))
+	  (cond (reload
+		 (set! reload #f)
+		 (hash-map->list (lambda (k v) v) active-mobs))
+		(else #f))))
 
-  (set! refresh-active-mobs
-	(lambda ()
-	  (define (add active to-add)
-	    (cond ((null? to-add) active)
-		  (else
-		   (pushnew (car to-add) active)
-		   (add active (cdr to-add)))))
-
-	  (add active-mobs mobs-to-add)
-	  (set! mobs-to-add '())
-	  (set! active-mobs (reverse (lset-difference eq? active-mobs mobs-to-kill)))
-	  (set! mobs-to-kill '())))
-
-  (set! action-mobs
-	(lambda ()
-	  (map (lambda (m) (m #:action)) active-mobs)))
-
-  (set! render-mobs
-	(lambda ()
-	  (map (lambda (m) (m #:render)) active-mobs))))
-
-
-(define-macro (makemob name . methods)
-  `(define* (,name . args)
-     (let ((option (car args)))
-       ,(lset-union eq?
-	 `(case option
-	    (:on (mob-on ',name))
-	    (:off (mob-off ',name)))
-	 (define (options m)
-	   (let ((option (car m)) (body (cadr m)))
-	     (cond ((null? m) '())
-		   (else (cons (list option `(apply ,body (cdr args))) (options (cddr m)))))))
-	 (options methods)))))
-
-(define-macro (makemob name . methods)
-  (define (options m)
-    (cond ((null? m) '((else #f)))
-	  (else
-	   (let ((option (caar m)) (body (cadar m)))
-	     (cons `((,option) (apply ,body (cdr args))) (options (cdr m)))))))
-  (let ((m (options methods)))
-    `(define (,name . args)
-       (let ((option (car args)))
-	 (case option
-	   ((#:on) (mob-on ',name))
-	   ((#:off) (mob-off ',name))
-	   ,@m)))))
-
-
-(define mob-on #f)
-(define run-mobs #f)
-(define mob-off #f)
-(define refresh-running-mobs #f)
-(define quit-all-mobs #f)
-
-(let ((running-mobs '()) (mobs-to-add '()) (mobs-to-quit '()))
-  (set! mob-on
-	(lambda (mob)
-	  (push mob mobs-to-add)))
-
-  (set! run-mobs
-	(lambda* (option #:key args function)
-	  (define (run-mobs-rec mobs)
-	    (cond ((null? mobs) #f)
-		  (else
-		   (cond (function (function)))
-		   (catch #t (lambda () (apply (car mobs) (cons option args))) (lambda (key . args) #f))
-		   (or #t (run-mobs-rec (cdr mobs))))))
-	  (run-mobs-rec running-mobs)))
-
-  (set! mob-off
-	(lambda (mob)
-	  (push mob mobs-to-quit)))
-
-  (set! refresh-running-mobs
-	(lambda ()
-	  (do ((mob (pop mobs-to-add) (pop mobs-to-add))) ((null? mob))
-	    (push mob running-mobs)
-	    (catch #t (lambda () (mob #:init)) (lambda (key . args) #f)))
-	  (set! running-mobs (reverse (lset-difference eq? running-mobs mobs-to-quit)))
-	  (set! mobs-to-quit '())))
-
-  (set! quit-all-mobs
-	(lambda ()
-	  (set! running-mobs '())
-	  (set! mobs-to-add '())
-	  (set! mobs-to-quit '()))))
-
-
-(define (logic-mobs)
-  (run-mobs #:logic))
-
-(define (render-mobs)
-  (run-mobs #:render #:function (lambda () (glLoadIdentity))))
+  (set! mobs (lambda () active-mobs))
+  (set! vreload (lambda () reload)))
