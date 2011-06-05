@@ -17,36 +17,33 @@
 
 ;;; Mobs Factory
 
-(define-macro (hash-add-mob hash-table mob)
-  `(hash-set! ,hash-table (procedure-name ,mob) (lambda () (,mob))))
-
-(define-macro (hash-remove-mob hash-table mob)
-  `(hash-remove! ,hash-table (procedure-name ,mob)))
-
-
 (define add-mob #f)
 (define kill-mob #f)
-(define get-mob-world #f)
-(define mobs #f)
-(define vreload #f)
+(define get-active-mobs #f)
+(define reload-mobs? #f)
+(define reload-mobs #f)
 
-(let ((active-mobs (make-hash-table)) (reload #f))
+(let ((active-mobs '(m1 m2)) (reload #f))
   (set! add-mob
 	(lambda (mob)
-	  (hash-add-mob active-mobs mob)
+	  (pushnew (procedure-name mob) active-mobs)
 	  (set! reload #t)))
 
   (set! kill-mob
 	(lambda (mob)
-	  (hash-remove-mob active-mobs mob)
+	  (set! active-mobs (lset-difference eq? active-mobs (list (procedure-name mob))))
 	  (set! reload #t)))
 
-  (set! get-mob-world
-	(lambda ()
-	  (cond (reload
-		 (set! reload #f)
-		 (hash-map->list (lambda (k v) v) active-mobs))
-		(else #f))))
+  (set! get-active-mobs
+	(lambda () active-mobs))
 
-  (set! mobs (lambda () active-mobs))
-  (set! vreload (lambda () reload)))
+  (set! reload-mobs?
+	(lambda () reload))
+
+  (set! reload-mobs
+	(lambda ()
+	  #f)))
+
+(define-macro (get-mobs-function)
+  (let ((mobs (get-active-mobs)))
+    `(lambda () ,@(map (lambda (mob) `(,mob)) ,mobs))))

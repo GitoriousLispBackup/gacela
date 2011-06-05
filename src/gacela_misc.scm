@@ -15,6 +15,14 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+
+;;; Additional modules
+
+(use-modules (srfi srfi-1))
+
+
+;;; Functions
+
 (define (nearest-power-of-two n)
   (define (power p n)
     (cond ((> (* p 2) n) p)
