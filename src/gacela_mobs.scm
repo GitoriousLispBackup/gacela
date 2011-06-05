@@ -46,4 +46,4 @@
 
 (define-macro (get-mobs-function)
   (let ((mobs (get-active-mobs)))
-    `(lambda () ,@(map (lambda (mob) `(,mob)) ,mobs))))
+    `(lambda () ,@(map (lambda (mob) `(,mob)) mobs))))
