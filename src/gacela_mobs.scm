@@ -21,7 +21,6 @@
 (define kill-mob #f)
 (define get-active-mobs #f)
 (define reload-mobs? #f)
-(define reload-mobs #f)
 
 (let ((active-mobs '(m1 m2)) (reload #f))
   (set! add-mob
@@ -38,12 +37,22 @@
 	(lambda () active-mobs))
 
   (set! reload-mobs?
-	(lambda () reload))
+	(lambda () reload)))
 
-  (set! reload-mobs
-	(lambda ()
-	  #f)))
 
 (define-macro (get-mobs-function)
   (let ((mobs (get-active-mobs)))
     `(lambda () ,@(map (lambda (mob) `(,mob)) mobs))))
+
+(define-macro (define-mob mob-head . look)
+  (let ((name (car mob-head)) (attr (cdr mob-head)))
+    `(begin
+       (define ,name #f)
+       (let ((attr ,attr))
+	 (set! ,name
+	       (lambda (option)
+		 (case option
+		   ((#:render)
+		    (glPushMatrix)
+		    ,@(map (lambda (x) (if (string? x) `(draw-image ,x) x)) look)
+		    (glPopMatrix)))))))))
