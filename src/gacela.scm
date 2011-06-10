@@ -220,7 +220,7 @@
 (define game-running? #f)
 (define set-game-code #f)
 
-(let ((running #f) (game-code #f))
+(let ((running #f) (game-code #f) (mobs-function (lambda () #f)))
   (set! game-loop
 	(lambda ()
 	  (set! running #t)
@@ -233,9 +233,11 @@
 	    (cond ((not (quit?))
 		   (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
 		   (to-origin)
-;		  (refresh-active-objects)
+		   (cond ((reload-mobs?)
+			  (set! mobs-function (get-mobs-function))
+			  (mobs-reloaded)))
 		   (if (procedure? game-code) (game-code))
-;		  (render-objects)
+		   (mobs-function)
 		   (SDL_GL_SwapBuffers)
 		   (delay-frame))))
 	  (set! running #f)))
