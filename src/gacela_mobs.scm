@@ -17,44 +17,39 @@
 
 ;;; Mobs Factory
 
-(define add-mob-symbol #f)
+(define add-mob-lambda #f)
 (define kill-mob-symbol #f)
 (define get-active-mobs #f)
-(define reload-mobs? #f)
-(define mobs-reloaded #f)
+(define mobs-changed? #f)
 
-(let ((active-mobs '()) (reload #f))
-  (set! add-mob-symbol
+(let ((active-mobs '()) (changed #f))
+  (set! add-mob-lambda
 	(lambda (mob)
 	  (pushnew mob active-mobs)
-	  (set! reload #t)))
+	  (set! changed #t)))
 
   (set! kill-mob-symbol
 	(lambda (mob)
 	  (set! active-mobs (lset-difference eq? active-mobs (list mob)))
-	  (set! reload #t)))
+	  (set! changed #t)))
 
   (set! get-active-mobs
-	(lambda () active-mobs))
+	(lambda* (#:optional (refreshed #t))
+	  (set! changed (not refreshed))
+	  active-mobs))
 
-  (set! reload-mobs?
-	(lambda () reload))
+  (set! mobs-changed?
+	(lambda () changed)))
 
-  (set! mobs-reloaded
-	(lambda () (set! reload #f))))
 
 (define-macro (add-mob mob)
-  `(add-mob-symbol ',mob))
+  `(add-mob-lambda (lambda (option) (,mob option))))
 
 (define-macro (kill-mob mob)
   `(kill-mob-symbol ',mob))
 
-(define-macro (get-mobs-function)
-  (let ((mobs (get-active-mobs)))
-    (cond ((null? mobs)
-	   `(lambda () #f))
-	  (else
-	   `(lambda () ,@(map (lambda (mob) `(,mob #:render)) mobs))))))
+(define (process-mobs mobs)
+  (for-each (lambda (m) (m #:render)) mobs))
 
 (define-macro (define-mob mob-head . look)
   (let ((name (car mob-head)) (attr (cdr mob-head)))

@@ -45,7 +45,7 @@
   (cond ((not (null? events))
 	 (let ((event (car events)))
 	   (cond ((= (assoc-ref event 'type) SDL_KEYDOWN) (key-press (assoc-ref event 'key.keysym.sym)))
-		 ((= (assoc-ref event 'type) SDL_KEYUP) (key-release (assoc-ref event :key.keysym.sym)))))
+		 ((= (assoc-ref event 'type) SDL_KEYUP) (key-release (assoc-ref event 'key.keysym.sym)))))
 	 (process-keyboard-events (cdr events)))))
 
 (define key? #f)
