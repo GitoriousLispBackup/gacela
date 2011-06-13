@@ -17,49 +17,47 @@
 
 ;;; Mobs Factory
 
-(define add-mob-lambda #f)
-(define kill-mob-symbol #f)
+(define show-mob-hash #f)
+(define hide-mob-hash #f)
 (define get-active-mobs #f)
 (define mobs-changed? #f)
 
-(let ((active-mobs '()) (changed #f))
-  (set! add-mob-lambda
-	(lambda (mob)
-	  (pushnew mob active-mobs)
+(let ((active-mobs (make-hash-table)) (changed #f))
+  (set! show-mob-hash
+	(lambda (key mob)
+	  (hash-set! active-mobs key mob)
 	  (set! changed #t)))
 
-  (set! kill-mob-symbol
-	(lambda (mob)
-	  (set! active-mobs (lset-difference eq? active-mobs (list mob)))
+  (set! hide-mob-hash
+	(lambda (key)
+	  (hash-remove! key)
 	  (set! changed #t)))
 
   (set! get-active-mobs
 	(lambda* (#:optional (refreshed #t))
 	  (set! changed (not refreshed))
-	  active-mobs))
+	  (hash-map->list (lambda (k v) v) active-mobs)))
 
   (set! mobs-changed?
 	(lambda () changed)))
 
 
-(define-macro (add-mob mob)
-  `(add-mob-lambda (lambda (option) (,mob option))))
+(define-macro (show-mob mob)
+  `(show-mob-hash ',mob (lambda (option) (,mob option))))
 
-(define-macro (kill-mob mob)
-  `(kill-mob-symbol ',mob))
+(define-macro (hide-mob mob)
+  `(hide-mob-hash ',mob))
 
 (define (process-mobs mobs)
   (for-each (lambda (m) (m #:render)) mobs))
 
 (define-macro (define-mob mob-head . look)
   (let ((name (car mob-head)) (attr (cdr mob-head)))
-    `(begin
-       (define ,name #f)
+    `(define ,name
        (let ((attr ',attr))
-	 (set! ,name
-	       (lambda (option)
-		 (case option
-		   ((#:render)
-		    (glPushMatrix)
-		    ,@(map (lambda (x) (if (string? x) `(draw-image ,x) x)) look)
-		    (glPopMatrix)))))))))
+	 (lambda (option)
+	   (case option
+	     ((#:render)
+	      (glPushMatrix)
+	      ,@(map (lambda (x) (if (string? x) `(draw-image ,x) x)) look)
+	      (glPopMatrix))))))))
