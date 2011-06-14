@@ -54,10 +54,15 @@
 (define-macro (define-mob mob-head . look)
   (let ((name (car mob-head)) (attr (cdr mob-head)))
     `(define ,name
-       (let ((attr ',attr))
-	 (lambda (option)
-	   (case option
-	     ((#:render)
-	      (glPushMatrix)
-	      ,@(map (lambda (x) (if (string? x) `(draw-image ,x) x)) look)
-	      (glPopMatrix))))))))
+       (lambda-mob ,attr ,@look))))
+
+(define-macro (lambda-mob attr . look)
+  (let ((look-code (map (lambda (x) (if (string? x) `(draw-texture ,x) x)) look)))
+    `(let ((attr ',attr))
+       (lambda (option)
+	 (case option
+	   ((#:render)
+	    (glPushMatrix)
+	    ,@look-code
+;	    ,@(map (lambda (x) (if (string? x) `(draw-texture ,x) x)) look)
+	    (glPopMatrix)))))))
