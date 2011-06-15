@@ -57,12 +57,24 @@
        (lambda-mob ,attr ,@look))))
 
 (define-macro (lambda-mob attr . look)
-  (let ((look-code (map (lambda (x) (if (string? x) `(draw-texture ,x) x)) look)))
-    `(let ((attr ',attr))
-       (lambda (option)
-	 (case option
-	   ((#:render)
-	    (glPushMatrix)
-	    ,@look-code
+  (define (process-look look)
+    (cond ((null? look) (values '() '()))
+	  (else
+	   (let ((line (car look)))
+	     (receive (lines images) (process-look (cdr look))
+		      (cond ((string? line)
+			     (cons `(draw-texture ,line) lines)
+			     (cons line images))
+			    (else
+			     (cons line lines)))
+		      (values lines images))))))
+
+  (receive (look-lines look-images) (process-look look)
+	   `(let ((attr ',attr))
+	      (lambda (option)
+		(case option
+		  ((#:render)
+		   (glPushMatrix)
+		   ,@look-lines
 ;	    ,@(map (lambda (x) (if (string? x) `(draw-texture ,x) x)) look)
-	    (glPopMatrix)))))))
+		   (glPopMatrix)))))))
