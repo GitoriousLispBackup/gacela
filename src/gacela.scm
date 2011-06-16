@@ -16,6 +16,7 @@
 
 
 ;;; Default values for Gacela
+
 (define *width-screen* 640)
 (define *height-screen* 480)
 (define *bpp-screen* 32)
@@ -23,6 +24,7 @@
 
 
 ;;; SDL Initialization Subsystem
+
 (define init-sdl #f)
 (define quit-sdl #f)
 
@@ -39,7 +41,9 @@
 
 
 ;;; Video Subsystem
+
 (define init-video-mode #f)
+(define video-mode? #f)
 (define resize-screen #f)
 (define apply-mode-change #f)
 (define quit-video-mode #f)
@@ -54,12 +58,15 @@
 				(if (= (assoc-ref (SDL_GetVideoInfo) 'hw_available) 0) SDL_SWSURFACE SDL_HWSURFACE)
 				(if (= (assoc-ref (SDL_GetVideoInfo) 'blit_hw) 0) 0 SDL_HWACCEL)))
 		 (set! screen (SDL_SetVideoMode width height bpp flags))
-		 (init-GL)
+		 (init-gl)
 		 (resize-screen-GL width height)
 		 (set! current-width width)
 		 (set! current-height height)
 		 (set! current-bpp bpp))
 		(else #t))))
+
+  (set! video-mode?
+	(lambda () (if screen #t #f)))
 
   (set! resize-screen
 	(lambda* (width height #:optional (bpp current-bpp))
@@ -91,7 +98,7 @@
 (define (3d-mode?)
   (eq? (assoc-ref (get-game-properties) 'mode) '3d))
 
-(define (init-GL)
+(define (init-gl)
   (glShadeModel GL_SMOOTH)
   (glClearColor 0 0 0 0)
 ;  (glClearDepth 1)
@@ -148,6 +155,7 @@
 
 
 ;;; Audio Subsystem
+
 (define init-audio #f)
 (define quit-audio #f)
 
@@ -164,6 +172,12 @@
 
 
 ;;; GaCeLa Functions
+
+(define (init-gacela)
+  (init-sdl)
+  (init-gl))
+
+
 (define set-frames-per-second #f)
 (define init-frame-time #f)
 (define delay-frame #f)
@@ -190,8 +204,8 @@
 (let ((ptitle "") (pwidth *width-screen*) (pheight *height-screen*) (pbpp *bpp-screen*) (pfps *frames-per-second*) (pmode '2d))
   (set! set-game-properties
 	(lambda* (#:key title width height bpp fps mode)
-	  (init-video-mode)
-	  (if title (begin (set! ptitle title) (SDL_WM_SetCaption title "")))
+;	  (init-video-mode)
+	  (if title (begin (set! ptitle title) (if (video-mode?) (SDL_WM_SetCaption title ""))))
 	  (if (or width height bpp)
 	      (begin
 		(if width (set! pwidth width))
