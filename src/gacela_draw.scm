@@ -26,12 +26,12 @@
 	(else `(begin ,@code))))
 
 (define-macro (progn-textures . code)
-  `(let (values)
+  `(let ((result #f))
      (init-video-mode)
      (glEnable GL_TEXTURE_2D)
-     (set! values (multiple-value-list (begin ,@code)))
+     (set! result (begin ,@code))
      (glDisable GL_TEXTURE_2D)
-     (apply values values)))
+     result))
 
 (define (draw . vertexes)
   (begin-draw (length vertexes))
@@ -68,7 +68,9 @@
 		  (resized-image #f))
 	     (cond ((and (= width power-2) (= height power-2)) (values image width height))
 		   (else (set! resized-image (resize-surface image power-2 power-2))
-			 (if resized-image (values resized-image width height)))))))))
+			 (if resized-image (values resized-image width height))))))
+	  (else
+	   (values #f 0 0)))))
 
 (define (resize-surface surface width height)
   (let ((old-width (surface-w surface)) (old-height (surface-h surface)))
@@ -81,8 +83,8 @@
    (receive
     (image real-w real-h) (load-image-for-texture filename)
     (cond (image
-	   (let ((width (get-surface-width image)) (height (get-surface-height image))
-		 (byteorder (if (= (SDL_ByteOrder) SDL_LIL_ENDIAN)
+	   (let ((width (surface-w image)) (height (surface-h image))
+		 (byteorder (if (= SDL_BYTEORDER SDL_LIL_ENDIAN)
 				(if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)
 				(if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)))
 		 (texture (car (glGenTextures 1))))

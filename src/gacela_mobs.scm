@@ -63,18 +63,18 @@
 	   (let ((line (car look)))
 	     (receive (lines images) (process-look (cdr look))
 		      (cond ((string? line)
-			     (values (cons `(draw-texture ,line) lines)
-				     (cons line images)))
+			     (let ((var (gensym)))
+			       (values (cons `(draw-texture ,var) lines)
+				       (cons `(,var (load-texture ,line)) images))))
 			    (else
 			     (values (cons line lines)
 				     images))))))))
 
   (receive (look-lines look-images) (process-look look)
-	   `(let ((attr ',attr))
+	   `(let ,(cons `(attr ',attr) look-images)
 	      (lambda (option)
 		(case option
 		  ((#:render)
 		   (glPushMatrix)
 		   ,@look-lines
-;	    ,@(map (lambda (x) (if (string? x) `(draw-texture ,x) x)) look)
 		   (glPopMatrix)))))))

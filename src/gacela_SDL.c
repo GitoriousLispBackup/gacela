@@ -20,6 +20,7 @@
 #include <SDL/SDL_events.h>
 #include <SDL/SDL_image.h>
 #include <SDL/SDL_mixer.h>
+#include <SDL/SDL_rotozoom.h>
 #include "gacela_SDL.h"
 
 struct surface
@@ -57,6 +58,16 @@ get_surface_address (SCM surface_smob)
   scm_assert_smob_type (surface_tag, surface_smob);
   surface = (struct surface *) SCM_SMOB_DATA (surface_smob);
   return surface->surface_address;
+}
+
+SCM
+get_surface_filename (SCM surface_smob)
+{
+  struct surface *surface;
+
+  scm_assert_smob_type (surface_tag, surface_smob);
+  surface = (struct surface *) SCM_SMOB_DATA (surface_smob);
+  return surface->filename;
 }
 
 SCM
@@ -279,6 +290,19 @@ gacela_SDL_EnableKeyRepeat (SCM delay, SCM interval)
 }
 
 SCM
+gacela_zoomSurface (SCM src, SCM zoomx, SCM zoomy, SCM smooth)
+{
+  SDL_Surface *image = zoomSurface (get_surface_address (src), scm_to_double (zoomx), scm_to_double (zoomy), scm_to_int (smooth));
+
+  if (image) {
+    return make_surface (get_surface_filename (src), image);
+  }
+  else {
+    return SCM_BOOL_F;
+  }
+}
+
+SCM
 gacela_Mix_OpenAudio (SCM frequency, SCM format, SCM channels, SCM chunksize)
 {
   return scm_from_int (Mix_OpenAudio (scm_to_int (frequency), scm_to_int (format), scm_to_int (channels), scm_to_int (chunksize)));
@@ -369,6 +393,7 @@ SDL_register_functions (void* data)
   scm_set_smob_mark (surface_tag, mark_surface);
   scm_set_smob_free (surface_tag, free_surface);
   scm_set_smob_print (surface_tag, print_surface);
+  scm_c_define_gsubr ("surface-file", 1, 0, 0, get_surface_filename);
   scm_c_define_gsubr ("surface-w", 1, 0, 0, get_surface_width);
   scm_c_define_gsubr ("surface-h", 1, 0, 0, get_surface_height);
   scm_c_define_gsubr ("surface-pixels", 1, 0, 0, get_surface_pixels);
@@ -454,6 +479,7 @@ SDL_register_functions (void* data)
   scm_c_define_gsubr ("SDL_PollEvent", 0, 0, 0, gacela_SDL_PollEvent);
   scm_c_define_gsubr ("SDL_GL_SwapBuffers", 0, 0, 0, gacela_SDL_GL_SwapBuffers);
   scm_c_define_gsubr ("SDL_EnableKeyRepeat", 2, 0, 0, gacela_SDL_EnableKeyRepeat);
+  scm_c_define_gsubr ("zoomSurface", 4, 0, 0, gacela_zoomSurface);
   scm_c_define_gsubr ("Mix_OpenAudio", 4, 0, 0, gacela_Mix_OpenAudio);
   scm_c_define_gsubr ("Mix_LoadMUS", 1, 0, 0, gacela_Mix_LoadMUS);
   scm_c_define_gsubr ("Mix_LoadWAV", 1, 0, 0, gacela_Mix_LoadWAV);

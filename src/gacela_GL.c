@@ -235,7 +235,7 @@ gacela_glGenTextures (SCM n)
   glGenTextures (nint, &text[0]);
 
   for (i = nint - 1; i >= 0; i--) {
-    textures = scm_cons (scm_from_int (text[i]), textures);
+    textures = scm_cons (make_glTexture (text[i]), textures);
   }
 
   return textures;

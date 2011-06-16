@@ -13,6 +13,11 @@ AC_CHECK_LIB(SDL_image,
 	LIBS="$LIBS -lSDL_image",
 	AC_MSG_ERROR([*** SDL_image library not found!])
 )
+AC_CHECK_LIB(SDL_gfx,
+	main,
+	LIBS="$LIBS -lSDL_gfx",
+	AC_MSG_ERROR([*** SDL_gfx library not found!])
+)
 AC_CHECK_LIB(SDL_mixer,
 	main,
 	LIBS="$LIBS -lSDL_mixer",
