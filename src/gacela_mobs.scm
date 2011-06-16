@@ -63,11 +63,11 @@
 	   (let ((line (car look)))
 	     (receive (lines images) (process-look (cdr look))
 		      (cond ((string? line)
-			     (cons `(draw-texture ,line) lines)
-			     (cons line images))
+			     (values (cons `(draw-texture ,line) lines)
+				     (cons line images)))
 			    (else
-			     (cons line lines)))
-		      (values lines images))))))
+			     (values (cons line lines)
+				     images))))))))
 
   (receive (look-lines look-images) (process-look look)
 	   `(let ((attr ',attr))
