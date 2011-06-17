@@ -45,24 +45,26 @@
 (define init-video-mode #f)
 (define video-mode-on? #f)
 (define resize-screen #f)
-(define apply-mode-change #f)
 (define quit-video-mode #f)
 
-(let ((screen #f) (flags 0) (current-width *width-screen*) (current-height *height-screen*) (current-bpp *bpp-screen*))
+(let ((screen #f) (flags 0))
   (set! init-video-mode
-	(lambda* (#:optional (width current-width) (height current-height) (bpp current-bpp))
+	(lambda ()
 	  (cond ((not screen)
 		 (init-sdl)
-		 (SDL_GL_SetAttribute SDL_GL_DOUBLEBUFFER 1)
-		 (set! flags (+ SDL_OPENGL SDL_GL_DOUBLEBUFFER SDL_HWPALETTE SDL_RESIZABLE
-				(if (= (assoc-ref (SDL_GetVideoInfo) 'hw_available) 0) SDL_SWSURFACE SDL_HWSURFACE)
-				(if (= (assoc-ref (SDL_GetVideoInfo) 'blit_hw) 0) 0 SDL_HWACCEL)))
-		 (set! screen (SDL_SetVideoMode width height bpp flags))
-		 (init-gl)
-		 (resize-screen-GL width height)
-		 (set! current-width width)
-		 (set! current-height height)
-		 (set! current-bpp bpp))
+		 (let* ((props (get-game-properties))
+			(width (assoc-ref props 'width)) (height (assoc-ref props 'height))
+			(bpp (assoc-ref props 'bpp)) (title (assoc-ref props 'title))
+			(mode (assoc-ref props 'mode))
+			(info (SDL_GetVideoInfo)))
+		   (SDL_GL_SetAttribute SDL_GL_DOUBLEBUFFER 1)
+		   (set! flags (+ SDL_OPENGL SDL_GL_DOUBLEBUFFER SDL_HWPALETTE SDL_RESIZABLE
+				  (if (= (assoc-ref info 'hw_available) 0) SDL_SWSURFACE SDL_HWSURFACE)
+				  (if (= (assoc-ref info 'blit_hw) 0) 0 SDL_HWACCEL)))
+		   (set! screen (SDL_SetVideoMode width height bpp flags))
+		   (SDL_WM_SetCaption title "")
+		   (init-gl)
+		   (if (eq? mode '3d) (set-3d-mode) (set-2d-mode))))
 		(else #t))))
 
   (set! video-mode-on?
@@ -71,12 +73,7 @@
   (set! resize-screen
 	(lambda* (width height #:optional (bpp current-bpp))
 	  (cond (screen (set! screen (SDL_SetVideoMode width height bpp flags))
-			(resize-screen-GL width height)))
-	  (set! current-width width)
-	  (set! current-height height)))
-
-  (set! apply-mode-change
-	(lambda () (resize-screen-GL current-width current-height)))
+			(resize-screen-GL width height)))))
 
   (set! quit-video-mode
 	(lambda () (set! screen #f))))
@@ -94,6 +91,11 @@
 	 (glEnable GL_DEPTH_TEST)
 	 (glDepthFunc GL_LEQUAL)
 	 (apply-mode-change))))
+
+(define (apply-mode-change)
+  (let* ((props (get-game-properties))
+	 (width (assoc-ref props 'width)) (height (assoc-ref props 'height)))
+    (resize-screen-GL width height)))
 
 (define (3d-mode?)
   (eq? (assoc-ref (get-game-properties) 'mode) '3d))
