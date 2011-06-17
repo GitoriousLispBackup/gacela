@@ -43,7 +43,7 @@
 ;;; Video Subsystem
 
 (define init-video-mode #f)
-(define video-mode? #f)
+(define video-mode-on? #f)
 (define resize-screen #f)
 (define apply-mode-change #f)
 (define quit-video-mode #f)
@@ -65,7 +65,7 @@
 		 (set! current-bpp bpp))
 		(else #t))))
 
-  (set! video-mode?
+  (set! video-mode-on?
 	(lambda () (if screen #t #f)))
 
   (set! resize-screen
@@ -205,15 +205,25 @@
   (set! set-game-properties
 	(lambda* (#:key title width height bpp fps mode)
 ;	  (init-video-mode)
-	  (if title (begin (set! ptitle title) (if (video-mode?) (SDL_WM_SetCaption title ""))))
+	  (if title
+	      (begin
+		(set! ptitle title)
+		(if (video-mode-on?) (SDL_WM_SetCaption title ""))))
 	  (if (or width height bpp)
 	      (begin
 		(if width (set! pwidth width))
 		(if height (set! pheight height))
 		(if bpp (set! pbpp bpp))
-		(resize-screen pwidth pheight pbpp)))
-	  (if fps (begin (set! pfps fps) (set-frames-per-second fps)))
-	  (if mode (begin (set! pmode mode) (if (eq? mode '3d) (set-3d-mode) (set-2d-mode))))
+		(if (video-mode-on?) (resize-screen pwidth pheight pbpp))))
+	  (if fps
+	      (begin
+		(set! pfps fps)
+		(set-frames-per-second fps)))
+	  (if mode
+	      (begin
+		(set! pmode mode)
+		(if (video-mode-on?)
+		    (if (eq? mode '3d) (set-3d-mode) (set-2d-mode)))))
 	  (get-game-properties)))
 
   (set! get-game-properties
