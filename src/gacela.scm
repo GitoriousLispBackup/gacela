@@ -139,22 +139,6 @@
 	  (set! current-color (list red green blue alpha))
 	  (glColor4f red green blue alpha))))
 
-(define* (load-image image-file #:key transparent-color)
-  (init-video-mode)
-  (let ((loaded-image (IMG_Load image-file)))
-    (cond ((= loaded-image 0) #f)
-	  (else (let ((optimized-image (SDL_DisplayFormat loaded-image)))
-		  (SDL_FreeSurface loaded-image)
-		  (cond ((= optimized-image 0) #f)
-			((not transparent-color) optimized-image)
-			(else (SDL_SetColorKey optimized-image
-					       SDL_SRCCOLORKEY
-					       (SDL_MapRGB (surface-format optimized-image)
-							   (car transparent-color)
-							   (cadr transparent-color)
-							   (caddr transparent-color)))
-			      optimized-image)))))))
-
 
 ;;; Audio Subsystem
 
