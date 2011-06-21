@@ -72,8 +72,11 @@
 
   (receive (look-lines look-images) (process-look look)
 	   `(let ,(cons `(attr ',attr) look-images)
-	      (lambda (option)
+	      (lambda (option . param)
 		(case option
+		  ((#:get)
+		   (display (assoc-ref attr (car param)))
+		   (display param) (newline))
 		  ((#:render)
 		   (glPushMatrix)
 		   ,@look-lines
