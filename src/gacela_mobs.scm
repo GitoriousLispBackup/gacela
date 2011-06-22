@@ -51,6 +51,35 @@
 (define (process-mobs mobs)
   (for-each (lambda (m) (m #:render)) mobs))
 
+
+;;; Actions and looks for mobs
+
+(defmacro make-behaviour (name attr &rest code)
+  `(defun ,(get-behaviour-fun-name name) (object-attr)
+     (let ,(mapcar #'attribute-definition attr)
+       ,@code
+       ,(cons 'progn (mapcar #'attribute-save (reverse attr)))
+       object-attr)))
+
+(defun get-behaviour-fun-name (name)
+  (intern (concatenate 'string "BEHAVIOUR-" (string-upcase (string name))) 'gacela))
+
+(defun attribute-name (attribute)
+  (intern (string attribute) 'keyword))
+
+(define (attribute-definition attribute)
+  (let* ((name (cond ((list? attribute) (car attribute))
+		     (else attribute)))
+	 (pname (attribute-name name))
+	 (value (cond ((listp attribute) (cadr attribute)))))
+    `(,name (getf object-attr ,pname ,value))))
+
+(defun attribute-save (attribute)
+  (let* ((name (cond ((listp attribute) (car attribute))
+		     (t attribute)))
+	 (pname (attribute-name name)))
+    `(setf (getf object-attr ,pname) ,name)))
+
 (define-macro (lambda-look . look)
   (define (process-look look)
     (cond ((null? look) (values '() '()))
@@ -72,6 +101,9 @@
 		  ,@look-lines
 		  (glPopMatrix)))))
 
+
+;;; Making mobs
+
 (define-macro (define-mob mob-head . look)
   (let ((name (car mob-head)) (attr (cdr mob-head)))
     `(define ,name
@@ -86,7 +118,15 @@
 		 ((get-attr)
 		  attr)
 		 ((set-attr)
-		  (if (not (null? params)) (set! attr (car params))))))))
+		  (if (not (null? params)) (set! attr (car params))))
+		 ((get-actions)
+		  actions)
+		 ((set-actions)
+		  (if (not (null? params)) (set! actions (car params))))
+		 ((get-renders)
+		  renders)
+		 ((set-renders)
+		  (if (not (null? params)) (set! renders (car params))))))))
      (cond ((not (null? ',look))
 	    (display ',look)
 	    (newline)))
