@@ -51,12 +51,7 @@
 (define (process-mobs mobs)
   (for-each (lambda (m) (m #:render)) mobs))
 
-(define-macro (define-mob mob-head . look)
-  (let ((name (car mob-head)) (attr (cdr mob-head)))
-    `(define ,name
-       (lambda-mob ,attr ,@look))))
-
-(define-macro (lambda-mob attr . look)
+(define-macro (lambda-look . look)
   (define (process-look look)
     (cond ((null? look) (values '() '()))
 	  (else
@@ -71,13 +66,28 @@
 				     images))))))))
 
   (receive (look-lines look-images) (process-look look)
-	   `(let ,(cons `(attr ',attr) look-images)
-	      (lambda (option . param)
-		(case option
-		  ((#:get)
-		   (display (assoc-ref attr (car param)))
-		   (display param) (newline))
-		  ((#:render)
-		   (glPushMatrix)
-		   ,@look-lines
-		   (glPopMatrix)))))))
+	   `(let ,look-images
+		(lambda ()
+		  (glPushMatrix)
+		  ,@look-lines
+		  (glPopMatrix)))))
+
+(define-macro (define-mob mob-head . look)
+  (let ((name (car mob-head)) (attr (cdr mob-head)))
+    `(define ,name
+       (lambda-mob ,attr ,@look))))
+
+(define-macro (lambda-mob attr . look)
+  `(let ((mob #f))
+     (set! mob
+	   (let ((attr ',attr) (actions '()) (renders '()))
+	     (lambda (option . params)
+	       (case option
+		 ((get-attr)
+		  attr)
+		 ((set-attr)
+		  (if (not (null? params)) (set! attr (car params))))))))
+     (cond ((not (null? ',look))
+	    (display ',look)
+	    (newline)))
+     mob))
