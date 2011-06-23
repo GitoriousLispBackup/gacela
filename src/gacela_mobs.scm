@@ -54,31 +54,41 @@
 
 ;;; Actions and looks for mobs
 
-(defmacro make-behaviour (name attr &rest code)
-  `(defun ,(get-behaviour-fun-name name) (object-attr)
-     (let ,(mapcar #'attribute-definition attr)
-       ,@code
-       ,(cons 'progn (mapcar #'attribute-save (reverse attr)))
-       object-attr)))
+(define (get-attr list name default)
+  (let ((value (assoc-ref list name)))
+    (cond (value (car value))
+	  (else default))))
 
-(defun get-behaviour-fun-name (name)
-  (intern (concatenate 'string "BEHAVIOUR-" (string-upcase (string name))) 'gacela))
+(define (attr-def attr)
+  (let ((name (car attr))
+	(value (cadr attr)))
+    `(,name (get-attr attributes ',name ,value))))
 
-(defun attribute-name (attribute)
-  (intern (string attribute) 'keyword))
+;; (defmacro make-behaviour (name attr &rest code)
+;;   `(defun ,(get-behaviour-fun-name name) (object-attr)
+;;      (let ,(mapcar #'attribute-definition attr)
+;;        ,@code
+;;        ,(cons 'progn (mapcar #'attribute-save (reverse attr)))
+;;        object-attr)))
 
-(define (attribute-definition attribute)
-  (let* ((name (cond ((list? attribute) (car attribute))
-		     (else attribute)))
-	 (pname (attribute-name name))
-	 (value (cond ((listp attribute) (cadr attribute)))))
-    `(,name (getf object-attr ,pname ,value))))
+;; (defun get-behaviour-fun-name (name)
+;;   (intern (concatenate 'string "BEHAVIOUR-" (string-upcase (string name))) 'gacela))
 
-(defun attribute-save (attribute)
-  (let* ((name (cond ((listp attribute) (car attribute))
-		     (t attribute)))
-	 (pname (attribute-name name)))
-    `(setf (getf object-attr ,pname) ,name)))
+;; (defun attribute-name (attribute)
+;;   (intern (string attribute) 'keyword))
+
+;; (define (attribute-definition attribute)
+;;   (let* ((name (cond ((list? attribute) (car attribute))
+;; 		     (else attribute)))
+;; 	 (pname (attribute-name name))
+;; 	 (value (cond ((listp attribute) (cadr attribute)))))
+;;     `(,name (getf object-attr ,pname ,value))))
+
+;; (defun attribute-save (attribute)
+;;   (let* ((name (cond ((listp attribute) (car attribute))
+;; 		     (t attribute)))
+;; 	 (pname (attribute-name name)))
+;;     `(setf (getf object-attr ,pname) ,name)))
 
 (define-macro (lambda-look . look)
   (define (process-look look)
