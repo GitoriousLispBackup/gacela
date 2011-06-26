@@ -62,33 +62,23 @@
 (define (attr-def attr)
   (let ((name (car attr))
 	(value (cadr attr)))
-    `(,name (get-attr attributes ',name ,value))))
+    `(,name (get-attr attributes ',name ',value))))
 
-;; (defmacro make-behaviour (name attr &rest code)
-;;   `(defun ,(get-behaviour-fun-name name) (object-attr)
-;;      (let ,(mapcar #'attribute-definition attr)
-;;        ,@code
-;;        ,(cons 'progn (mapcar #'attribute-save (reverse attr)))
-;;        object-attr)))
+(define (attr-save attr)
+  (let ((name (car attr)))
+    `(assoc-set! attributes ',name (list ,name))))
 
-;; (defun get-behaviour-fun-name (name)
-;;   (intern (concatenate 'string "BEHAVIOUR-" (string-upcase (string name))) 'gacela))
+(define-macro (define-action action-head . code)
+  (let ((name (car action-head)) (attr (cdr action-head)))
+    `(define ,name
+       (lambda-action ,attr ,@code))))
 
-;; (defun attribute-name (attribute)
-;;   (intern (string attribute) 'keyword))
-
-;; (define (attribute-definition attribute)
-;;   (let* ((name (cond ((list? attribute) (car attribute))
-;; 		     (else attribute)))
-;; 	 (pname (attribute-name name))
-;; 	 (value (cond ((listp attribute) (cadr attribute)))))
-;;     `(,name (getf object-attr ,pname ,value))))
-
-;; (defun attribute-save (attribute)
-;;   (let* ((name (cond ((listp attribute) (car attribute))
-;; 		     (t attribute)))
-;; 	 (pname (attribute-name name)))
-;;     `(setf (getf object-attr ,pname) ,name)))
+(define-macro (lambda-action attr . code)
+  `(lambda (attributes)
+     (let ,(map attr-def attr)
+       ,@code
+       ,(cons 'begin (map attr-save attr))
+       attributes)))
 
 (define-macro (lambda-look . look)
   (define (process-look look)
