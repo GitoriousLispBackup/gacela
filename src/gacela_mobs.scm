@@ -66,7 +66,7 @@
 
 (define (attr-save attr)
   (let ((name (car attr)))
-    `(assoc-set! attributes ',name (list ,name))))
+    `(set! attributes (assoc-set! attributes ',name (list ,name)))))
 
 (define-macro (define-action action-head . code)
   (let ((name (car action-head)) (attr (cdr action-head)))
@@ -80,7 +80,7 @@
        ,(cons 'begin (map attr-save attr))
        attributes)))
 
-(define-macro (lambda-look . look)
+(define-macro (lambda-look attr . look)
   (define (process-look look)
     (cond ((null? look) (values '() '()))
 	  (else
@@ -96,10 +96,11 @@
 
   (receive (look-lines look-images) (process-look look)
 	   `(let ,look-images
-		(lambda ()
-		  (glPushMatrix)
-		  ,@look-lines
-		  (glPopMatrix)))))
+		(lambda (attributes)
+		  (let ,(map attr-def attr)
+		    (glPushMatrix)
+		    ,@look-lines
+		    (glPopMatrix))))))
 
 
 ;;; Making mobs
@@ -128,6 +129,8 @@
 		 ((set-renders)
 		  (if (not (null? params)) (set! renders (car params))))))))
      (cond ((not (null? ',look))
-	    (display ',look)
-	    (newline)))
+	    (mob 'set-renders
+		 (list (cons
+			'default-look
+			(lambda-look () ,@look))))))
      mob))
