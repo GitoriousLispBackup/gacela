@@ -127,10 +127,12 @@
 		 ((get-renders)
 		  renders)
 		 ((set-renders)
-		  (if (not (null? params)) (set! renders (car params))))))))
+		  (if (not (null? params)) (set! renders (car params))))
+		 ((render)
+		  (for-each (lambda (render) ((cdr render) attr)) renders))))))
      (cond ((not (null? ',look))
 	    (mob 'set-renders
 		 (list (cons
 			'default-look
-			(lambda-look () ,@look))))))
+			(lambda-look ,attr ,@look))))))
      mob))
