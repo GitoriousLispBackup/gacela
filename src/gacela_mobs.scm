@@ -128,11 +128,29 @@
 		  renders)
 		 ((set-renders)
 		  (if (not (null? params)) (set! renders (car params))))
+		 ((actions)
+		  (for-each
+		   (lambda (action)
+		     (set! attr ((cdr action) attr)))
+		   actions))
 		 ((render)
-		  (for-each (lambda (render) ((cdr render) attr)) renders))))))
+		  (for-each
+		   (lambda (render)
+		     ((cdr render) attr))
+		   renders))))))
      (cond ((not (null? ',look))
 	    (mob 'set-renders
 		 (list (cons
 			'default-look
 			(lambda-look ,attr ,@look))))))
      mob))
+
+(define (get-mob-attr mob var)
+  (let ((value (assoc-ref (mob 'get-attr) var)))
+    (if value (car value) #f)))
+
+(define (set-mob-attr! mob var value)
+  (mob 'set-attr (assoc-set! (mob 'get-attr) var (list value))))
+
+(define (add-mob-action mob name action)
+  )
