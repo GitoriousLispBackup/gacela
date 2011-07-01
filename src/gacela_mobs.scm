@@ -48,8 +48,11 @@
 (define-macro (hide-mob mob)
   `(hide-mob-hash ',mob))
 
-(define (process-mobs mobs)
-  (for-each (lambda (m) (m #:render)) mobs))
+(define (run-mob-actions mobs)
+  (for-each (lambda (m) (m 'run-actions)) mobs))
+
+(define (render-mobs mobs)
+  (for-each (lambda (m) (m 'render)) mobs))
 
 
 ;;; Actions and looks for mobs
@@ -113,7 +116,7 @@
 (define-macro (lambda-mob attr . look)
   `(let ((mob #f))
      (set! mob
-	   (let ((attr ',attr) (actions '()) (renders '()))
+	   (let ((attr ',attr) (actions '()) (looks '()))
 	     (lambda (option . params)
 	       (case option
 		 ((get-attr)
@@ -124,22 +127,22 @@
 		  actions)
 		 ((set-actions)
 		  (if (not (null? params)) (set! actions (car params))))
-		 ((get-renders)
-		  renders)
-		 ((set-renders)
-		  (if (not (null? params)) (set! renders (car params))))
-		 ((actions)
+		 ((get-looks)
+		  looks)
+		 ((set-looks)
+		  (if (not (null? params)) (set! looks (car params))))
+		 ((run-actions)
 		  (for-each
 		   (lambda (action)
 		     (set! attr ((cdr action) attr)))
 		   actions))
 		 ((render)
 		  (for-each
-		   (lambda (render)
-		     ((cdr render) attr))
-		   renders))))))
+		   (lambda (look)
+		     ((cdr look) attr))
+		   looks))))))
      (cond ((not (null? ',look))
-	    (mob 'set-renders
+	    (mob 'set-looks
 		 (list (cons
 			'default-look
 			(lambda-look ,attr ,@look))))))
@@ -153,4 +156,13 @@
   (mob 'set-attr (assoc-set! (mob 'get-attr) var (list value))))
 
 (define (add-mob-action mob name action)
-  )
+  (mob 'set-actions (assoc-set! (mob 'get-actions) name action)))
+
+(define (quit-mob-action mob name)
+  (mob 'set-actions (assoc-remove! (mob 'get-actions) name)))
+
+(define (add-mob-look mob name look)
+  (mob 'set-looks (assoc-set! (mob 'get-looks) name look)))
+
+(define (quit-mob-look mob name)
+  (mob 'set-looks (assoc-remove! (mob 'get-looks) name)))
