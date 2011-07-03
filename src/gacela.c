@@ -30,6 +30,8 @@ init_gacela (void *data, int argc, char **argv)
   scm_c_eval_string ("(activate-readline)");
   scm_c_eval_string ("(use-modules (ice-9 optargs))");
   scm_c_eval_string ("(use-modules (ice-9 receive))");
+  scm_c_eval_string ("(use-modules (ice-9 threads))");
+  scm_c_eval_string ("(read-enable 'case-insensitive)");
 
   // Bindings for C functions and structs
   SDL_register_functions (NULL);
