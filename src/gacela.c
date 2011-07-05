@@ -24,7 +24,7 @@
 #include "gacela_FTGL.h"
 
 static int
-find_matching_paren(int k)
+find_matching_paren (int k)
 {
   register int i;
   register char c = 0;
@@ -35,7 +35,7 @@ find_matching_paren(int k)
   else if (k == ']') c = '[';
   else if (k == '}') c = '{';
 
-  for (i=rl_point-2; i>=0; i--)
+  for (i = rl_point-2; i >= 0; i--)
     {
       /* Is the current character part of a character literal?  */
       if (i - 2 >= 0
@@ -63,13 +63,13 @@ find_matching_paren(int k)
 }
 
 static void
-match_paren(int x, int k)
+match_paren2 (int x, int k)
 {
   int tmp;
   fd_set readset;
   struct timeval timeout;
 
-  rl_insert(x, k);
+  rl_insert (x, k);
  
   /* Did we just insert a quoted paren?  If so, then don't bounce.  */
   if (rl_point - 1 >= 1
@@ -78,27 +78,63 @@ match_paren(int x, int k)
 
   timeout.tv_sec = 0;
   timeout.tv_usec = 500000;
-  FD_ZERO(&readset);
-  FD_SET(fileno(rl_instream), &readset);
+  FD_ZERO (&readset);
+  FD_SET (fileno(rl_instream), &readset);
 
-  if(rl_point > 1) {
+  if (rl_point > 1) {
     tmp = rl_point;
     rl_point = find_matching_paren(k);
-    if(rl_point > -1) {
+    if (rl_point > -1) {
       rl_redisplay();
-      //      scm_internal_select(1, &readset, NULL, NULL, &timeout);
+      //scm_internal_select(1, &readset, NULL, NULL, &timeout);
     }
-    rl_point = tmp;
+    //rl_point = tmp;
   }
+}
+
+static int
+match_paren (int x, int k)
+{
+  int tmp;
+  int fno;
+  SELECT_TYPE readset;
+  struct timeval timeout;
+
+  rl_insert (x, k);
+
+  /* Did we just insert a quoted paren?  If so, then don't bounce.  */
+  if (rl_point - 1 >= 1
+      && rl_line_buffer[rl_point - 2] == '\\')
+    return 0;
+
+  tmp = 1000 * 1000;
+  timeout.tv_sec = tmp / 1000000;
+  timeout.tv_usec = tmp % 1000000;
+  FD_ZERO (&readset);
+  fno = fileno (rl_instream);
+  FD_SET (fno, &readset);
+
+  if (rl_point > 1)
+    {
+      tmp = rl_point;
+      rl_point = find_matching_paren (k);
+      if (rl_point > -1)
+        {
+          rl_redisplay ();
+          scm_std_select (fno + 1, &readset, NULL, NULL, &timeout);
+        }
+      rl_point = tmp;
+    }
+  return 0;
 }
 
 static void
 init_gacela_client ()
 {
   /* init bouncing parens */
-  rl_bind_key(')', match_paren);
-  rl_bind_key(']', match_paren);
-  rl_bind_key('}', match_paren);
+  rl_bind_key (')', match_paren);
+  rl_bind_key (']', match_paren);
+  rl_bind_key ('}', match_paren);
 }
 
 void
