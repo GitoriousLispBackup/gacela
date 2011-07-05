@@ -17,9 +17,105 @@
 
 #include <libguile.h>
 #include <libgen.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 #include "gacela_SDL.h"
 #include "gacela_GL.h"
 #include "gacela_FTGL.h"
+
+static int
+find_matching_paren(int k)
+{
+  register int i;
+  register char c = 0;
+  int end_parens_found = 0;
+
+  /* Choose the corresponding opening bracket.  */
+  if (k == ')') c = '(';
+  else if (k == ']') c = '[';
+  else if (k == '}') c = '{';
+
+  for (i=rl_point-2; i>=0; i--)
+    {
+      /* Is the current character part of a character literal?  */
+      if (i - 2 >= 0
+ 	  && rl_line_buffer[i - 1] == '\\'
+ 	  && rl_line_buffer[i - 2] == '#')
+ 	;
+      else if (rl_line_buffer[i] == k)
+ 	end_parens_found++;
+      else if (rl_line_buffer[i] == '"')
+ 	{
+ 	  /* Skip over a string literal.  */
+ 	  for (i--; i >= 0; i--)
+ 	    if (rl_line_buffer[i] == '"'
+ 		&& ! (i - 1 >= 0
+ 		      && rl_line_buffer[i - 1] == '\\'))
+ 	      break;
+ 	}
+      else if (rl_line_buffer[i] == c)
+ 	{
+ 	  if (end_parens_found==0) return i;
+ 	  else --end_parens_found;
+ 	}
+    }
+  return -1;
+}
+
+static void
+match_paren(int x, int k)
+{
+  int tmp;
+  fd_set readset;
+  struct timeval timeout;
+
+  rl_insert(x, k);
+ 
+  /* Did we just insert a quoted paren?  If so, then don't bounce.  */
+  if (rl_point - 1 >= 1
+      && rl_line_buffer[rl_point - 2] == '\\')
+    return;
+
+  timeout.tv_sec = 0;
+  timeout.tv_usec = 500000;
+  FD_ZERO(&readset);
+  FD_SET(fileno(rl_instream), &readset);
+
+  if(rl_point > 1) {
+    tmp = rl_point;
+    rl_point = find_matching_paren(k);
+    if(rl_point > -1) {
+      rl_redisplay();
+      //      scm_internal_select(1, &readset, NULL, NULL, &timeout);
+    }
+    rl_point = tmp;
+  }
+}
+
+static void
+init_gacela_client ()
+{
+  /* init bouncing parens */
+  rl_bind_key(')', match_paren);
+  rl_bind_key(']', match_paren);
+  rl_bind_key('}', match_paren);
+}
+
+void
+gacela_client (void)
+{
+  char *line;
+
+  init_gacela_client ();
+
+  while (1) {
+    line = readline ("gacela>");
+    printf ("%s\n", line);
+    if (line && *line)
+      add_history (line);
+    free (line);
+  }
+}
 
 static void*
 init_gacela (void *data, int argc, char **argv)
@@ -54,7 +150,10 @@ load_scheme_files (char *path)
 int
 main (int argc, char *argv[])
 {
+  /*
   scm_with_guile (&init_gacela, NULL);
   load_scheme_files (dirname (argv[0]));
   scm_shell (argc, argv);
+  */
+  gacela_client ();
 }

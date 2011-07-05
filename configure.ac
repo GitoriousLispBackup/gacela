@@ -3,6 +3,11 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC
 GUILE_FLAGS
 CFLAGS="$CFLAGS -I/usr/include/freetype2"
+AC_CHECK_LIB(readline,
+	main,
+	LIBS="$LIBS -lreadline",
+	AC_MSG_ERROR([*** readline library not found!])
+)
 AC_CHECK_LIB(SDL,
 	main,
 	LIBS="$LIBS -lSDL",
