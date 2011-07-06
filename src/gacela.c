@@ -23,6 +23,7 @@
 #include "gacela_GL.h"
 #include "gacela_FTGL.h"
 
+
 static int
 find_matching_paren (int k)
 {
@@ -62,36 +63,6 @@ find_matching_paren (int k)
   return -1;
 }
 
-static void
-match_paren2 (int x, int k)
-{
-  int tmp;
-  fd_set readset;
-  struct timeval timeout;
-
-  rl_insert (x, k);
- 
-  /* Did we just insert a quoted paren?  If so, then don't bounce.  */
-  if (rl_point - 1 >= 1
-      && rl_line_buffer[rl_point - 2] == '\\')
-    return;
-
-  timeout.tv_sec = 0;
-  timeout.tv_usec = 500000;
-  FD_ZERO (&readset);
-  FD_SET (fileno(rl_instream), &readset);
-
-  if (rl_point > 1) {
-    tmp = rl_point;
-    rl_point = find_matching_paren(k);
-    if (rl_point > -1) {
-      rl_redisplay();
-      //scm_internal_select(1, &readset, NULL, NULL, &timeout);
-    }
-    //rl_point = tmp;
-  }
-}
-
 static int
 match_paren (int x, int k)
 {
@@ -107,7 +78,7 @@ match_paren (int x, int k)
       && rl_line_buffer[rl_point - 2] == '\\')
     return 0;
 
-  tmp = 1000 * 1000;
+  tmp = 500000;
   timeout.tv_sec = tmp / 1000000;
   timeout.tv_usec = tmp % 1000000;
   FD_ZERO (&readset);
@@ -135,6 +106,9 @@ init_gacela_client ()
   rl_bind_key (')', match_paren);
   rl_bind_key (']', match_paren);
   rl_bind_key ('}', match_paren);
+
+  /* SIGINT */
+  scm_c_eval_string ("(sigaction SIGINT (lambda (sig) (format #t \"ERROR: User interrupt~%ABORT: (signal)~%\")))");
 }
 
 void
@@ -149,6 +123,8 @@ gacela_client (void)
     printf ("%s\n", line);
     if (line && *line)
       add_history (line);
+    if (strcmp(line, "fuera") == 0)
+      break;
     free (line);
   }
 }
@@ -162,7 +138,6 @@ init_gacela (void *data, int argc, char **argv)
   scm_c_eval_string ("(activate-readline)");
   scm_c_eval_string ("(use-modules (ice-9 optargs))");
   scm_c_eval_string ("(use-modules (ice-9 receive))");
-  scm_c_eval_string ("(use-modules (ice-9 threads))");
   scm_c_eval_string ("(read-enable 'case-insensitive)");
 
   // Bindings for C functions and structs
@@ -191,5 +166,6 @@ main (int argc, char *argv[])
   load_scheme_files (dirname (argv[0]));
   scm_shell (argc, argv);
   */
+  scm_init_guile ();
   gacela_client ();
 }
