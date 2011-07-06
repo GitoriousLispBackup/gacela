@@ -19,6 +19,7 @@
 #include <libgen.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <signal.h>
 #include "gacela_SDL.h"
 #include "gacela_GL.h"
 #include "gacela_FTGL.h"
@@ -99,16 +100,28 @@ match_paren (int x, int k)
   return 0;
 }
 
+void
+ctrl_c_handler (int signum)
+{
+  printf ("ERROR: User interrupt\nABORT: (signal)\n");
+}
+     
 static void
 init_gacela_client ()
 {
+  struct sigaction new_action;
+
   /* init bouncing parens */
   rl_bind_key (')', match_paren);
   rl_bind_key (']', match_paren);
   rl_bind_key ('}', match_paren);
 
   /* SIGINT */
-  scm_c_eval_string ("(sigaction SIGINT (lambda (sig) (format #t \"ERROR: User interrupt~%ABORT: (signal)~%\")))");
+  new_action.sa_handler = ctrl_c_handler;
+  sigemptyset (&new_action.sa_mask);
+  new_action.sa_flags = 0;
+
+  sigaction (SIGINT, &new_action, NULL);
 }
 
 void
@@ -117,16 +130,20 @@ gacela_client (void)
   char *line;
 
   init_gacela_client ();
+  read_history (".gacela_history");
 
   while (1) {
-    line = readline ("gacela>");
-    printf ("%s\n", line);
+    line = readline ("gacela> ");
+    if (!line) break;
     if (line && *line)
-      add_history (line);
-    if (strcmp(line, "fuera") == 0)
-      break;
+      {
+	printf ("%s\n", line);
+	add_history (line);
+      }
     free (line);
   }
+
+  write_history (".gacela_history");
 }
 
 static void*
