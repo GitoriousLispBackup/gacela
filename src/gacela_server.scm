@@ -16,12 +16,24 @@
 
 
 (define start-server #f)
+(define check-connections #f)
+(define stop-server #f)
 
 (let ((server-socket #f) (clients '()))
   (set! start-server
 	(lambda (port)
 	  (set! server-socket (socket PF_INET SOCK_STREAM 0))
+	  (fcntl server-socket F_SETFL (logior O_NONBLOCK (fcntl server-socket F_GETFL)))
 	  (setsockopt server-socket SOL_SOCKET SO_REUSEADDR 1)
 	  (bind server-socket AF_INET INADDR_ANY port)
 	  (listen server-socket 5)))
-)
+
+  (set! check-connections
+	(lambda ()
+	  (catch #t
+		 (lambda () (set! clients (cons (accept server-socket) clients)))
+		 (lambda (key . args) #f))))
+
+  (set! stop-server
+	(lambda ()
+	  (cond (server-socket (close server-socket) (set! server-socket #f)))
