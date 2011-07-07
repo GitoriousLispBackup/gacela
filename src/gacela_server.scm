@@ -17,6 +17,7 @@
 
 (define start-server #f)
 (define check-connections #f)
+(define eval-from-clients #f)
 (define stop-server #f)
 
 (let ((server-socket #f) (clients '()))
@@ -34,6 +35,21 @@
 		 (lambda () (set! clients (cons (accept server-socket) clients)))
 		 (lambda (key . args) #f))))
 
+  (set! eval-from-clients
+	(lambda ()
+	  (for-each
+	   (lambda (cli)
+	     (let ((sock (car cli)))
+	       (cond ((char-ready? sock)
+		      (catch #t
+			     (lambda () (eval (read sock)))
+			     (lambda (key . args) #f))))))
+	   clients)))
+
   (set! stop-server
 	(lambda ()
-	  (cond (server-socket (close server-socket) (set! server-socket #f)))
+	  (cond (server-socket
+		 (close server-socket)
+		 (set! server-socket #f)))
+	  (for-each (lambda (cli) (close (car cli))) clients)
+	  (set! clients '()))))
