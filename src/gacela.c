@@ -128,9 +128,12 @@ void
 gacela_client (void)
 {
   char *line;
+  char *history_path;
+
+  asprintf (&history_path, "%s/.gacela_history", getenv("HOME"));
 
   init_gacela_client ();
-  read_history (".gacela_history");
+  read_history (history_path);
 
   while (1) {
     line = readline ("gacela> ");
@@ -143,7 +146,8 @@ gacela_client (void)
     free (line);
   }
 
-  write_history (".gacela_history");
+  write_history (history_path);
+  free (history_path);
 }
 
 static void*
@@ -155,7 +159,7 @@ init_gacela (void *data, int argc, char **argv)
   scm_c_eval_string ("(activate-readline)");
   scm_c_eval_string ("(use-modules (ice-9 optargs))");
   scm_c_eval_string ("(use-modules (ice-9 receive))");
-  scm_c_eval_string ("(read-enable 'case-insensitive)");
+  //  scm_c_eval_string ("(read-enable 'case-insensitive)");
 
   // Bindings for C functions and structs
   SDL_register_functions (NULL);
@@ -178,11 +182,15 @@ load_scheme_files (char *path)
 int
 main (int argc, char *argv[])
 {
-  /*
-  scm_with_guile (&init_gacela, NULL);
-  load_scheme_files (dirname (argv[0]));
-  scm_shell (argc, argv);
-  */
-  scm_init_guile ();
-  gacela_client ();
+  if (fork () == 0) {
+    scm_with_guile (&init_gacela, NULL);
+    load_scheme_files (dirname (argv[0]));
+    //scm_shell (argc, argv);
+    scm_c_eval_string ("(start-server 1234)");
+    scm_c_eval_string ("(run-game)");
+  }
+  else {
+    scm_init_guile ();
+    gacela_client ();
+  }
 }

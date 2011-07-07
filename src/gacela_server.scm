@@ -15,10 +15,13 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-(primitive-load-path "gacela.scm")
-(primitive-load-path "gacela_events.scm")
-(primitive-load-path "gacela_draw.scm")
-(primitive-load-path "gacela_ttf.scm")
-(primitive-load-path "gacela_mobs.scm")
-(primitive-load-path "gacela_misc.scm")
-(primitive-load-path "gacela_server.scm")
+(define start-server #f)
+
+(let ((server-socket #f) (clients '()))
+  (set! start-server
+	(lambda (port)
+	  (set! server-socket (socket PF_INET SOCK_STREAM 0))
+	  (setsockopt server-socket SOL_SOCKET SO_REUSEADDR 1)
+	  (bind server-socket AF_INET INADDR_ANY port)
+	  (listen server-socket 5)))
+)
