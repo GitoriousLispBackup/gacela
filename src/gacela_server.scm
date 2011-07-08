@@ -17,6 +17,7 @@
 
 (define start-server #f)
 (define check-connections #f)
+(define clean-closed-connections #f)
 (define eval-from-clients #f)
 (define stop-server #f)
 
@@ -29,8 +30,19 @@
 	  (bind server-socket AF_INET INADDR_ANY port)
 	  (listen server-socket 5)))
 
+  (set! clean-closed-connections
+	(lambda (conns)
+	  (cond ((null? conns) '())
+		(else
+		 (let* ((cli (car conns)) (sock (car cli)))
+		   (cond ((port-closed? sock)
+			  (clean-closed-connections (cdr conns)))
+			 (else
+			  (cons cli (clean-closed-connections (cdr conns))))))))))
+
   (set! check-connections
 	(lambda ()
+	  (set! clients (clean-closed-connections clients))
 	  (catch #t
 ;		 (lambda () (set! clients (cons (accept server-socket) clients)))
 		 (lambda ()
@@ -45,8 +57,18 @@
 	     (let ((sock (car cli)))
 	       (cond ((char-ready? sock)
 		      (catch #t
-			     (lambda () (display (primitive-eval (read sock)) sock))
-			     (lambda (key . args) #f))))))
+			     (lambda ()
+			       (let ((exp (read sock)))
+				 (cond ((eof-object? exp)
+					(close sock))
+				       (else
+					(format sock "~a~%" (primitive-eval exp))))))
+			     (lambda (key . args)
+			       (let ((fmt (string-concatenate (list (cadr args) "~%")))
+				     (params (caddr args)))
+				 (if params
+				     (apply format (cons sock (cons fmt params)))
+				     (format sock fmt)))))))))
 	   clients)))
 
   (set! stop-server

@@ -20,6 +20,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <signal.h>
+#include <sys/socket.h>
 #include "gacela_SDL.h"
 #include "gacela_GL.h"
 #include "gacela_FTGL.h"
@@ -32,14 +33,14 @@ find_matching_paren (int k)
   register char c = 0;
   int end_parens_found = 0;
 
-  /* Choose the corresponding opening bracket.  */
+  // Choose the corresponding opening bracket
   if (k == ')') c = '(';
   else if (k == ']') c = '[';
   else if (k == '}') c = '{';
 
   for (i = rl_point-2; i >= 0; i--)
     {
-      /* Is the current character part of a character literal?  */
+      // Is the current character part of a character literal?
       if (i - 2 >= 0
  	  && rl_line_buffer[i - 1] == '\\'
  	  && rl_line_buffer[i - 2] == '#')
@@ -48,7 +49,7 @@ find_matching_paren (int k)
  	end_parens_found++;
       else if (rl_line_buffer[i] == '"')
  	{
- 	  /* Skip over a string literal.  */
+ 	  // Skip over a string literal
  	  for (i--; i >= 0; i--)
  	    if (rl_line_buffer[i] == '"'
  		&& ! (i - 1 >= 0
@@ -74,7 +75,7 @@ match_paren (int x, int k)
 
   rl_insert (x, k);
 
-  /* Did we just insert a quoted paren?  If so, then don't bounce.  */
+  // Did we just insert a quoted paren?  If so, then don't bounce
   if (rl_point - 1 >= 1
       && rl_line_buffer[rl_point - 2] == '\\')
     return 0;
@@ -111,12 +112,12 @@ init_gacela_client ()
 {
   struct sigaction new_action;
 
-  /* init bouncing parens */
+  // init bouncing parens
   rl_bind_key (')', match_paren);
   rl_bind_key (']', match_paren);
   rl_bind_key ('}', match_paren);
 
-  /* SIGINT */
+  // SIGINT
   new_action.sa_handler = ctrl_c_handler;
   sigemptyset (&new_action.sa_mask);
   new_action.sa_flags = 0;
@@ -125,11 +126,25 @@ init_gacela_client ()
 }
 
 void
-gacela_client (void)
+gacela_client (char *hostname, int port)
 {
+  int sockfd;
+  struct hostent *server;
+  struct sockaddr_in serv_addr;
+
   char *line;
   char *history_path;
 
+  // Connect to the server
+  sockfd = socket (AF_INET, SOCK_STREAM, 0);
+  server = gethostbyname (hostname);
+  bzero ((char *) &serv_addr, sizeof (serv_addr));
+  serv_addr.sin_family = AF_INET;
+  bcopy ((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+  serv_addr.sin_port = htons (port);
+  connect (sockfd, (struct sockaddr *) &serv_addr, sizeof (serv_addr));
+
+  // Command line
   asprintf (&history_path, "%s/.gacela_history", getenv("HOME"));
 
   init_gacela_client ();
@@ -197,10 +212,10 @@ start_server (int argc, char *argv[])
 }
 
 void
-start_client (void)
+start_client (char *hostname, int port)
 {
   scm_init_guile ();
-  gacela_client ();
+  gacela_client (hostname, port);
 }
 
 int
@@ -211,6 +226,6 @@ main (int argc, char *argv[])
   if (fork () == 0)
     start_server ();
   else
-    start_client ();
+    start_client ("localhost", 1234);
   */
 }

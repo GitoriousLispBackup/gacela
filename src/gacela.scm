@@ -240,7 +240,7 @@
 	(lambda ()
 	  (set! mobs (get-active-mobs))
 	  (set! running #t)
-	  (quit? #f)
+	  (quit! #f)
 	  (do () ((quit?))
 	    (if (sdl-on?) (init-frame-time))
 	    (check-connections)

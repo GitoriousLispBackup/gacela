@@ -30,16 +30,21 @@
 
 (define (process-events)
   (let ((events (poll-events)))
-    (quit? (not (null? (get-event events `(,SDL_QUIT)))))
+    (quit! (not (null? (get-event events `(,SDL_QUIT)))))
     (clear-key-state)
     (process-keyboard-events (get-event events `(,SDL_KEYDOWN ,SDL_KEYUP)))))
 
 (define quit? #f)
+(define quit! #f)
 
 (let ((quit #f))
   (set! quit?
-	(lambda* (#:optional (value '()))
-	  (if (null? value) quit (set! quit value)))))
+	(lambda ()
+	  quit))
+
+  (set! quit!
+	(lambda (value)
+	  (set! quit value))))
 
 (define (process-keyboard-events events)
   (cond ((not (null? events))
