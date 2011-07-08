@@ -179,18 +179,38 @@ load_scheme_files (char *path)
   scm_primitive_load_path (scm_from_locale_string ("gacela_loader.scm"));
 }
 
+void
+start_single (int argc, char *argv[])
+{
+  scm_with_guile (&init_gacela, NULL);
+  load_scheme_files (dirname (argv[0]));
+  scm_shell (argc, argv);
+}
+
+void
+start_server (int argc, char *argv[])
+{
+  scm_with_guile (&init_gacela, NULL);
+  load_scheme_files (dirname (argv[0]));
+  scm_c_eval_string ("(start-server 1234)");
+  scm_c_eval_string ("(game-loop)");
+}
+
+void
+start_client (void)
+{
+  scm_init_guile ();
+  gacela_client ();
+}
+
 int
 main (int argc, char *argv[])
 {
-  if (fork () == 0) {
-    scm_with_guile (&init_gacela, NULL);
-    load_scheme_files (dirname (argv[0]));
-    //scm_shell (argc, argv);
-    scm_c_eval_string ("(start-server 1234)");
-    scm_c_eval_string ("(run-game)");
-  }
-  else {
-    scm_init_guile ();
-    gacela_client ();
-  }
+  start_single (argc, argv);
+  /*
+  if (fork () == 0)
+    start_server ();
+  else
+    start_client ();
+  */
 }

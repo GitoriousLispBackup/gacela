@@ -26,6 +26,7 @@
 ;;; SDL Initialization Subsystem
 
 (define init-sdl #f)
+(define sdl-on? #f)
 (define quit-sdl #f)
 
 (let ((initialized #f))
@@ -33,6 +34,10 @@
 	(lambda ()
 	  (cond ((not initialized) (SDL_Init SDL_INIT_EVERYTHING) (set! initialized #t))
 		(else initialized))))
+
+  (set! sdl-on?
+	(lambda ()
+	  (if initialized #t #f)))
 
   (set! quit-sdl
 	(lambda ()
@@ -237,19 +242,20 @@
 	  (set! running #t)
 	  (quit? #f)
 	  (do () ((quit?))
-	    (init-frame-time)
-;	    (check-connections)
-;	    (eval-from-clients)
-	    (process-events)
-	    (cond ((not (quit?))
-		   (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-		   (to-origin)
-		   (cond ((mobs-changed?) (set! mobs (get-active-mobs))))
-		   (if (procedure? game-code) (game-code))
-		   (run-mob-actions mobs)
-		   (render-mobs mobs)
-		   (SDL_GL_SwapBuffers)
-		   (delay-frame))))
+	    (if (sdl-on?) (init-frame-time))
+	    (check-connections)
+	    (eval-from-clients)
+	    (cond ((sdl-on?)
+		   (process-events)
+		   (cond ((not (quit?))
+			  (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
+			  (to-origin)
+			  (cond ((mobs-changed?) (set! mobs (get-active-mobs))))
+			  (if (procedure? game-code) (game-code))
+			  (run-mob-actions mobs)
+			  (render-mobs mobs)
+			  (SDL_GL_SwapBuffers)
+			  (delay-frame))))))
 	  (set! running #f)))
 
   (set! game-running?

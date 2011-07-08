@@ -24,7 +24,7 @@
   (set! start-server
 	(lambda (port)
 	  (set! server-socket (socket PF_INET SOCK_STREAM 0))
-	  (fcntl server-socket F_SETFL (logior O_NONBLOCK (fcntl server-socket F_GETFL)))
+;	  (fcntl server-socket F_SETFL (logior O_NONBLOCK (fcntl server-socket F_GETFL)))
 	  (setsockopt server-socket SOL_SOCKET SO_REUSEADDR 1)
 	  (bind server-socket AF_INET INADDR_ANY port)
 	  (listen server-socket 5)))
@@ -32,7 +32,10 @@
   (set! check-connections
 	(lambda ()
 	  (catch #t
-		 (lambda () (set! clients (cons (accept server-socket) clients)))
+;		 (lambda () (set! clients (cons (accept server-socket) clients)))
+		 (lambda ()
+		   (cond ((char-ready? server-socket)
+			  (set! clients (cons (accept server-socket) clients)))))
 		 (lambda (key . args) #f))))
 
   (set! eval-from-clients
@@ -42,7 +45,7 @@
 	     (let ((sock (car cli)))
 	       (cond ((char-ready? sock)
 		      (catch #t
-			     (lambda () (eval (read sock)))
+			     (lambda () (display (primitive-eval (read sock)) sock))
 			     (lambda (key . args) #f))))))
 	   clients)))
 
