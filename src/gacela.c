@@ -229,16 +229,22 @@ start_client (char *hostname, int port)
 int
 main (int argc, char *argv[])
 {
-  int shell_mode = 0;
-  int port;
+  char *arg;
+  int mode = 0;   // shell: 1, server: 2, client: 3
+  int port = 2;
   int i;
 
   for (i = 1; i < argc; i++)
     if (strcmp (argv[i], "--shell-mode") == 0)
-      shell_mode = 1;
+      mode = 1;
+    else if (strncmp (argv[i], "--server", 8) == 0) {
+      arg = strdup (argv[i]);
+      port = 1234;
 
-  if (shell_mode == 1)
+  if (mode == 1)
     start_single (dirname (argv[0]));
+  else
+    printf ("Puerto: %d\n", port);
   /*
   if (fork () == 0)
     start_server ();
