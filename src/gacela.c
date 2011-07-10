@@ -21,6 +21,9 @@
 #include <readline/history.h>
 #include <signal.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
 #include "gacela_SDL.h"
 #include "gacela_GL.h"
 #include "gacela_FTGL.h"
@@ -195,19 +198,24 @@ load_scheme_files (char *path)
 }
 
 void
-start_single (int argc, char *argv[])
+start_single (char *working_path)
 {
+  char *argv = "guile";
+
   scm_with_guile (&init_gacela, NULL);
-  load_scheme_files (dirname (argv[0]));
-  scm_shell (argc, argv);
+  load_scheme_files (working_path);
+  scm_shell (1, &argv);
 }
 
 void
-start_server (int argc, char *argv[])
+start_server (char *working_path, int port)
 {
+  char start_server[100];
+
   scm_with_guile (&init_gacela, NULL);
-  load_scheme_files (dirname (argv[0]));
-  scm_c_eval_string ("(start-server 1234)");
+  load_scheme_files (working_path);
+  sprintf (start_server, "(start-server %d)", port);
+  scm_c_eval_string (start_server);
   scm_c_eval_string ("(game-loop)");
 }
 
@@ -221,7 +229,16 @@ start_client (char *hostname, int port)
 int
 main (int argc, char *argv[])
 {
-  start_single (argc, argv);
+  int shell_mode = 0;
+  int port;
+  int i;
+
+  for (i = 1; i < argc; i++)
+    if (strcmp (argv[i], "--shell-mode") == 0)
+      shell_mode = 1;
+
+  if (shell_mode == 1)
+    start_single (dirname (argv[0]));
   /*
   if (fork () == 0)
     start_server ();
