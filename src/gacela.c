@@ -15,6 +15,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <stdio.h>
+#include <string.h>
 #include <libguile.h>
 #include <libgen.h>
 #include <readline/readline.h>
@@ -231,20 +233,40 @@ main (int argc, char *argv[])
 {
   char *arg;
   int mode = 0;   // shell: 1, server: 2, client: 3
-  int port = 2;
+  char *host;
+  int port = 0;
   int i;
 
-  for (i = 1; i < argc; i++)
+  // Checking arguments
+  for (i = 1; i < argc; i++) {
     if (strcmp (argv[i], "--shell-mode") == 0)
       mode = 1;
     else if (strncmp (argv[i], "--server", 8) == 0) {
-      arg = strdup (argv[i]);
-      port = 1234;
+      mode = 2;
+      arg = strtok (argv[i], "=");
+      arg = strtok (NULL, "=");
+      if (arg != NULL)
+	port = atoi (arg);
+    }
+    else if (strncmp (argv[i], "--client", 8) == 0) {
+      mode = 3;
+      arg = strtok (argv[i], "=");
+      arg = strtok (NULL, "=");
+      if (arg != NULL) {
+	host = strtok (arg, ":");
+	arg = strtok (NULL, ":");
+	if (arg != NULL)
+	  port = atoi (arg);
+      }
+    }
+  }
 
   if (mode == 1)
     start_single (dirname (argv[0]));
-  else
-    printf ("Puerto: %d\n", port);
+  else if (mode == 2 && port != 0)
+    start_server (dirname (argv[0]), port);
+  else if (mode == 3 && port != 0)
+    start_client (host, port);
   /*
   if (fork () == 0)
     start_server ();
