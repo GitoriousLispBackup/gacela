@@ -133,10 +133,10 @@ init_gacela_client ()
 void
 gacela_client (char *hostname, int port)
 {
-  int sockfd;
+  int sockfd, n;
   struct hostent *server;
   struct sockaddr_in serv_addr;
-
+  char buffer[256];
   char *line;
   char *history_path;
 
@@ -160,12 +160,25 @@ gacela_client (char *hostname, int port)
     if (!line) break;
     if (line && *line)
       {
-	printf ("%s\n", line);
 	add_history (line);
+	write (sockfd, "(", 1);
+	n = write (sockfd, line, strlen (line));
+	write (sockfd, ")", 1);
+	if (n < 0)
+	  error("ERROR writing to socket");
+
+	bzero (buffer, 256);
+	n = 0;
+	while (n == 0)
+	  n = read (sockfd, buffer, 255);
+	if (n < 0)
+	  error("ERROR reading from socket");
+	printf ("%s\n", buffer);
       }
     free (line);
   }
 
+  close (sockfd);
   write_history (history_path);
   free (history_path);
 }

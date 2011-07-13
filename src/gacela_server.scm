@@ -58,11 +58,13 @@
 	       (cond ((char-ready? sock)
 		      (catch #t
 			     (lambda ()
-			       (let ((exp (read sock)))
+			       (let ((exp (car (read sock))))
+				 (format #t "~a~%" exp)
 				 (cond ((eof-object? exp)
 					(close sock))
 				       (else
-					(format sock "~a~%" (primitive-eval exp))))))
+					(format #t "~a~%" (primitive-eval exp))
+					(format sock "~a" (primitive-eval exp))))))
 			     (lambda (key . args)
 			       (let ((fmt (string-concatenate (list (cadr args) "~%")))
 				     (params (caddr args)))
