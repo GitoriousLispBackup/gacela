@@ -25,10 +25,12 @@
   (set! start-server
 	(lambda (port)
 	  (set! server-socket (socket PF_INET SOCK_STREAM 0))
-;	  (fcntl server-socket F_SETFL (logior O_NONBLOCK (fcntl server-socket F_GETFL)))
 	  (setsockopt server-socket SOL_SOCKET SO_REUSEADDR 1)
 	  (bind server-socket AF_INET INADDR_ANY port)
-	  (listen server-socket 5)))
+	  (listen server-socket 5)
+	  (cond ((not (game-running?))
+		 (game-loop)))))
+
 
   (set! clean-closed-connections
 	(lambda (conns)
@@ -44,7 +46,6 @@
 	(lambda ()
 	  (set! clients (clean-closed-connections clients))
 	  (catch #t
-;		 (lambda () (set! clients (cons (accept server-socket) clients)))
 		 (lambda ()
 		   (cond ((char-ready? server-socket)
 			  (set! clients (cons (accept server-socket) clients)))))
@@ -58,13 +59,13 @@
 	       (cond ((char-ready? sock)
 		      (catch #t
 			     (lambda ()
-			       (let ((exp (car (read sock))))
+			       (let ((exp (read sock)))
 				 (format #t "~a~%" exp)
 				 (cond ((eof-object? exp)
 					(close sock))
 				       (else
-					(format #t "~a~%" (primitive-eval exp))
-					(format sock "~a" (primitive-eval exp))))))
+					(format #t "~a~%" (primitive-eval (car exp)))
+					(format sock "~a" (primitive-eval (car exp)))))))
 			     (lambda (key . args)
 			       (let ((fmt (string-concatenate (list (cadr args) "~%")))
 				     (params (caddr args)))

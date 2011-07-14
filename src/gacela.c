@@ -31,6 +31,9 @@
 #include "gacela_FTGL.h"
 
 
+// Generic variables
+int ctrl_c = 0;
+
 static int
 find_matching_paren (int k)
 {
@@ -110,6 +113,7 @@ void
 ctrl_c_handler (int signum)
 {
   printf ("ERROR: User interrupt\nABORT: (signal)\n");
+  ctrl_c = 1;
 }
      
 static void
@@ -157,6 +161,7 @@ gacela_client (char *hostname, int port)
 
   while (1) {
     line = readline ("gacela> ");
+    ctrl_c = 0;
     if (!line) break;
     if (line && *line)
       {
@@ -168,12 +173,18 @@ gacela_client (char *hostname, int port)
 	  error("ERROR writing to socket");
 
 	bzero (buffer, 256);
-	n = 0;
-	while (n == 0)
-	  n = read (sockfd, buffer, 255);
+	n = read (sockfd, buffer, sizeof (buffer));
+	while (n == 0) {
+	  if (ctrl_c) break;
+	  sleep (1);
+	  n = read (sockfd, buffer, sizeof (buffer));
+	}
 	if (n < 0)
 	  error("ERROR reading from socket");
-	printf ("%s\n", buffer);
+	if (ctrl_c)
+	  ctrl_c = 0;
+	else
+	  printf ("%s\n", buffer);
       }
     free (line);
   }
@@ -231,7 +242,6 @@ start_server (char *working_path, int port)
   load_scheme_files (working_path);
   sprintf (start_server, "(start-server %d)", port);
   scm_c_eval_string (start_server);
-  scm_c_eval_string ("(game-loop)");
 }
 
 void
