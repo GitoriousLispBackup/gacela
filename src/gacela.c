@@ -151,7 +151,10 @@ gacela_client (char *hostname, int port)
   serv_addr.sin_family = AF_INET;
   bcopy ((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
   serv_addr.sin_port = htons (port);
-  connect (sockfd, (struct sockaddr *) &serv_addr, sizeof (serv_addr));
+  if (connect (sockfd, (struct sockaddr *) &serv_addr, sizeof (serv_addr)) == -1) {
+    printf ("%s [%d.%d.%d.%d] %d: Connection refused\n", hostname, server->h_addr[0], server->h_addr[1], server->h_addr[2], server->h_addr[3], port);
+    return;
+  }
 
   // Command line
   asprintf (&history_path, "%s/.gacela_history", getenv("HOME"));
