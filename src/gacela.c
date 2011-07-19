@@ -30,7 +30,6 @@
 #include "gacela_GL.h"
 #include "gacela_FTGL.h"
 
-
 // Generic variables
 int ctrl_c = 0;
 
@@ -135,26 +134,12 @@ init_gacela_client ()
 }
 
 void
-gacela_client (char *hostname, int port)
+gacela_client (int rec_channel, int send_channel)
 {
-  int sockfd, n;
-  struct hostent *server;
-  struct sockaddr_in serv_addr;
+  int n;
   char buffer[256];
   char *line;
   char *history_path;
-
-  // Connect to the server
-  sockfd = socket (AF_INET, SOCK_STREAM, 0);
-  server = gethostbyname (hostname);
-  bzero ((char *) &serv_addr, sizeof (serv_addr));
-  serv_addr.sin_family = AF_INET;
-  bcopy ((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
-  serv_addr.sin_port = htons (port);
-  if (connect (sockfd, (struct sockaddr *) &serv_addr, sizeof (serv_addr)) == -1) {
-    printf ("%s [%d.%d.%d.%d] %d: Connection refused\n", hostname, server->h_addr[0], server->h_addr[1], server->h_addr[2], server->h_addr[3], port);
-    return;
-  }
 
   // Command line
   asprintf (&history_path, "%s/.gacela_history", getenv("HOME"));
@@ -169,18 +154,18 @@ gacela_client (char *hostname, int port)
     if (line && *line)
       {
 	add_history (line);
-	write (sockfd, "(", 1);
-	n = write (sockfd, line, strlen (line));
-	write (sockfd, ")", 1);
+	write (send_channel, "(", 1);
+	n = write (send_channel, line, strlen (line));
+	write (send_channel, ")", 1);
 	if (n < 0)
 	  error("ERROR writing to socket");
 
 	bzero (buffer, 256);
-	n = read (sockfd, buffer, sizeof (buffer));
+	n = read (rec_channel, buffer, sizeof (buffer));
 	while (n == 0) {
 	  if (ctrl_c) break;
 	  sleep (1);
-	  n = read (sockfd, buffer, sizeof (buffer));
+	  n = read (rec_channel, buffer, sizeof (buffer));
 	}
 	if (n < 0)
 	  error("ERROR reading from socket");
@@ -192,7 +177,6 @@ gacela_client (char *hostname, int port)
     free (line);
   }
 
-  close (sockfd);
   write_history (history_path);
   free (history_path);
 }
@@ -206,7 +190,6 @@ init_gacela (void *data, int argc, char **argv)
   scm_c_eval_string ("(activate-readline)");
   scm_c_eval_string ("(use-modules (ice-9 optargs))");
   scm_c_eval_string ("(use-modules (ice-9 receive))");
-  //  scm_c_eval_string ("(read-enable 'case-insensitive)");
 
   // Bindings for C functions and structs
   SDL_register_functions (NULL);
@@ -248,10 +231,37 @@ start_server (char *working_path, int port)
 }
 
 void
-start_client (char *hostname, int port)
+start_local_server (char *working_path, SCM pipes)
 {
-  scm_init_guile ();
-  gacela_client (hostname, port);
+  char start_server[100];
+
+  scm_with_guile (&init_gacela, NULL);
+  load_scheme_files (working_path);
+  scm_c_define ("pipes", pipes);
+  scm_c_eval_string ("(start-server pipes)");
+}
+
+void
+start_remote_client (char *hostname, int port)
+{
+  int sockfd;
+  struct hostent *server;
+  struct sockaddr_in serv_addr;
+
+  // Connect to the server
+  sockfd = socket (AF_INET, SOCK_STREAM, 0);
+  server = gethostbyname (hostname);
+  bzero ((char *) &serv_addr, sizeof (serv_addr));
+  serv_addr.sin_family = AF_INET;
+  bcopy ((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+  serv_addr.sin_port = htons (port);
+  if (connect (sockfd, (struct sockaddr *) &serv_addr, sizeof (serv_addr)) == -1) {
+    printf ("%s [%d.%d.%d.%d] %d: Connection refused\n", hostname, server->h_addr[0], server->h_addr[1], server->h_addr[2], server->h_addr[3], port);
+  }
+  else {
+    gacela_client (sockfd, sockfd);
+    close (sockfd);
+  }
 }
 
 int
@@ -262,6 +272,8 @@ main (int argc, char *argv[])
   char *host;
   int port = 0;
   int i;
+  SCM pipes;
+  int pid;
 
   // Checking arguments
   for (i = 1; i < argc; i++) {
@@ -287,16 +299,20 @@ main (int argc, char *argv[])
     }
   }
 
+  scm_init_guile ();
+
   if (mode == 1)
     start_single (dirname (argv[0]));
   else if (mode == 2 && port != 0)
     start_server (dirname (argv[0]), port);
   else if (mode == 3 && port != 0)
-    start_client (host, port);
-  /*
-  if (fork () == 0)
-    start_server ();
-  else
-    start_client ("localhost", 1234);
-  */
+    start_remote_client (host, port);
+  else {
+    pipes = scm_pipe ();
+    pid = fork ();
+    if (pid == 0)
+      start_local_server (dirname (argv[0]), pipes);
+    else
+      gacela_client (scm_to_int (SCM_CAR (pipes)), scm_to_int (SCM_CDR (pipes)));
+  }
 }
