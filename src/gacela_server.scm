@@ -57,25 +57,10 @@
 
   (set! eval-from-clients
 	(lambda ()
+	  (cond (pipes
+		 (eval-from-client (car pipes) (cdr pipes))))
 	  (for-each
-	   (lambda (cli)
-	     (let ((sock (car cli)))
-	       (cond ((char-ready? sock)
-		      (catch #t
-			     (lambda ()
-			       (let ((exp (read sock)))
-				 (format #t "~a~%" exp)
-				 (cond ((eof-object? exp)
-					(close sock))
-				       (else
-					(format #t "~a~%" (primitive-eval (car exp)))
-					(format sock "~a" (primitive-eval (car exp)))))))
-			     (lambda (key . args)
-			       (let ((fmt (string-concatenate (list (cadr args) "~%")))
-				     (params (caddr args)))
-				 (if params
-				     (apply format (cons sock (cons fmt params)))
-				     (format sock fmt)))))))))
+	   (lambda (cli) (eval-from-client (car cli) (car cli)))
 	   clients)))
 
   (set! stop-server
@@ -85,3 +70,21 @@
 		 (set! server-socket #f)))
 	  (for-each (lambda (cli) (close (car cli))) clients)
 	  (set! clients '()))))
+
+(define (eval-from-client rec-channel send-channel)
+  (cond ((char-ready? rec-channel)
+	 (catch #t
+		(lambda ()
+		  (let ((exp (read rec-channel)))
+		    (format #t "~a~%" exp)
+		    (cond ((eof-object? exp)
+			   (close rec-channel))
+			  (else
+			   (format #t "~a~%" (primitive-eval (car exp)))
+			   (format send-channel "~a" (primitive-eval (car exp)))))))
+		(lambda (key . args)
+		  (let ((fmt (string-concatenate (list (cadr args) "~%")))
+			(params (caddr args)))
+		    (if params
+			(apply format (cons send-channel (cons fmt params)))
+			(format send-channel fmt))))))))
