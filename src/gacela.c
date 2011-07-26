@@ -134,10 +134,10 @@ init_gacela_client ()
 }
 
 void
-gacela_client (int rec_channel, int send_channel)
+gacela_client (SCM rec_channel, SCM send_channel)
 {
   int n;
-  char buffer[256];
+  SCM buffer;
   char *line;
   char *history_path;
 
@@ -154,25 +154,20 @@ gacela_client (int rec_channel, int send_channel)
     if (line && *line)
       {
 	add_history (line);
-	write (send_channel, "(", 1);
-	n = write (send_channel, line, strlen (line));
-	write (send_channel, ")", 1);
-	if (n < 0)
-	  error("ERROR writing to socket");
+	scm_write (scm_from_locale_string ("("), send_channel);
+	scm_write (scm_from_locale_string (line), send_channel);
+	scm_write (scm_from_locale_string (")"), send_channel);
 
-	bzero (buffer, 256);
-	n = read (rec_channel, buffer, sizeof (buffer));
-	while (n == 0) {
+	while (scm_char_ready_p (rec_channel) == SCM_BOOL_F) {
 	  if (ctrl_c) break;
 	  sleep (1);
-	  n = read (rec_channel, buffer, sizeof (buffer));
 	}
-	if (n < 0)
-	  error("ERROR reading from socket");
 	if (ctrl_c)
 	  ctrl_c = 0;
-	else
-	  printf ("%s\n", buffer);
+	else {
+	  buffer = scm_read_line (rec_channel);
+	  printf ("%s\n", scm_to_locale_string (buffer));
+	}
       }
     free (line);
   }
@@ -240,7 +235,7 @@ start_local_server (char *working_path, SCM pipes)
   scm_c_define ("pipes", pipes);
   scm_c_eval_string ("(start-server pipes)");
 }
-
+/*
 void
 start_remote_client (char *hostname, int port)
 {
@@ -263,7 +258,7 @@ start_remote_client (char *hostname, int port)
     close (sockfd);
   }
 }
-
+*/
 int
 main (int argc, char *argv[])
 {
@@ -306,13 +301,14 @@ main (int argc, char *argv[])
   else if (mode == 2 && port != 0)
     start_server (dirname (argv[0]), port);
   else if (mode == 3 && port != 0)
-    start_remote_client (host, port);
+    //start_remote_client (host, port);
+    return;
   else {
     pipes = scm_pipe ();
     pid = fork ();
     if (pid == 0)
       start_local_server (dirname (argv[0]), pipes);
     else
-      gacela_client (scm_to_int (SCM_CAR (pipes)), scm_to_int (SCM_CDR (pipes)));
+      gacela_client (SCM_CAR (pipes), SCM_CDR (pipes));
   }
 }

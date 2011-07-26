@@ -21,13 +21,17 @@
 (define eval-from-clients #f)
 (define stop-server #f)
 
-(let ((server-socket #f) (clients '()))
+(let ((server-socket #f) (clients '())
+      (server-pipes #f))
   (set! start-server
-	(lambda (port)
-	  (set! server-socket (socket PF_INET SOCK_STREAM 0))
-	  (setsockopt server-socket SOL_SOCKET SO_REUSEADDR 1)
-	  (bind server-socket AF_INET INADDR_ANY port)
-	  (listen server-socket 5)
+	(lambda* (#:key (port #f) (pipes #f))
+	  (cond (port
+		 (set! server-socket (socket PF_INET SOCK_STREAM 0))
+		 (setsockopt server-socket SOL_SOCKET SO_REUSEADDR 1)
+		 (bind server-socket AF_INET INADDR_ANY port)
+		 (listen server-socket 5))
+		(pipes
+		 (set! server-pipes pipes)))
 	  (cond ((not (game-running?))
 		 (game-loop)))))
 
