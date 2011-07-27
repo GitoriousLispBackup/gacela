@@ -270,9 +270,7 @@ main (int argc, char *argv[])
   SCM pipes;
   int pid;
 
-  char *string = "prueba\n";
-  int p[2];
-  char buffer[150];
+  SCM buffer;
 
   // Checking arguments
   for (i = 1; i < argc; i++) {
@@ -308,7 +306,6 @@ main (int argc, char *argv[])
     //start_remote_client (host, port);
     return;
   else {
-    /*
     pipes = scm_pipe ();
     pid = fork ();
 
@@ -316,38 +313,20 @@ main (int argc, char *argv[])
       start_local_server (dirname (argv[0]), pipes);
     else
       gacela_client (SCM_CAR (pipes), SCM_CDR (pipes));
-    */
+
     /*
     if (pid == 0) {
-      scm_write (scm_from_locale_string ("prueba"), SCM_CDR (pipes));
-      sleep (10);
+      printf ("Hijo: 0\n");
+      scm_write (scm_from_locale_string ("Hola mundo\n"), SCM_CDR (pipes));
+      scm_force_output (SCM_CDR (pipes));
+      printf ("Hijo: 1\n");
     }
     else {
-      while (scm_char_ready_p (SCM_CAR (pipes)) == SCM_BOOL_F) {
-	sleep (1);
-	printf ("1\n");
-      }
-      SCM buffer;
-      buffer = scm_read_line (SCM_CAR (pipes));
+      printf ("Padre: 0\n");
+      buffer = scm_read (SCM_CAR (pipes));
       printf ("%s\n", scm_to_locale_string (buffer));
+      printf ("Padre: 1\n");
     }
     */
-    FILE *stream;
-    pipe (p);
-    if (pid == 0) {
-      close (p[1]);
-      stream = fdopen (p[0], "w");
-      fprintf (stream, "prueba\n");
-      fclose (stream);
-      printf ("1\n");
-      sleep (10);
-    }
-    else {
-      int c;
-      close (p[0]);
-      stream = fdopen (p[1], "r");
-      while ((c = fgetc (stream)) != EOF)
-	putchar (c);
-    }
   }
 }
