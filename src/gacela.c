@@ -154,9 +154,10 @@ gacela_client (SCM rec_channel, SCM send_channel)
     if (line && *line)
       {
 	add_history (line);
-	scm_write (scm_from_locale_string ("("), send_channel);
+	//scm_write (scm_from_locale_string ("("), send_channel);
 	scm_write (scm_from_locale_string (line), send_channel);
-	scm_write (scm_from_locale_string (")"), send_channel);
+	//scm_write (scm_from_locale_string (")"), send_channel);
+	scm_force_output (send_channel);
 
 	while (scm_char_ready_p (rec_channel) == SCM_BOOL_F) {
 	  if (ctrl_c) break;
@@ -165,7 +166,7 @@ gacela_client (SCM rec_channel, SCM send_channel)
 	if (ctrl_c)
 	  ctrl_c = 0;
 	else {
-	  buffer = scm_read_line (rec_channel);
+	  buffer = scm_read (rec_channel);
 	  printf ("%s\n", scm_to_locale_string (buffer));
 	}
       }
@@ -267,10 +268,8 @@ main (int argc, char *argv[])
   char *host;
   int port = 0;
   int i;
-  SCM pipes;
+  SCM fd1, fd2;
   int pid;
-
-  SCM buffer;
 
   // Checking arguments
   for (i = 1; i < argc; i++) {
@@ -306,15 +305,24 @@ main (int argc, char *argv[])
     //start_remote_client (host, port);
     return;
   else {
-    pipes = scm_pipe ();
+    fd1 = scm_pipe ();
+    fd2 = scm_pipe ();
     pid = fork ();
 
-    if (pid == 0)
-      start_local_server (dirname (argv[0]), pipes);
-    else
-      gacela_client (SCM_CAR (pipes), SCM_CDR (pipes));
+    if (pid == 0) {
+      scm_close (SCM_CAR (fd1));
+      scm_close (SCM_CDR (fd2));
+      start_local_server (dirname (argv[0]), scm_cons (SCM_CAR (fd2), SCM_CDR (fd1)));
+    }
+    else {
+      scm_close (SCM_CDR (fd1));
+      scm_close (SCM_CAR (fd2));
+      gacela_client (SCM_CAR (fd1), SCM_CDR (fd2));
+      kill (pid, SIGKILL);
+    }
 
     /*
+    SCM buffer;
     if (pid == 0) {
       printf ("Hijo: 0\n");
       scm_write (scm_from_locale_string ("Hola mundo\n"), SCM_CDR (pipes));
