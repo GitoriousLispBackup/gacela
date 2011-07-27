@@ -235,6 +235,7 @@ start_local_server (char *working_path, SCM pipes)
   scm_c_eval_string ("(start-server pipes)");
 }
 
+/*
 void
 start_remote_client (char *hostname, int port)
 {
@@ -256,6 +257,16 @@ start_remote_client (char *hostname, int port)
     gacela_client (sockfd, sockfd);
     close (sockfd);
   }
+}
+*/
+
+void
+start_remote_client (char *hostname, int port)
+{
+  SCM sockfd;
+
+  sockfd = scm_socket (AF_INET, SOCK_STREAM);
+  scm_connect (sockfd, AF_INET, 
 }
 
 int
