@@ -154,14 +154,12 @@ gacela_client (SCM rec_channel, SCM send_channel)
     if (line && *line)
       {
 	add_history (line);
-	//scm_write (scm_from_locale_string ("("), send_channel);
 	scm_write (scm_from_locale_string (line), send_channel);
-	//scm_write (scm_from_locale_string (")"), send_channel);
 	scm_force_output (send_channel);
 
 	while (scm_char_ready_p (rec_channel) == SCM_BOOL_F) {
 	  if (ctrl_c) break;
-	  sleep (1);
+	  sleep (0.5);
 	}
 	if (ctrl_c)
 	  ctrl_c = 0;
@@ -236,7 +234,7 @@ start_local_server (char *working_path, SCM pipes)
   scm_c_define ("pipes", pipes);
   scm_c_eval_string ("(start-server pipes)");
 }
-/*
+
 void
 start_remote_client (char *hostname, int port)
 {
@@ -259,7 +257,7 @@ start_remote_client (char *hostname, int port)
     close (sockfd);
   }
 }
-*/
+
 int
 main (int argc, char *argv[])
 {
@@ -302,8 +300,7 @@ main (int argc, char *argv[])
   else if (mode == 2 && port != 0)
     start_server (dirname (argv[0]), port);
   else if (mode == 3 && port != 0)
-    //start_remote_client (host, port);
-    return;
+    start_remote_client (host, port);
   else {
     fd1 = scm_pipe ();
     fd2 = scm_pipe ();

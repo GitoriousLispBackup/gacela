@@ -79,14 +79,13 @@
 		    (cond ((eof-object? exp)
 			   (close rec-channel))
 			  (else
-			   (format #t "Server1: ~a~%" exp)
-			   (format #t "Server2: ~a~%" (primitive-eval exp))
-			   (format send-channel "~a" (primitive-eval exp))
-			   (force-output send-channel)))))
+			   (write (format #f "~a" (eval-string exp)) send-channel)))))
 		(lambda (key . args)
-		  (format #t "ERROR")
 		  (let ((fmt (string-concatenate (list (cadr args) "~%")))
 			(params (caddr args)))
-		    (if params
-			(apply format (cons send-channel (cons fmt params)))
-			(format send-channel fmt))))))))
+		    (write
+		     (if params
+			 (apply format (cons #f (cons fmt params)))
+			 (format #f fmt))
+		     send-channel))))
+	 (force-output send-channel))))
