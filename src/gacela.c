@@ -179,7 +179,7 @@ static void*
 init_gacela (void *data, int argc, char **argv)
 {
   // Guile configuration
-  scm_c_eval_string ("(set-repl-prompt! \"gacela>\")");
+  scm_c_eval_string ("(set-repl-prompt! \"gacela> \")");
   scm_c_eval_string ("(use-modules (ice-9 readline))");
   scm_c_eval_string ("(activate-readline)");
   scm_c_eval_string ("(use-modules (ice-9 optargs))");
@@ -264,9 +264,18 @@ void
 start_remote_client (char *hostname, int port)
 {
   SCM sockfd;
+  struct hostent *server;
+  struct sockaddr_in serv_addr;
 
-  sockfd = scm_socket (AF_INET, SOCK_STREAM);
-  scm_connect (sockfd, AF_INET, 
+  server = gethostbyname (hostname);
+  bzero ((char *) &serv_addr, sizeof (serv_addr));
+  serv_addr.sin_family = AF_INET;
+  bcopy ((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+  serv_addr.sin_port = htons (port);
+
+  //sockfd = scm_socket (AF_INET, SOCK_STREAM);
+  //  scm_from_sockaddr (serv_addr, sizeof (serv_addr));
+  //  scm_connect (sockfd, AF_INET, , scm_from_integer (port));
 }
 
 int
@@ -311,7 +320,8 @@ main (int argc, char *argv[])
   else if (mode == 2 && port != 0)
     start_server (dirname (argv[0]), port);
   else if (mode == 3 && port != 0)
-    start_remote_client (host, port);
+    return;
+    //start_remote_client (host, port);
   else {
     fd1 = scm_pipe ();
     fd2 = scm_pipe ();
