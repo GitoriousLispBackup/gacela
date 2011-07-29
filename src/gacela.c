@@ -204,35 +204,29 @@ load_scheme_files (char *path)
 }
 
 void
-start_single (char *working_path)
+start_single ()
 {
   char *argv = "guile";
 
-  scm_with_guile (&init_gacela, NULL);
-  load_scheme_files (working_path);
   scm_shell (1, &argv);
 }
 
 void
-start_server (char *working_path, int port)
+start_server (int port)
 {
   char start_server[100];
 
-  scm_with_guile (&init_gacela, NULL);
-  load_scheme_files (working_path);
-  sprintf (start_server, "(start-server %d)", port);
+  sprintf (start_server, "(start-server #:port %d)", port);
   scm_c_eval_string (start_server);
 }
 
 void
-start_local_server (char *working_path, SCM pipes)
+start_local_server (SCM pipes)
 {
   char start_server[100];
 
-  scm_with_guile (&init_gacela, NULL);
-  load_scheme_files (working_path);
   scm_c_define ("pipes", pipes);
-  scm_c_eval_string ("(start-server pipes)");
+  scm_c_eval_string ("(start-server #:pipes pipes)");
 }
 
 /*
@@ -263,19 +257,12 @@ start_remote_client (char *hostname, int port)
 void
 start_remote_client (char *hostname, int port)
 {
-  SCM sockfd;
-  struct hostent *server;
-  struct sockaddr_in serv_addr;
+  SCM scmsock;
+  char connect_to_server[200];
 
-  server = gethostbyname (hostname);
-  bzero ((char *) &serv_addr, sizeof (serv_addr));
-  serv_addr.sin_family = AF_INET;
-  bcopy ((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
-  serv_addr.sin_port = htons (port);
-
-  //sockfd = scm_socket (AF_INET, SOCK_STREAM);
-  //  scm_from_sockaddr (serv_addr, sizeof (serv_addr));
-  //  scm_connect (sockfd, AF_INET, , scm_from_integer (port));
+  sprintf (connect_to_server, "(connect-to-server \"%s\" %d)", hostname, port);
+  scmsock = scm_c_eval_string (connect_to_server);
+  gacela_client (scmsock, scmsock);
 }
 
 int
@@ -313,15 +300,15 @@ main (int argc, char *argv[])
     }
   }
 
-  scm_init_guile ();
+  scm_with_guile (&init_gacela, NULL);
+  load_scheme_files (dirname (argv[0]));
 
   if (mode == 1)
-    start_single (dirname (argv[0]));
+    start_single ();
   else if (mode == 2 && port != 0)
-    start_server (dirname (argv[0]), port);
+    start_server (port);
   else if (mode == 3 && port != 0)
-    return;
-    //start_remote_client (host, port);
+    start_remote_client (host, port);
   else {
     fd1 = scm_pipe ();
     fd2 = scm_pipe ();
@@ -330,7 +317,7 @@ main (int argc, char *argv[])
     if (pid == 0) {
       scm_close (SCM_CAR (fd1));
       scm_close (SCM_CDR (fd2));
-      start_local_server (dirname (argv[0]), scm_cons (SCM_CAR (fd2), SCM_CDR (fd1)));
+      start_local_server (scm_cons (SCM_CAR (fd2), SCM_CDR (fd1)));
     }
     else {
       scm_close (SCM_CDR (fd1));

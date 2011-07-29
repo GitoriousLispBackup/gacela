@@ -57,8 +57,8 @@
 
   (set! eval-from-clients
 	(lambda ()
-	  (cond (pipes
-		 (eval-from-client (car pipes) (cdr pipes))))
+	  (cond (server-pipes
+		 (eval-from-client (car server-pipes) (cdr server-pipes))))
 	  (for-each
 	   (lambda (cli) (eval-from-client (car cli) (car cli)))
 	   clients)))
@@ -89,3 +89,11 @@
 			 (format #f fmt))
 		     send-channel))))
 	 (force-output send-channel))))
+
+
+(define connect-to-server #f)
+
+(define (connect-to-server hostname port)
+  (let ((s (socket PF_INET SOCK_STREAM 0)))
+    (connect s AF_INET (car (hostent:addr-list (gethost hostname))) port)
+    s))
