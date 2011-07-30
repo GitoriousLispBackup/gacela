@@ -214,9 +214,9 @@ start_single ()
 void
 start_server (int port)
 {
-  char start_server[100];
+  char *start_server;
 
-  sprintf (start_server, "(start-server #:port %d)", port);
+  asprintf (&start_server, "(start-server #:port %d)", port);
   scm_c_eval_string (start_server);
 }
 
@@ -232,41 +232,13 @@ start_local_server (SCM pipes)
 void
 start_remote_client (char *hostname, int port)
 {
-  SCM s;
-  char connect_to_server[200];
+  SCM client_socket;
+  char *connect_to_server;
 
-  s = scm_socket (AF_INET, SOCK_STREAM, 0);
-  //scm_c_define ("client-socket", scm_sock);
-  //sprintf (connect_to_server, "(connect-to-server client-socket \"%s\" %d)", hostname, port);
-  //scm_c_eval_string (connect_to_server);
-  //  gacela_client (scm_sock, scm_sock);
-  sleep (5);
+  asprintf (&connect_to_server, "(let ((s (socket PF_INET SOCK_STREAM 0))) (connect s AF_INET (car (hostent:addr-list (gethost \"%s\"))) %d) s)", hostname, port);
+  client_socket = scm_c_eval_string (connect_to_server);
+  gacela_client (client_socket, client_socket);
 }
-
-/*
-void
-start_remote_client (char *hostname, int port)
-{
-  int sockfd;
-  struct hostent *server;
-  struct sockaddr_in serv_addr;
-
-  // Connect to the server
-  sockfd = socket (AF_INET, SOCK_STREAM, 0);
-  server = gethostbyname (hostname);
-  bzero ((char *) &serv_addr, sizeof (serv_addr));
-  serv_addr.sin_family = AF_INET;
-  bcopy ((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
-  serv_addr.sin_port = htons (port);
-  if (connect (sockfd, (struct sockaddr *) &serv_addr, sizeof (serv_addr)) == -1) {
-    printf ("%s [%d.%d.%d.%d] %d: Connection refused\n", hostname, server->h_addr[0], server->h_addr[1], server->h_addr[2], server->h_addr[3], port);
-  }
-  else {
-    gacela_client (sockfd, sockfd);
-    close (sockfd);
-  }
-}
-*/
 
 int
 main (int argc, char *argv[])
@@ -303,13 +275,18 @@ main (int argc, char *argv[])
     }
   }
 
-  scm_with_guile (&init_gacela, NULL);
-  load_scheme_files (dirname (argv[0]));
+  scm_init_guile ();
 
-  if (mode == 1)
+  if (mode == 1) {
+    scm_with_guile (&init_gacela, NULL);
+    load_scheme_files (dirname (argv[0]));
     start_single ();
-  else if (mode == 2 && port != 0)
+  }
+  else if (mode == 2 && port != 0) {
+    scm_with_guile (&init_gacela, NULL);
+    load_scheme_files (dirname (argv[0]));
     start_server (port);
+  }
   else if (mode == 3 && port != 0)
     start_remote_client (host, port);
   else {
@@ -320,6 +297,8 @@ main (int argc, char *argv[])
     if (pid == 0) {
       scm_close (SCM_CAR (fd1));
       scm_close (SCM_CDR (fd2));
+      scm_with_guile (&init_gacela, NULL);
+      load_scheme_files (dirname (argv[0]));
       start_local_server (scm_cons (SCM_CAR (fd2), SCM_CDR (fd1)));
     }
     else {
@@ -328,21 +307,5 @@ main (int argc, char *argv[])
       gacela_client (SCM_CAR (fd1), SCM_CDR (fd2));
       kill (pid, SIGKILL);
     }
-
-    /*
-    SCM buffer;
-    if (pid == 0) {
-      printf ("Hijo: 0\n");
-      scm_write (scm_from_locale_string ("Hola mundo\n"), SCM_CDR (pipes));
-      scm_force_output (SCM_CDR (pipes));
-      printf ("Hijo: 1\n");
-    }
-    else {
-      printf ("Padre: 0\n");
-      buffer = scm_read (SCM_CAR (pipes));
-      printf ("%s\n", scm_to_locale_string (buffer));
-      printf ("Padre: 1\n");
-    }
-    */
   }
 }
