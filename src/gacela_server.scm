@@ -93,7 +93,5 @@
 
 (define connect-to-server #f)
 
-(define (connect-to-server hostname port)
-  (let ((s (socket PF_INET SOCK_STREAM 0)))
-    (connect s AF_INET (car (hostent:addr-list (gethost hostname))) port)
-    s))
+(define (connect-to-server client-socket hostname port)
+  (connect client-socket AF_INET (car (hostent:addr-list (gethost hostname))) port))

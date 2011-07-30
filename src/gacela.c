@@ -229,6 +229,20 @@ start_local_server (SCM pipes)
   scm_c_eval_string ("(start-server #:pipes pipes)");
 }
 
+void
+start_remote_client (char *hostname, int port)
+{
+  SCM s;
+  char connect_to_server[200];
+
+  s = scm_socket (AF_INET, SOCK_STREAM, 0);
+  //scm_c_define ("client-socket", scm_sock);
+  //sprintf (connect_to_server, "(connect-to-server client-socket \"%s\" %d)", hostname, port);
+  //scm_c_eval_string (connect_to_server);
+  //  gacela_client (scm_sock, scm_sock);
+  sleep (5);
+}
+
 /*
 void
 start_remote_client (char *hostname, int port)
@@ -253,17 +267,6 @@ start_remote_client (char *hostname, int port)
   }
 }
 */
-
-void
-start_remote_client (char *hostname, int port)
-{
-  SCM scmsock;
-  char connect_to_server[200];
-
-  sprintf (connect_to_server, "(connect-to-server \"%s\" %d)", hostname, port);
-  scmsock = scm_c_eval_string (connect_to_server);
-  gacela_client (scmsock, scmsock);
-}
 
 int
 main (int argc, char *argv[])
