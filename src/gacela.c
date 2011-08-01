@@ -165,7 +165,8 @@ gacela_client (SCM rec_channel, SCM send_channel)
 	  ctrl_c = 0;
 	else {
 	  buffer = scm_read (rec_channel);
-	  printf ("%s\n", scm_to_locale_string (buffer));
+	  if (strlen (scm_to_locale_string (buffer)) > 0)
+	    printf ("%s\n", scm_to_locale_string (buffer));
 	}
       }
     free (line);

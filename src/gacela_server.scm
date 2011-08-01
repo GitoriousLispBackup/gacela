@@ -79,7 +79,8 @@
 		    (cond ((eof-object? exp)
 			   (close rec-channel))
 			  (else
-			   (write (format #f "~a" (eval-string exp)) send-channel)))))
+			   (let ((result (eval-string exp)))
+			     (write (if (eq? result *unspecified*) "" (format #f "~a" result)) send-channel))))))
 		(lambda (key . args)
 		  (let ((fmt (string-concatenate (list (cadr args) "~%")))
 			(params (caddr args)))
