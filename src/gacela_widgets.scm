@@ -1,4 +1,4 @@
-;;; Gacela, a GNU Common Lisp extension for fast games development
+;;; Gacela, a GNU Guile extension for fast games development
 ;;; Copyright (C) 2009 by Javier Sancho Fernandez <jsf at jsancho dot org>
 ;;;
 ;;; This program is free software: you can redistribute it and/or modify
@@ -13,11 +13,6 @@
 ;;;
 ;;; You should have received a copy of the GNU General Public License
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-(eval-when (compile load eval)
-	   (when (not (find-package 'gacela)) (make-package 'gacela :nicknames '(gg) :use '(lisp)))
-	   (in-package 'gacela :nicknames '(gg) :use '(lisp)))
 
 
 ;;; Timers

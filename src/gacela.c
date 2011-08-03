@@ -205,14 +205,6 @@ load_scheme_files (char *path)
 }
 
 void
-start_single ()
-{
-  char *argv = "guile";
-
-  scm_shell (1, &argv);
-}
-
-void
 start_server (int port)
 {
   char *start_server;
@@ -245,7 +237,7 @@ int
 main (int argc, char *argv[])
 {
   char *arg;
-  int mode = 0;   // shell: 1, server: 2, client: 3
+  int mode = 0;   // playing: 1, server: 2, client: 3
   char *host;
   int port = 0;
   int i;
@@ -254,7 +246,7 @@ main (int argc, char *argv[])
 
   // Checking arguments
   for (i = 1; i < argc; i++) {
-    if (strcmp (argv[i], "--shell-mode") == 0)
+    if (strcmp (argv[i], "--playing") == 0)
       mode = 1;
     else if (strncmp (argv[i], "--server", 8) == 0) {
       mode = 2;
@@ -279,18 +271,6 @@ main (int argc, char *argv[])
   scm_init_guile ();
 
   if (mode == 1) {
-    scm_with_guile (&init_gacela, NULL);
-    load_scheme_files (dirname (argv[0]));
-    start_single ();
-  }
-  else if (mode == 2 && port != 0) {
-    scm_with_guile (&init_gacela, NULL);
-    load_scheme_files (dirname (argv[0]));
-    start_server (port);
-  }
-  else if (mode == 3 && port != 0)
-    start_remote_client (host, port);
-  else {
     fd1 = scm_pipe ();
     fd2 = scm_pipe ();
     pid = fork ();
@@ -308,5 +288,17 @@ main (int argc, char *argv[])
       gacela_client (SCM_CAR (fd1), SCM_CDR (fd2));
       kill (pid, SIGKILL);
     }
+  }
+  else if (mode == 2 && port != 0) {
+    scm_with_guile (&init_gacela, NULL);
+    load_scheme_files (dirname (argv[0]));
+    start_server (port);
+  }
+  else if (mode == 3 && port != 0)
+    start_remote_client (host, port);
+  else {
+    scm_with_guile (&init_gacela, NULL);
+    load_scheme_files (dirname (argv[0]));
+    scm_shell (argc, argv);
   }
 }

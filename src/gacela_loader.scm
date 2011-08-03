@@ -22,3 +22,4 @@
 (primitive-load-path "gacela_mobs.scm")
 (primitive-load-path "gacela_misc.scm")
 (primitive-load-path "gacela_server.scm")
+(primitive-load-path "gacela_widgets.scm")
