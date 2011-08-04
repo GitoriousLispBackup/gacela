@@ -17,27 +17,27 @@
 
 ;;; Timers
 
-(defstruct timer (start 0) (paused 0) (state 'stopped))
+(define (make-timer)
+  '((start . 0) (paused . 0) (state . stopped)))
 
-(defun start-timer (timer)
-  (setf (timer-start timer) (SDL_GetTicks))
-  (setf (timer-state timer) 'running))
+(define (start-timer timer)
+  (assoc-set! timer 'start (SDL_GetTicks))
+  (assoc-set! timer state 'running))
 
-(defun stop-timer (timer)
-  (setf (timer-state timer) 'stopped))
+(define (stop-timer timer)
+  (assoc-set! timer 'state 'stopped))
 
-(defun get-time (timer)
-  (cond ((eq (timer-state timer) 'stopped) 0)
-        ((eq (timer-state timer) 'paused) (timer-paused timer))
-        (t (- (SDL_GetTicks) (timer-start timer)))))
+(define (get-time timer)
+  (cond ((eq? (assoc 'state timer) 'stopped) 0)
+        ((eq? (assoc 'state timer) 'paused) (assoc 'paused timer))
+        (else (- (SDL_GetTicks) (assoc 'start timer)))))
 
-(defun pause-timer (timer)
-  (cond ((eq (timer-state timer) 'running)
-         (setf (timer-paused timer) (- (SDL_GetTicks) (timer-start timer)))
-         (setf (timer-state timer) 'paused))))
+(define (pause-timer timer)
+  (cond ((eq? (assoc 'state timer) 'running)
+         (assoc-set! timer 'paused (- (SDL_GetTicks) (assoc 'start timer)))
+         (assoc-set! timer 'state 'paused))))
 
-(defun resume-timer (timer)
-  (cond ((eq (timer-state timer) 'paused)
-         (setf (timer-start timer) (- (SDL_GetTicks) (timer-paused timer)))
-         (setf (timer-state timer) 'running))))
-
+(define (resume-timer timer)
+  (cond ((eq? (assoc 'state timer) 'paused)
+         (assoc-set! timer 'start (- (SDL_GetTicks) (assoc 'paused timer)))
+         (assoc-set! timer 'state 'running))))
