@@ -164,11 +164,6 @@
 
 ;;; GaCeLa Functions
 
-(define (init-gacela)
-  (init-sdl)
-  (init-gl))
-
-
 (define set-frames-per-second #f)
 (define init-frame-time #f)
 (define delay-frame #f)

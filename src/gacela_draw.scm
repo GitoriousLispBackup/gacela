@@ -27,7 +27,7 @@
 
 (define-macro (progn-textures . code)
   `(let ((result #f))
-     (init-gacela)
+     (init-video-mode)
      (glEnable GL_TEXTURE_2D)
      (set! result (begin ,@code))
      (glDisable GL_TEXTURE_2D)
@@ -60,7 +60,7 @@
 	(else (glVertex2f x y))))
 
 (define (load-image-for-texture filename)
-  (init-gacela)
+  (init-sdl)
   (let ((image (IMG_Load filename)))
     (cond (image
 	   (let* ((width (surface-w image)) (height (surface-h image))
