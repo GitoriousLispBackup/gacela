@@ -17,10 +17,12 @@
 
 ;;; Default values for Gacela
 
+(define *title* "Gacela")
 (define *width-screen* 640)
 (define *height-screen* 480)
 (define *bpp-screen* 32)
 (define *frames-per-second* 20)
+(define *mode* '2d)
 
 
 ;;; SDL Initialization Subsystem
@@ -81,7 +83,9 @@
 			(resize-screen-GL width height)))))
 
   (set! quit-video-mode
-	(lambda () (set! screen #f))))
+	(lambda ()
+	  (SDL_FreeSurface screen)
+	  (set! screen #f))))
 
 (define (set-2d-mode)
   (cond ((not (3d-mode?))
@@ -187,7 +191,7 @@
 (define set-game-properties #f)
 (define get-game-properties #f)
 
-(let ((ptitle "") (pwidth *width-screen*) (pheight *height-screen*) (pbpp *bpp-screen*) (pfps *frames-per-second*) (pmode '2d))
+(let ((ptitle *title*) (pwidth *width-screen*) (pheight *height-screen*) (pbpp *bpp-screen*) (pfps *frames-per-second*) (pmode *mode*))
   (set! set-game-properties
 	(lambda* (#:key title width height bpp fps mode)
 ;	  (init-video-mode)
@@ -261,12 +265,3 @@
   (set! set-game-code
 	(lambda (game-function)
 	  (set! game-code game-function))))
-
-(define (quit-game)
-   (quit-audio)
-   (quit-video-mode)
-;  (quit-all-mobs)
-;   (kill-all-objects)
-;   (clear-events)
-   (quit-events)
-   (quit-sdl))

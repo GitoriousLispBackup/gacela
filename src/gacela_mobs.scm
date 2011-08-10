@@ -20,6 +20,7 @@
 (define show-mob-hash #f)
 (define hide-mob-hash #f)
 (define get-active-mobs #f)
+(define clear-active-mobs #f)
 (define mobs-changed? #f)
 
 (let ((active-mobs (make-hash-table)) (changed #f))
@@ -37,6 +38,11 @@
 	(lambda* (#:optional (refreshed #t))
 	  (set! changed (not refreshed))
 	  (hash-map->list (lambda (k v) v) active-mobs)))
+
+  (set! clear-active-mobs
+	(lambda ()
+	  (set! changed #t)
+	  (hash-clear! active-mobs)))
 
   (set! mobs-changed?
 	(lambda () changed)))

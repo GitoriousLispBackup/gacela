@@ -177,7 +177,7 @@ gacela_client (SCM rec_channel, SCM send_channel)
 }
 
 static void*
-init_gacela (void *data, int argc, char **argv)
+init_scheme (void *data, int argc, char **argv)
 {
   // Guile configuration
   scm_c_eval_string ("(set-repl-prompt! \"gacela> \")");
@@ -202,6 +202,14 @@ load_scheme_files (char *path)
   sprintf (load_path, "(set! %%load-path (cons \"%s\" %%load-path))", path);
   scm_c_eval_string (load_path);
   scm_primitive_load_path (scm_from_locale_string ("gacela_loader.scm"));
+}
+
+void
+init_gacela (char *path)
+{
+  scm_with_guile (&init_scheme, NULL);
+  load_scheme_files (path);
+  scm_c_eval_string ("(init-video-mode)");
 }
 
 void
@@ -237,7 +245,7 @@ int
 main (int argc, char *argv[])
 {
   char *arg;
-  int mode = 0;   // playing: 1, server: 2, client: 3
+  int mode = 0;   // dev: 1, server: 2, client: 3
   char *host;
   int port = 0;
   int i;
@@ -246,7 +254,7 @@ main (int argc, char *argv[])
 
   // Checking arguments
   for (i = 1; i < argc; i++) {
-    if (strcmp (argv[i], "--playing") == 0)
+    if (strcmp (argv[i], "--dev") == 0)
       mode = 1;
     else if (strncmp (argv[i], "--server", 8) == 0) {
       mode = 2;
@@ -278,8 +286,7 @@ main (int argc, char *argv[])
     if (pid == 0) {
       scm_close (SCM_CAR (fd1));
       scm_close (SCM_CDR (fd2));
-      scm_with_guile (&init_gacela, NULL);
-      load_scheme_files (dirname (argv[0]));
+      init_gacela (dirname (argv[0]));
       start_local_server (scm_cons (SCM_CAR (fd2), SCM_CDR (fd1)));
     }
     else {
@@ -290,15 +297,14 @@ main (int argc, char *argv[])
     }
   }
   else if (mode == 2 && port != 0) {
-    scm_with_guile (&init_gacela, NULL);
-    load_scheme_files (dirname (argv[0]));
+    init_gacela (dirname (argv[0]));
     start_server (port);
   }
   else if (mode == 3 && port != 0)
     start_remote_client (host, port);
   else {
-    scm_with_guile (&init_gacela, NULL);
-    load_scheme_files (dirname (argv[0]));
+    init_gacela (dirname (argv[0]));
     scm_shell (argc, argv);
+    SDL_Quit ();
   }
 }

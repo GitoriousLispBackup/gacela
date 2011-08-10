@@ -165,6 +165,12 @@ gacela_SDL_SetVideoMode (SCM width, SCM height, SCM bpp, SCM flags)
 }
 
 SCM
+gacela_SDL_FreeSurface (SCM surface)
+{
+  return scm_from_int (free_surface (surface));
+}
+
+SCM
 gacela_SDL_WM_SetCaption (SCM title, SCM icon)
 {
   SDL_WM_SetCaption (scm_to_locale_string(title), scm_to_locale_string(icon));
@@ -465,6 +471,7 @@ SDL_register_functions (void* data)
   scm_c_define_gsubr ("SDL_Init", 1, 0, 0, gacela_SDL_Init);
   scm_c_define_gsubr ("SDL_Quit", 0, 0, 0, gacela_SDL_Quit);
   scm_c_define_gsubr ("SDL_SetVideoMode", 4, 0, 0, gacela_SDL_SetVideoMode);
+  scm_c_define_gsubr ("SDL_FreeSurface", 1, 0, 0, gacela_SDL_FreeSurface);
   scm_c_define_gsubr ("SDL_WM_SetCaption", 2, 0, 0, gacela_SDL_WM_SetCaption);
   scm_c_define_gsubr ("SDL_Flip", 1, 0, 0, gacela_SDL_Flip);
   scm_c_define_gsubr ("SDL_Delay", 1, 0, 0, gacela_SDL_Delay);

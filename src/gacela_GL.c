@@ -76,6 +76,18 @@ get_glTexture_height (SCM glTexture_smob)
   return scm_from_int (glTexture->height);
 }
 
+SCM
+set_glTexture_size (SCM glTexture_smob, SCM width, SCM height)
+{
+  struct glTexture *glTexture;
+
+  scm_assert_smob_type (glTexture_tag, glTexture_smob);
+  glTexture = (struct glTexture *) SCM_SMOB_DATA (glTexture_smob);
+  glTexture->width = scm_to_int (width);
+  glTexture->height = scm_to_int (height);
+  return SCM_UNSPECIFIED;
+}
+
 size_t
 free_glTexture (SCM glTexture_smob)
 {
@@ -369,6 +381,7 @@ GL_register_functions (void* data)
   scm_set_smob_free (glTexture_tag, free_glTexture);
   scm_c_define_gsubr ("texture-w", 1, 0, 0, get_glTexture_width);
   scm_c_define_gsubr ("texture-h", 1, 0, 0, get_glTexture_height);
+  scm_c_define_gsubr ("set-texture-size!", 3, 0, 0, set_glTexture_size);
 
   // Data types
   scm_c_define ("GL_UNSIGNED_BYTE", scm_from_int (GL_UNSIGNED_BYTE));

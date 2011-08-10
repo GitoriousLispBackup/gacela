@@ -93,6 +93,7 @@
 	     (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
 	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
 	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
+	     (set-texture-size! texture real-w real-h)
 	     texture))))))
 
 (define* (draw-image filename #:optional (zoom 1))
@@ -121,12 +122,13 @@
 	 (draw v1 v2 v3 v4))))
 
 (define* (draw-rectangle width height #:key texture color)
-  (draw-quad (list (- width) height 0)
-	     (list width height 0)
-	     (list width (- height) 0)
-	     (list (- width) (- height) 0)
-	     #:texture texture
-	     #:color color))
+  (let ((w (/ width 2)) (h (/ height 2)))
+    (draw-quad (list (- w) h 0)
+	       (list w h 0)
+	       (list w (- h) 0)
+	       (list (- w) (- h) 0)
+	       #:texture texture
+	       #:color color)))
 
 (define* (draw-square #:key (size 1) texture color)
   (draw-rectangle size size #:texture texture #:color color))
