@@ -120,7 +120,7 @@
 	  (set! lines (+ lines l)))))
 
 (define game #f)
-(define game-over #f)
+(define display-game-over #f)
 (define tetramine #f)
 
 (let ((current-tetramine (random-tetramine)) (x 6) (y 0)
@@ -133,16 +133,16 @@
 
   (set! game
 	(lambda ()
-	  (if game-over (game-over) (tetramine))))
+	  (if game-over (display-game-over) (tetramine))))
 
-  (set! game-over
+  (set! display-game-over
 	(lambda ()
 	  (translate -100 0)
 	  (render-text "Game Over" font #:size 50)))
 
   (set! tetramine
 	(lambda ()
-	  (cond ((eq? (timer-state timer) 'stopped) (start-timer timer)))
+	  (cond ((eq? (get-state timer) 'stopped) (start-timer timer)))
 
 	  (cond ((key? 'right)
 		 (cond ((not (collide-grids current-tetramine grid (+ x 1) y))
@@ -163,7 +163,7 @@
 			    (> (+ y 1 (length current-tetramine)) 20))
 			(set! grid (remove-rows-completed (join-grids current-tetramine grid x y)))
 			(set! current-tetramine next x 6 y 0)
-			(cond ((collide-grids current-tetramine grid x y) (set! game-over t)))
+			(cond ((collide-grids current-tetramine grid x y) (set! game-over #t)))
 			(set! next (random-tetramine)))
 		       (else
 			(set! y (+ y 1))
@@ -174,9 +174,9 @@
 	  (translate 440 440)
 	  (draw-grid next)
 	  (translate -40 -100)
-	  (render-text (format nil "Points: ~d" (get-points)) font)
+	  (render-text (format #f "Points: ~a" (get-points)) font)
 	  (translate 0 -30)
-	  (render-text (format nil "Lines: ~d" (get-lines)) font))))
+	  (render-text (format #f "Lines: ~a" (get-lines)) font))))
 
 (define (run-gacela-tetris)
   (let ((frame 0.0) (fps (make-timer)) (update (make-timer)))
@@ -188,5 +188,4 @@
      (cond ((> (get-time update) 1000)
 	    (display (/ frame (/ (get-time fps) 1000.0)))
 	    (newline)
-	    (start-timer update))))
-    (quit-game)))
+	    (start-timer update))))))
