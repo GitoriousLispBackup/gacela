@@ -18,26 +18,23 @@
 ;;; Timers
 
 (define (make-timer)
-  '((start . 0) (paused . 0) (state . stopped)))
-
-(define (start-timer timer)
-  (assoc-set! timer 'start (SDL_GetTicks))
-  (assoc-set! timer state 'running))
-
-(define (stop-timer timer)
-  (assoc-set! timer 'state 'stopped))
-
-(define (get-time timer)
-  (cond ((eq? (assoc 'state timer) 'stopped) 0)
-        ((eq? (assoc 'state timer) 'paused) (assoc 'paused timer))
-        (else (- (SDL_GetTicks) (assoc 'start timer)))))
-
-(define (pause-timer timer)
-  (cond ((eq? (assoc 'state timer) 'running)
-         (assoc-set! timer 'paused (- (SDL_GetTicks) (assoc 'start timer)))
-         (assoc-set! timer 'state 'paused))))
-
-(define (resume-timer timer)
-  (cond ((eq? (assoc 'state timer) 'paused)
-         (assoc-set! timer 'start (- (SDL_GetTicks) (assoc 'paused timer)))
-         (assoc-set! timer 'state 'running))))
+  (let ((start 0) (paused 0) (state 'stopped))
+    (lambda (op)
+      (case op
+	(('start-timer)
+	 (set! start (SDL_GetTicks))
+	 (set! state 'running))
+	(('stop-timer)
+	 (set! state 'stopped))
+	(('get-time)
+	 (cond ((eq? state 'stopped) 0)
+	       ((eq? state 'paused) paused)
+	       (else (- (SDL_GetTicks) start))))
+	(('pause-timer)
+	 (cond ((eq? state 'running)
+		(set! paused (- (SDL_GetTicks) start))
+		(set! state 'paused))))
+	(('resume-timer)
+	 (cond ((eq? state 'paused)
+		(set! start (- (SDL_GetTicks) paused))
+		(set! state 'running))))))))
