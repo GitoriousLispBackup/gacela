@@ -45,8 +45,8 @@
 	  ((= n 6) (tetramine-z)))))
 
 (define (draw-cell cell)
-  (cond ((null? cell) #f)
-	(else (with-color cell (draw-square #:size 20)))))
+  (cond ((and cell (not (null? cell)))
+	 (with-color cell (draw-square #:size 20)))))
 
 (define (draw-row row)
   (for-each (lambda (cell) (draw-cell cell) (translate 23 0)) row))
@@ -91,11 +91,11 @@
 	(else (and (car row) (row-completed (cdr row))))))
 
 (define (remove-rows-completed grid)
-  (let ((res (remove-if (lambda (x) (row-completed x)) grid)))
-    (inc-points (- (length grid) (length res)))
+  (let ((res (filter (lambda (x) (not (row-completed x))) grid)))
     (define (fill grid n)
       (cond ((< n 1) grid)
 	    (else (fill (cons (make-list 14) grid) (- n 1)))))
+    (inc-points (- (length grid) (length res)))
     (fill res (- 20 (length res)))))
 
 (define get-points #f)
@@ -161,11 +161,15 @@
 	  (cond ((or (key? 'down) (> (get-time timer) 5000))
 		 (cond ((or (collide-grids current-tetramine grid x (+ y 1))
 			    (> (+ y 1 (length current-tetramine)) 20))
+			(display "eo") (newline)
 			(set! grid (remove-rows-completed (join-grids current-tetramine grid x y)))
-			(set! current-tetramine next x 6 y 0)
+			(set! current-tetramine next)
+			(set! x 6)
+			(set! y 0)
 			(cond ((collide-grids current-tetramine grid x y) (set! game-over #t)))
 			(set! next (random-tetramine)))
 		       (else
+			(display "eo2") (newline)
 			(set! y (+ y 1))
 			(start-timer timer)))))
 	  (draw-texture background)
