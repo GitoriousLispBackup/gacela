@@ -70,12 +70,12 @@
 		    (join-grids (cdr source) (cdr destination) x y)))))
 
 (define* (collide-rows row1 row2 #:optional (offset 0))
-  (cond ((not (or row1 row2)) #f)
+  (cond ((not (or (null? row1) (null? row2))) #f)
 	((> offset 0) (collide-rows row1 (cdr row2) (- offset 1)))
 	(else (or (and (car row1) (car row2)) (collide-rows (cdr row1) (cdr row2))))))
 
 (define* (collide-grids grid1 grid2 #:optional (x 0) (y 0))
-  (cond ((not (or grid1 grid2)) nil)
+  (cond ((not (or (null? grid1) (null? grid2))) #f)
 	((> y 0) (collide-grids grid1 (cdr grid2) x (- y 1)))
 	(else (or (collide-rows (car grid1) (car grid2) x)
 		  (collide-grids (cdr grid1) (cdr grid2) x y)))))
@@ -83,7 +83,7 @@
 (define (rotate-tetramine grid)
   (define (rot grid res)
     (cond ((null? grid) res)
-	  (else (rot (cdr grid) (mapcar #'cons (car grid) res)))))
+	  (else (rot (cdr grid) (map cons (car grid) res)))))
   (rot grid (make-list (length (car grid)))))
 
 (define (row-completed row)
@@ -126,7 +126,7 @@
 (let ((current-tetramine (random-tetramine)) (x 6) (y 0)
       (next (random-tetramine))
       (timer (make-timer))
-      (grid (make-list 20 (make-list 14)))
+      (grid (make-list 20 (make-list 14 #f)))
       (background (load-texture "fondo_tetris.png"))
       (font (load-font "lazy.ttf" #:size 20))
       (game-over #f))
@@ -161,7 +161,6 @@
 	  (cond ((or (key? 'down) (> (get-time timer) 5000))
 		 (cond ((or (collide-grids current-tetramine grid x (+ y 1))
 			    (> (+ y 1 (length current-tetramine)) 20))
-			(display "eo") (newline)
 			(set! grid (remove-rows-completed (join-grids current-tetramine grid x y)))
 			(set! current-tetramine next)
 			(set! x 6)
@@ -169,7 +168,6 @@
 			(cond ((collide-grids current-tetramine grid x y) (set! game-over #t)))
 			(set! next (random-tetramine)))
 		       (else
-			(display "eo2") (newline)
 			(set! y (+ y 1))
 			(start-timer timer)))))
 	  (draw-texture background)
@@ -193,3 +191,12 @@
 	    (display (/ frame (/ (get-time fps) 1000.0)))
 	    (newline)
 	    (start-timer update))))))
+
+(define o (tetramine-o))
+(define grid (join-grids o (make-list 20 (make-list 14 #f)) 6 0))
+
+(define (test)
+  (display o) (newline)
+  (display grid) (newline)
+  (collide-grids o grid 6 0)
+  (collide-rows (car o) (car grid) 6))
