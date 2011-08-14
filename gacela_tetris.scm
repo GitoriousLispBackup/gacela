@@ -70,12 +70,12 @@
 		    (join-grids (cdr source) (cdr destination) x y)))))
 
 (define* (collide-rows row1 row2 #:optional (offset 0))
-  (cond ((not (or (null? row1) (null? row2))) #f)
+  (cond ((or (null? row1) (null? row2)) #f)
 	((> offset 0) (collide-rows row1 (cdr row2) (- offset 1)))
 	(else (or (and (car row1) (car row2)) (collide-rows (cdr row1) (cdr row2))))))
 
 (define* (collide-grids grid1 grid2 #:optional (x 0) (y 0))
-  (cond ((not (or (null? grid1) (null? grid2))) #f)
+  (cond ((or (null? grid1) (null? grid2)) #f)
 	((> y 0) (collide-grids grid1 (cdr grid2) x (- y 1)))
 	(else (or (collide-rows (car grid1) (car grid2) x)
 		  (collide-grids (cdr grid1) (cdr grid2) x y)))))
@@ -94,7 +94,7 @@
   (let ((res (filter (lambda (x) (not (row-completed x))) grid)))
     (define (fill grid n)
       (cond ((< n 1) grid)
-	    (else (fill (cons (make-list 14) grid) (- n 1)))))
+	    (else (fill (cons (make-list 14 #f) grid) (- n 1)))))
     (inc-points (- (length grid) (length res)))
     (fill res (- 20 (length res)))))
 
@@ -191,12 +191,3 @@
 	    (display (/ frame (/ (get-time fps) 1000.0)))
 	    (newline)
 	    (start-timer update))))))
-
-(define o (tetramine-o))
-(define grid (join-grids o (make-list 20 (make-list 14 #f)) 6 0))
-
-(define (test)
-  (display o) (newline)
-  (display grid) (newline)
-  (collide-grids o grid 6 0)
-  (collide-rows (car o) (car grid) 6))
