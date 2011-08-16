@@ -63,6 +63,7 @@
   (init-sdl)
   (let ((image (IMG_Load filename)))
     (cond (image
+	   (SDL_SetAlpha image 0 0)
 	   (let* ((width (surface-w image)) (height (surface-h image))
 		  (power-2 (nearest-power-of-two (min width height)))
 		  (resized-image #f))
@@ -85,8 +86,8 @@
     (cond (image
 	   (let ((width (surface-w image)) (height (surface-h image))
 		 (byteorder (if (= SDL_BYTEORDER SDL_LIL_ENDIAN)
-				(if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)
-				(if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)))
+				(if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)
+				(if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)))
 		 (texture (car (glGenTextures 1))))
 
 	     (glBindTexture GL_TEXTURE_2D texture)

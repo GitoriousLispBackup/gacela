@@ -417,6 +417,7 @@ GL_register_functions (void* data)
   // Blending
   scm_c_define ("GL_BLEND", scm_from_int (GL_BLEND));
   scm_c_define ("GL_ONE", scm_from_int (GL_ONE));
+  scm_c_define ("GL_ONE_MINUS_SRC_ALPHA", scm_from_int (GL_ONE_MINUS_SRC_ALPHA));
   scm_c_define ("GL_SRC_ALPHA", scm_from_int (GL_SRC_ALPHA));
 
   // Fog

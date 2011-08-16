@@ -114,8 +114,9 @@
   (glClearColor 0 0 0 0)
 ;  (glClearDepth 1)
 ;  (glDepthFunc GL_LEQUAL)
-;  (glEnable GL_BLEND)
+  (glEnable GL_BLEND)
 ;  (glBlendFunc GL_SRC_ALPHA GL_ONE)
+  (glBlendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   (glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST)
   #t)
 

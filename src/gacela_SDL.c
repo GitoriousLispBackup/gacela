@@ -215,6 +215,12 @@ gacela_SDL_SetColorKey (SCM surface, SCM flag, SCM key)
 }
 
 SCM
+gacela_SDL_SetAlpha (SCM surface, SCM flag, SCM alpha)
+{
+  return scm_from_int (SDL_SetAlpha (get_surface_address (surface), scm_to_int (flag), scm_to_int (alpha)));
+}
+
+SCM
 gacela_SDL_LoadBMP (SCM file)
 {
   SDL_Surface *image = SDL_LoadBMP (scm_to_locale_string (file));
@@ -479,6 +485,7 @@ SDL_register_functions (void* data)
   scm_c_define_gsubr ("SDL_DisplayFormat", 1, 0, 0, gacela_SDL_DisplayFormat);
   scm_c_define_gsubr ("SDL_MapRGB", 4, 0, 0, gacela_SDL_MapRGB);
   scm_c_define_gsubr ("SDL_SetColorKey", 3, 0, 0, gacela_SDL_SetColorKey);
+  scm_c_define_gsubr ("SDL_SetAlpha", 3, 0, 0, gacela_SDL_SetAlpha);
   scm_c_define_gsubr ("SDL_LoadBMP", 1, 0, 0, gacela_SDL_LoadBMP);
   scm_c_define_gsubr ("IMG_Load", 1, 0, 0, gacela_IMG_Load);
   scm_c_define_gsubr ("SDL_GetVideoInfo", 0, 0, 0, gacela_SDL_GetVideoInfo);
