@@ -199,7 +199,27 @@ gacela_SDL_GetTicks (void)
 SCM
 gacela_SDL_DisplayFormat (SCM surface)
 {
-  return scm_from_int ((int)SDL_DisplayFormat (get_surface_address (surface)));
+  SDL_Surface *new = SDL_DisplayFormat (get_surface_address (surface));
+
+  if (new) {
+    return make_surface (scm_from_locale_string (get_surface_filename (surface)), new);
+  }
+  else {
+    return SCM_BOOL_F;
+  }
+}
+
+SCM
+gacela_SDL_DisplayFormatAlpha (SCM surface)
+{
+  SDL_Surface *new = SDL_DisplayFormatAlpha (get_surface_address (surface));
+
+  if (new) {
+    return make_surface (scm_from_locale_string (get_surface_filename (surface)), new);
+  }
+  else {
+    return SCM_BOOL_F;
+  }
 }
 
 SCM
@@ -483,6 +503,7 @@ SDL_register_functions (void* data)
   scm_c_define_gsubr ("SDL_Delay", 1, 0, 0, gacela_SDL_Delay);
   scm_c_define_gsubr ("SDL_GetTicks", 0, 0, 0, gacela_SDL_GetTicks);
   scm_c_define_gsubr ("SDL_DisplayFormat", 1, 0, 0, gacela_SDL_DisplayFormat);
+  scm_c_define_gsubr ("SDL_DisplayFormatAlpha", 1, 0, 0, gacela_SDL_DisplayFormatAlpha);
   scm_c_define_gsubr ("SDL_MapRGB", 4, 0, 0, gacela_SDL_MapRGB);
   scm_c_define_gsubr ("SDL_SetColorKey", 3, 0, 0, gacela_SDL_SetColorKey);
   scm_c_define_gsubr ("SDL_SetAlpha", 3, 0, 0, gacela_SDL_SetAlpha);

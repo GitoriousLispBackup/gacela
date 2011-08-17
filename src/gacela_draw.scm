@@ -59,11 +59,16 @@
   (cond ((3d-mode?) (glVertex3f x y z))
 	(else (glVertex2f x y))))
 
-(define (load-image-for-texture filename)
+(define (load-image filename)
   (init-sdl)
   (let ((image (IMG_Load filename)))
     (cond (image
-	   (SDL_SetAlpha image 0 0)
+	   (SDL_DisplayFormatAlpha image)))))
+  
+(define (load-image-for-texture filename)
+  (init-sdl)
+  (let ((image (load-image filename)))
+    (cond (image
 	   (let* ((width (surface-w image)) (height (surface-h image))
 		  (power-2 (nearest-power-of-two (min width height)))
 		  (resized-image #f))
@@ -86,12 +91,12 @@
     (cond (image
 	   (let ((width (surface-w image)) (height (surface-h image))
 		 (byteorder (if (= SDL_BYTEORDER SDL_LIL_ENDIAN)
-				(if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)
-				(if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)))
+				(if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)
+				(if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)))
 		 (texture (car (glGenTextures 1))))
 
 	     (glBindTexture GL_TEXTURE_2D texture)
-	     (glTexImage2D GL_TEXTURE_2D 0 3 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
+	     (glTexImage2D GL_TEXTURE_2D 0 4 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
 	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
 	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
 	     (set-texture-size! texture real-w real-h)
