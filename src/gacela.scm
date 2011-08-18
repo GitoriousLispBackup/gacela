@@ -251,7 +251,10 @@
 			  (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
 			  (to-origin)))
 		   (cond ((mobs-changed?) (set! mobs (get-active-mobs))))
-		   (if (procedure? game-code) (game-code))
+		   (if (procedure? game-code)
+		       (catch #t
+			      (lambda () (game-code))
+			      (lambda (key . args) #f)))
 		   (run-mob-actions mobs)
 		   (cond ((video-mode-on?)
 			  (render-mobs mobs)

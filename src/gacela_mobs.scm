@@ -154,6 +154,38 @@
 			(lambda-look ,attr ,@look))))))
      mob))
 
+(define-macro (define-mob mob-def)
+  (let ((name (car mob-def)) (def (cdr mob-def)))
+    `(define ,name
+       (lambda-mob ,def))))
+
+(defmacro* lambda-mob (#:key (attr '()) (action #f) (look #f))
+  `(let ((attr ,attr) (action ,action) (look ,look))
+     (lambda (option . params)
+       (case option
+	 ((get-attr)
+	  attr)
+	 ((set-attr)
+	  (if (not (null? params)) (set! attr (car params))))
+	 ((get-action)
+	  action)
+	 ((set-action)
+	  (if (not (null? params)) (set! action (car params))))
+	 ((get-look)
+	  look)
+	 ((set-look)
+	  (if (not (null? params)) (set! look (car params))))
+	 ((run-mob)
+	  (lambda (action)
+		     (set! attr ((cdr action) attr)))
+		   actions))
+		 ((render)
+		  (for-each
+		   (lambda (look)
+		     ((cdr look) attr))
+		   looks))))))
+
+
 (define (get-mob-attr mob var)
   (let ((value (assoc-ref (mob 'get-attr) var)))
     (if value (car value) #f)))

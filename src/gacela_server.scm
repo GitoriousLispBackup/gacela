@@ -92,7 +92,5 @@
 	 (force-output send-channel))))
 
 
-(define connect-to-server #f)
-
 (define (connect-to-server client-socket hostname port)
   (connect client-socket AF_INET (car (hostent:addr-list (gethost hostname))) port))
