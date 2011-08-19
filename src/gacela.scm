@@ -255,7 +255,7 @@
 		       (catch #t
 			      (lambda () (game-code))
 			      (lambda (key . args) #f)))
-		   (run-mob-actions mobs)
+		   (run-mobs-logic mobs)
 		   (cond ((video-mode-on?)
 			  (render-mobs mobs)
 			  (SDL_GL_SwapBuffers)))
