@@ -162,9 +162,9 @@
 (define-macro (define-mob mob-def)
   (let ((name (car mob-def)) (def (cdr mob-def)))
     `(define ,name
-       (lambda-mob ,def))))
+       (lambda-mob ,@def))))
 
-(defmacro* lambda-mob (#:key (attr '()) (logic #f) (look #f))
+(defmacro* lambda-mob (#:key (attr '(quote ())) (logic #f) (look #f))
   `(let ((attr ,attr) (logic ,logic) (look ,look))
      (lambda (option . params)
        (case option
