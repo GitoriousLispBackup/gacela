@@ -189,11 +189,11 @@
 		   (SDL_Delay (- time-per-frame frame-time))))))))
 
 
-(define set-game-properties #f)
+(define set-game-properties! #f)
 (define get-game-properties #f)
 
 (let ((ptitle *title*) (pwidth *width-screen*) (pheight *height-screen*) (pbpp *bpp-screen*) (pfps *frames-per-second*) (pmode *mode*))
-  (set! set-game-properties
+  (set! set-game-properties!
 	(lambda* (#:key title width height bpp fps mode)
 ;	  (init-video-mode)
 	  (if title

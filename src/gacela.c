@@ -133,13 +133,36 @@ init_gacela_client ()
   sigaction (SIGINT, &new_action, NULL);
 }
 
+int
+opened_parens (char *line, int k)
+{
+  int i;
+  int opened = 0;
+  char c = 0;
+
+  // Choose the corresponding opening bracket
+  if (k == ')') c = '(';
+  else if (k == ']') c = '[';
+  else if (k == '}') c = '{';
+
+  for (i = 0; i < strlen (line); i++) {
+    if (line[i] == c)
+      opened++;
+    else if (line[i] == k)
+      opened--;
+  }
+
+  return opened;
+}
+
 void
 gacela_client (SCM rec_channel, SCM send_channel)
 {
   int n;
   SCM buffer;
-  char *line;
+  char *line, *line_for_sending;
   char *history_path;
+  int opened = 0;
 
   // Command line
   asprintf (&history_path, "%s/.gacela_history", getenv("HOME"));
@@ -148,25 +171,32 @@ gacela_client (SCM rec_channel, SCM send_channel)
   read_history (history_path);
 
   while (1) {
-    line = readline ("gacela> ");
+    if (opened > 0)
+      line = readline ("... ");
+    else
+      line = readline ("gacela> ");
+
+    opened += opened_parens (line, ')');
     ctrl_c = 0;
     if (!line) break;
     if (line && *line)
       {
 	add_history (line);
-	scm_write (scm_from_locale_string (line), send_channel);
-	scm_force_output (send_channel);
+	if (opened == 0) {
+	  scm_write (scm_from_locale_string (line), send_channel);
+	  scm_force_output (send_channel);
 
-	while (scm_char_ready_p (rec_channel) == SCM_BOOL_F) {
-	  if (ctrl_c) break;
-	  sleep (0.5);
-	}
-	if (ctrl_c)
-	  ctrl_c = 0;
-	else {
-	  buffer = scm_read (rec_channel);
-	  if (strlen (scm_to_locale_string (buffer)) > 0)
-	    printf ("%s\n", scm_to_locale_string (buffer));
+	  while (scm_char_ready_p (rec_channel) == SCM_BOOL_F) {
+	    if (ctrl_c) break;
+	    sleep (0.5);
+	  }
+	  if (ctrl_c)
+	    ctrl_c = 0;
+	  else {
+	    buffer = scm_read (rec_channel);
+	    if (strlen (scm_to_locale_string (buffer)) > 0)
+	      printf ("%s\n", scm_to_locale_string (buffer));
+	  }
 	}
       }
     free (line);

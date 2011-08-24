@@ -1,4 +1,4 @@
-(set-game-properties #:title "Gacela Tetris" #:fps 15)
+(set-game-properties! #:title "Gacela Tetris" #:fps 15)
 
 (define (tetramine-i)
   (let ((color '(1 0 0)))
