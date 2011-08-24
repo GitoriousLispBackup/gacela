@@ -146,7 +146,19 @@ opened_parens (char *line, int k)
   else if (k == '}') c = '{';
 
   for (i = 0; i < strlen (line); i++) {
-    if (line[i] == c)
+    // Is the current character part of a character literal?
+    if (i + 2 >= strlen (line)
+	&& line[i] == '#'
+	&& line[i + 1] == '\\')
+      i = i + 2;
+    else if (line[i] == '"') {
+      // Skip over a string literal
+      for (i++; i < strlen (line); i++)
+	if (line[i] == '"'
+	    && line[i - 1] != '\\')
+ 	      break;
+    }
+    else if (line[i] == c)
       opened++;
     else if (line[i] == k)
       opened--;
@@ -160,7 +172,7 @@ gacela_client (SCM rec_channel, SCM send_channel)
 {
   int n;
   SCM buffer;
-  char *line, *line_for_sending;
+  char *line = NULL, *line_for_sending = NULL;
   char *history_path;
   int opened = 0;
 
@@ -176,15 +188,28 @@ gacela_client (SCM rec_channel, SCM send_channel)
     else
       line = readline ("gacela> ");
 
+    if (!line) break;
+
     opened += opened_parens (line, ')');
     ctrl_c = 0;
-    if (!line) break;
+
     if (line && *line)
       {
 	add_history (line);
-	if (opened == 0) {
-	  scm_write (scm_from_locale_string (line), send_channel);
+	if (line_for_sending == NULL) {
+	  line_for_sending = strdup (line);
+	}
+	else {
+	  line_for_sending = realloc (line_for_sending, strlen (line_for_sending) + strlen (line) + 2);
+	  line_for_sending = strcat (line_for_sending, " ");
+	  line_for_sending = strcat (line_for_sending, line);
+	}
+
+	if (opened <= 0) {
+	  scm_write (scm_from_locale_string (line_for_sending), send_channel);
 	  scm_force_output (send_channel);
+	  free (line_for_sending);
+	  line_for_sending = NULL;
 
 	  while (scm_char_ready_p (rec_channel) == SCM_BOOL_F) {
 	    if (ctrl_c) break;
