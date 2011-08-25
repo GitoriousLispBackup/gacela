@@ -32,6 +32,7 @@
 
 // Generic variables
 int ctrl_c = 0;
+int pid = 0;
 
 static int
 find_matching_paren (int k)
@@ -114,11 +115,17 @@ ctrl_c_handler (int signum)
   printf ("ERROR: User interrupt\nABORT: (signal)\n");
   ctrl_c = 1;
 }
-     
+
+void
+look_child_handler (int signum)
+{
+  printf ("Hola\n");
+}
+
 static void
 init_gacela_client ()
 {
-  struct sigaction new_action;
+  struct sigaction ctrl_c_action, look_child_action;
 
   // init bouncing parens
   rl_bind_key (')', match_paren);
@@ -126,11 +133,21 @@ init_gacela_client ()
   rl_bind_key ('}', match_paren);
 
   // SIGINT
-  new_action.sa_handler = ctrl_c_handler;
-  sigemptyset (&new_action.sa_mask);
-  new_action.sa_flags = 0;
+  ctrl_c_action.sa_handler = ctrl_c_handler;
+  sigemptyset (&ctrl_c_action.sa_mask);
+  ctrl_c_action.sa_flags = 0;
 
-  sigaction (SIGINT, &new_action, NULL);
+  sigaction (SIGINT, &ctrl_c_action, NULL);
+
+  // SIGALRM
+  if (pid != 0) {
+    look_child_action.sa_handler = look_child_handler;
+    sigemptyset (&look_child_action.sa_mask);
+    look_child_action.sa_flags = 0;
+
+    sigaction (SIGALRM, &look_child_action, NULL);
+  }
+
 }
 
 int
@@ -305,7 +322,6 @@ main (int argc, char *argv[])
   int port = 0;
   int i;
   SCM fd1, fd2;
-  int pid;
 
   // Checking arguments
   for (i = 1; i < argc; i++) {
