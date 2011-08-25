@@ -30,9 +30,11 @@
 #include "gacela_GL.h"
 #include "gacela_FTGL.h"
 
-// Generic variables
+// Global variables
 int ctrl_c = 0;
 int pid = 0;
+char *history_path = NULL;
+
 
 static int
 find_matching_paren (int k)
@@ -117,15 +119,16 @@ ctrl_c_handler (int signum)
 }
 
 void
-look_child_handler (int signum)
+child_dies_handler (int signum)
 {
-  printf ("Hola\n");
+  write_history (history_path);
+  exit (0);
 }
 
 static void
 init_gacela_client ()
 {
-  struct sigaction ctrl_c_action, look_child_action;
+  struct sigaction ctrl_c_action, child_dies_action;
 
   // init bouncing parens
   rl_bind_key (')', match_paren);
@@ -141,11 +144,11 @@ init_gacela_client ()
 
   // SIGALRM
   if (pid != 0) {
-    look_child_action.sa_handler = look_child_handler;
-    sigemptyset (&look_child_action.sa_mask);
-    look_child_action.sa_flags = 0;
+    child_dies_action.sa_handler = child_dies_handler;
+    sigemptyset (&child_dies_action.sa_mask);
+    child_dies_action.sa_flags = 0;
 
-    sigaction (SIGALRM, &look_child_action, NULL);
+    sigaction (SIGALRM, &child_dies_action, NULL);
   }
 
 }
@@ -190,7 +193,6 @@ gacela_client (SCM rec_channel, SCM send_channel)
   int n;
   SCM buffer;
   char *line = NULL, *line_for_sending = NULL;
-  char *history_path;
   int opened = 0;
 
   // Command line
@@ -359,6 +361,7 @@ main (int argc, char *argv[])
       scm_close (SCM_CDR (fd2));
       init_gacela (dirname (argv[0]));
       start_local_server (scm_cons (SCM_CAR (fd2), SCM_CDR (fd1)));
+      kill (getppid (), SIGALRM);
     }
     else {
       scm_close (SCM_CDR (fd1));
