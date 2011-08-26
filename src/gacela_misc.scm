@@ -21,6 +21,11 @@
 (use-modules (srfi srfi-1))
 
 
+;;; Constants
+
+(define *pi* (* (asin 1) 2))
+
+
 ;;; Functions
 
 (define (nearest-power-of-two n)
@@ -28,6 +33,12 @@
     (cond ((> (* p 2) n) p)
 	  (else (power (* p 2) n))))
   (power 1 n))
+
+(define (degrees-to-radians angle)
+  (/ (* angle *pi*) 180))
+
+(define (radians-to-degrees angle)
+  (/ (* angle 180) *pi*))
 
 (define-macro (pushnew elem list)
   `(cond ((not (find (lambda (e) (eq? e ,elem)) ,list))
