@@ -11,7 +11,8 @@
   (cond ((use-region-p)
 	 (process-send-region "gacela" (region-beginning) (region-end)))
 	(t
-	 (process-send-region "gacela" (point-min-marker) (point-max-marker)))))
+	 (process-send-region "gacela" (point-min-marker) (point-max-marker))))
+  (process-send-string "gacela" "\n"))
 
 (define-key global-map [(ctrl x) (ctrl g)] 'send-to-gacela)
 
