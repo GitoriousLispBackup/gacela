@@ -54,6 +54,10 @@
 	   (set! moving #f)))
     `((x . ,x) (y . ,y) (angle . ,angle) (moving . ,moving))))
 
+(define (ship-shot s)
+  (cond ((key-released? 'space)
+	 #f)))
+
 (define (make-asteroids n)
   (define (xy n r)
     (let ((n2 (- (random (* n 2)) n)))
@@ -71,6 +75,8 @@
   (run-game
    (set! asteroids (map move-asteroid asteroids))
    (set! ship (move-ship ship))
-   (set! shots (ship-shots
+   (let ((shot (ship-shot ship)))
+     (cond (shot
+	    (set! shots (cons shot shots)))))
    (for-each draw-asteroid asteroids)
    (draw-ship ship)))

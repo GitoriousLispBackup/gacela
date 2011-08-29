@@ -39,7 +39,8 @@
   (glEnd))
 
 (define (begin-draw number-of-points)
-  (cond ((= number-of-points 3) (glBegin GL_TRIANGLES))
+  (cond ((= number-of-points 2) (glBegin GL_LINES))
+	((= number-of-points 3) (glBegin GL_TRIANGLES))
 	((= number-of-points 4) (glBegin GL_QUADS))))
 
 (define (draw-vertexes vertexes)
@@ -111,6 +112,13 @@
 	 (let ((width (texture-w texture))
 	       (height (texture-h texture)))
 	   (draw-rectangle (* zoom width) (* zoom height) #:texture texture)))))
+
+(define* (draw-line length #:optional color)
+  (let ((l
+  (cond (color
+	 (with-color color (draw v1 v2)))
+	(else
+	 (draw v1 v2))))
 
 (define* (draw-quad v1 v2 v3 v4 #:key texture color)
   (cond (texture
