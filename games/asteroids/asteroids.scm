@@ -9,21 +9,21 @@
   (let ((asteroid (load-texture "Asteroid.png")))
     (lambda (a)
       (to-origin)
-      (translate (car a) (cadr a))
-      (rotate (caddr a))
+      (translate (assoc-ref a 'x) (assoc-ref a 'y))
+      (rotate (assoc-ref a 'angle))
       (draw-texture asteroid))))
 
 (define (move-asteroid a)
-  (let* ((x (car a)) (y (cadr a))
-	 (angle (caddr a))
-	 (vx (cadddr a)) (vy (cadddr (cdr a)))
+  (let* ((x (assoc-ref a 'x)) (y (assoc-ref a 'y))
+	 (angle (assoc-ref a 'angle))
+	 (vx (assoc-ref a 'vx)) (vy (assoc-ref a 'vy))
 	 (nx (+ x vx)) (ny (+ y vy)))
     (cond ((> nx max-x) (set! vx -1))
 	  ((< nx min-x) (set! vx 1)))
     (cond ((> ny max-y) (set! vy -1))
 	  ((< ny min-y) (set! vy 1)))
     (set! angle (+ angle 1))
-    (list (+ x vx) (+ y vy) angle vx vy)))
+    `((x . ,(+ x vx)) (y . ,(+ y vy)) (angle . ,angle) (vx . ,vx) (vy . ,vy))))
 
 (define draw-ship
   (let ((ship1 (load-texture "Ship1.png"))
@@ -45,6 +45,10 @@
 	   (let ((r (degrees-to-radians (- angle))))
 	     (set! x (+ x (* 4 (sin r))))
 	     (set! y (+ y (* 4 (cos r)))))
+	   (cond ((> x max-x) (set! x min-x))
+		 ((< x min-x) (set! x max-x)))
+	   (cond ((> y max-y) (set! y min-y))
+		 ((< y min-y) (set! y max-y)))
 	   (set! moving #t))
 	  (else
 	   (set! moving #f)))
@@ -59,12 +63,14 @@
 
   (cond ((= n 0) '())
 	(else
-	 (cons (list (xy max-x 20) (xy max-y 20) 0 1 1) (make-asteroids (- n 1))))))
+	 (cons `((x . ,(xy max-x 20)) (y . ,(xy max-y 20)) (angle . 0) (vx . 1) (vy . 1)) (make-asteroids (- n 1))))))
 
 (let ((asteroids (make-asteroids 2))
-      (ship '((x . 0) (y . 0) (angle . 0) (moving . #f))))
+      (ship '((x . 0) (y . 0) (angle . 0) (moving . #f)))
+      (shots '())
   (run-game
    (set! asteroids (map move-asteroid asteroids))
    (set! ship (move-ship ship))
+   (set! shots (ship-shots
    (for-each draw-asteroid asteroids)
    (draw-ship ship)))
