@@ -5,6 +5,13 @@
 (define max-y (/ (assoc-ref (get-game-properties) 'height) 2))
 (define min-y (- max-y))
 
+(define (update-asteroid! a #:key x y angle vx vy)
+  (cond (x (assoc-set! a 'x x)))
+  (cond (y (assoc-set! a 'y y)))
+  (cond (x (assoc-set! a 'x x)))
+  (cond (x (assoc-set! a 'x x)))
+  (cond (x (assoc-set! a 'x x)))
+
 (define draw-asteroid
   (let ((asteroid (load-texture "Asteroid.png")))
     (lambda (a)
@@ -16,14 +23,20 @@
 (define (move-asteroid a)
   (let* ((x (assoc-ref a 'x)) (y (assoc-ref a 'y))
 	 (angle (assoc-ref a 'angle))
-	 (vx (assoc-ref a 'vx)) (vy (assoc-ref a 'vy))
-	 (nx (+ x vx)) (ny (+ y vy)))
-    (cond ((> nx max-x) (set! vx -1))
-	  ((< nx min-x) (set! vx 1)))
-    (cond ((> ny max-y) (set! vy -1))
-	  ((< ny min-y) (set! vy 1)))
-    (set! angle (+ angle 1))
-    `((x . ,(+ x vx)) (y . ,(+ y vy)) (angle . ,angle) (vx . ,vx) (vy . ,vy))))
+	 (vx (assoc-ref a 'vx)) (vy (assoc-ref a 'vy)))
+    (set! x (+ x vx))
+    (set! y (+ y vy))
+    (cond ((> x max-x) (set! vx -1))
+	  ((< x min-x) (set! vx 1)))
+    (cond ((> y max-y) (set! vy -1))
+	  ((< y min-y) (set! vy 1)))
+
+    (assoc-set! a 'x x)
+    (assoc-set! a 'y y)
+    (assoc-set! a 'angle (+ angle 1))
+    (assoc-set! a 'vx vx)
+    (assoc-set! a 'vy vy)
+    a))
 
 (define draw-ship
   (let ((ship1 (load-texture "Ship1.png"))
@@ -52,12 +65,41 @@
 	   (set! moving #t))
 	  (else
 	   (set! moving #f)))
+
+    (assoc-set! s 'x x)
+    (assoc-set! s 'y y)
     `((x . ,x) (y . ,y) (angle . ,angle) (moving . ,moving))))
 
 (define (ship-shot s)
-  (cond ((key-released? 'space)
+  (cond ((key-pressed? 'space)
+	 `((x . ,(assoc-ref s 'x)) (y . ,(assoc-ref s 'y)) (angle . ,(assoc-ref s 'angle))))
+	(else
 	 #f)))
 
+(define (draw-shot sh)
+  (to-origin)
+  (translate (assoc-ref sh 'x) (assoc-ref sh 'y))
+  (rotate (assoc-ref sh 'angle))
+  (draw-line 10))
+
+(define (move-shots shots)
+  (cond ((null? shots) '())
+	(else
+	 (let* ((sh (car shots))
+		(x (assoc-ref sh 'x)) (y (assoc-ref sh 'y))
+		(angle (assoc-ref sh 'angle))
+		(r (degrees-to-radians (- angle))))
+	   (set! x (+ x (* 10 (sin r))))
+	   (set! y (+ y (* 10 (cos r))))
+	   (cond ((and (<= x max-x)
+		       (>= x min-x)
+		       (<= y max-y)
+		       (>= y min-y))
+		  (cons `((x . ,x) (y . ,y) (angle . ,angle))
+			(move-shots (cdr shots))))
+		 (else
+		  (move-shots (cdr shots))))))))
+  
 (define (make-asteroids n)
   (define (xy n r)
     (let ((n2 (- (random (* n 2)) n)))
@@ -69,14 +111,26 @@
 	(else
 	 (cons `((x . ,(xy max-x 20)) (y . ,(xy max-y 20)) (angle . 0) (vx . 1) (vy . 1)) (make-asteroids (- n 1))))))
 
-(let ((asteroids (make-asteroids 2))
-      (ship '((x . 0) (y . 0) (angle . 0) (moving . #f)))
-      (shots '())
+(define (killed-ship? ship asteroids)
+  #f)
+
+(let ((asteroids #f) (ship #f) (shots #f))
+  (define (new-game n)
+    (set! asteroids (make-asteroids n))
+    (set! ship '((x . 0) (y . 0) (angle . 0) (moving . #f)))
+    (set! shots '()))
+
+  (new-game 2)
+
   (run-game
+   (cond ((killed-ship? ship asteroids)
+	  (new-game 2)))
    (set! asteroids (map move-asteroid asteroids))
    (set! ship (move-ship ship))
    (let ((shot (ship-shot ship)))
      (cond (shot
 	    (set! shots (cons shot shots)))))
+   (set! shots (move-shots shots))
    (for-each draw-asteroid asteroids)
+   (for-each draw-shot shots)
    (draw-ship ship)))
