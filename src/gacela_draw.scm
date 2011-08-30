@@ -114,11 +114,11 @@
 	   (draw-rectangle (* zoom width) (* zoom height) #:texture texture)))))
 
 (define* (draw-line length #:optional color)
-  (let ((l
-  (cond (color
-	 (with-color color (draw v1 v2)))
-	(else
-	 (draw v1 v2))))
+  (let ((l (/ length 2)))
+    (cond (color
+	   (with-color color (draw (list 0 l) (list 0 (- l)))))
+	  (else
+	   (draw (list 0 l) (list 0 (- l)))))))
 
 (define* (draw-quad v1 v2 v3 v4 #:key texture color)
   (cond (texture
