@@ -26,6 +26,28 @@
 (define *pi* (* (asin 1) 2))
 
 
+;;; Geometry
+
+(define (degrees-to-radians angle)
+  (/ (* angle *pi*) 180))
+
+(define (radians-to-degrees angle)
+  (/ (* angle 180) *pi*))
+
+(define (distance-between-points p1 p2)
+  (define (add-power-of-two p1 p2)
+    (cond ((null? p1)
+	   0)
+	  (else
+	   (+ (expt (- (car p1) (car p2)) 2)
+	      (add-power-of-two (cdr p1) (cdr p2))))))
+
+  (cond ((not (= (length p1) (length p2)))
+	 #f)
+	(else
+	 (sqrt (add-power-of-two p1 p2)))))
+
+
 ;;; Functions
 
 (define (nearest-power-of-two n)
@@ -33,12 +55,6 @@
     (cond ((> (* p 2) n) p)
 	  (else (power (* p 2) n))))
   (power 1 n))
-
-(define (degrees-to-radians angle)
-  (/ (* angle *pi*) 180))
-
-(define (radians-to-degrees angle)
-  (/ (* angle 180) *pi*))
 
 (define-macro (pushnew elem list)
   `(cond ((not (find (lambda (e) (eq? e ,elem)) ,list))

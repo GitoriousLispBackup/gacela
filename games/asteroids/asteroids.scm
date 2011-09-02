@@ -106,6 +106,12 @@
 		(assoc-ref (car a) 'size))
 	     (killed-ship? s (cdr a))))))
 
+(define (kill-asteroids s a)
+  (cond ((or (null? s) (null? a)) (values s a))
+	(else
+	 (let ((s1 (car s)) (a1 (car a)))
+	   (cond ((or (< (sqrt (+ (expt (- (assoc-ref 
+
 (let ((asteroids #f) (ship #f) (shots #f))
   (define (new-game n)
     (set! asteroids (make-asteroids n))
