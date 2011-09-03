@@ -101,16 +101,36 @@
 (define (killed-ship? s a)
   (cond ((null? a) #f)
 	(else
-	 (or (< (sqrt (+ (expt (- (assoc-ref s 'x) (assoc-ref (car a) 'x)) 2)
-			 (expt (- (assoc-ref s 'y) (assoc-ref (car a) 'y)) 2)))
+	 (or (< (distance-between-points (list (assoc-ref s 'x) (assoc-ref s 'y))
+					 (list (assoc-ref (car a) 'x) (assoc-ref (car a) 'y)))
 		(assoc-ref (car a) 'size))
 	     (killed-ship? s (cdr a))))))
 
 (define (kill-asteroids s a)
-  (cond ((or (null? s) (null? a)) (values s a))
+  (define (f1 s1 a)
+    (cond ((null? a)
+	   (values a #f))
+	  (else
+	   (let ((a1 (car a)))
+	     (cond ((< (distance-between-points (list (assoc-ref s1 'x) (assoc-ref s1 'y))
+						(list (assoc-ref a1 'x) (assoc-ref a1 'y)))
+		       (assoc-ref a1 'size))
+		    (values (cdr a) #t))
+		   (else
+		    (receive (an k) (f1 s1 (cdr a))
+			     (values (cons a1 an) k))))))))
+
+  (cond ((null? s)
+	 (values s a))
 	(else
-	 (let ((s1 (car s)) (a1 (car a)))
-	   (cond ((or (< (sqrt (+ (expt (- (assoc-ref 
+	 (let ((s1 (car s)))
+	   (receive (an k) (f1 s1 a)
+		    (cond (k
+			   (kill-asteroids (cdr s) an))
+			  (else
+			   (receive (sn an) (kill-asteroids (cdr s) an)
+				    (values (cons s1 sn) an)))))))))
+			   
 
 (let ((asteroids #f) (ship #f) (shots #f))
   (define (new-game n)
@@ -123,6 +143,9 @@
   (run-game
    (cond ((killed-ship? ship asteroids)
 	  (new-game 2)))
+   (receive (s a) (kill-asteroids shots asteroids)
+	    (set! shots s)
+	    (set! asteroids a))
    (set! asteroids (map move-asteroid asteroids))
    (set! ship (move-ship ship))
    (let ((shot (ship-shot ship)))
