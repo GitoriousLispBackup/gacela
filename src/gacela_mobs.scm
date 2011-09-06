@@ -191,6 +191,17 @@
 			(lambda () (look attr))
 			(lambda (key . args) #f)))))))))
 
+(define-macro (define-mob mob-head . body)
+  (let ((name (car mob-head)) (attr (cdr mob-head)))
+    `(define ,(string->symbol (string-concatenate (list "make-" (symbol->string name))))
+       (lambda-mob ,attr ,@body))))
+
+(define-macro (lambda-mob attr . body)
+  `(lambda ()
+     (let ,(cons '(mob-id (gentemp)) attr)
+       (lambda ()
+	 ,@body))))
+
 
 (define (get-mob-attr mob var)
   (let ((value (assoc-ref (mob 'get-attr) var)))
