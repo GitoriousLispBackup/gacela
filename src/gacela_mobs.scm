@@ -58,174 +58,30 @@
 (define-macro (hide-mob mob)
   `(hide-mob-hash ',mob))
 
-(define (run-mobs-logic mobs)
-  (for-each (lambda (m) (m 'run-logic)) mobs))
-
-(define (render-mobs mobs)
-  (for-each (lambda (m) (m 'render)) mobs))
-
-
-;;; Logics and looks for mobs
-
-(define (get-attr list name default)
-  (let ((value (assoc-ref list name)))
-    (cond (value (car value))
-	  (else default))))
-
-(define (attr-def attr)
-  (let ((name (car attr))
-	(value (cadr attr)))
-    `(,name (get-attr attributes ',name ',value))))
-
-(define (attr-save attr)
-  (let ((name (car attr)))
-    `(set! attributes (assoc-set! attributes ',name (list ,name)))))
-
-(define-macro (define-mob-logic logic-head . code)
-  (let ((name (car logic-head)) (attr (cdr logic-head)))
-    `(define ,name
-       (lambda-mob-logic ,attr ,@code))))
-
-(define-macro (lambda-mob-logic attr . code)
-  `(lambda (attributes)
-     (let ,(map attr-def attr)
-       ,@code
-       ,(cons 'begin (map attr-save attr))
-       attributes)))
-
-(define-macro (define-mob-look look-head . code)
-  (let ((name (car look-head)) (attr (cdr look-head)))
-    `(define ,name
-       (lambda-mob-look ,attr ,@code))))
-
-(define-macro (lambda-mob-look attr . look)
-  (define (process-look look)
-    (cond ((null? look) (values '() '()))
-	  (else
-	   (let ((line (car look)))
-	     (receive (lines images) (process-look (cdr look))
-		      (cond ((string? line)
-			     (let ((var (gensym)))
-			       (values (cons `(draw-texture ,var) lines)
-				       (cons `(,var (load-texture ,line)) images))))
-			    (else
-			     (values (cons line lines)
-				     images))))))))
-
-  (receive (look-lines look-images) (process-look look)
-	   `(let ,look-images
-		(lambda (attributes)
-		  (let ,(map attr-def attr)
-		    (glPushMatrix)
-		    ,@look-lines
-		    (glPopMatrix))))))
+(define (run-mobs mobs)
+  (for-each
+   (lambda (m)
+     (glPushMatrix)
+     (m)
+     (glPopMatrix))
+   mobs))
 
 
 ;;; Making mobs
 
-(define-macro (define-mob mob-head . look)
-  (let ((name (car mob-head)) (attr (cdr mob-head)))
-    `(define ,name
-       (lambda-mob ,attr ,@look))))
-
-(define-macro (lambda-mob attr . look)
-  `(let ((mob #f))
-     (set! mob
-	   (let ((attr ',attr) (actions '()) (looks '()))
-	     (lambda (option . params)
-	       (case option
-		 ((get-attr)
-		  attr)
-		 ((set-attr)
-		  (if (not (null? params)) (set! attr (car params))))
-		 ((get-actions)
-		  actions)
-		 ((set-actions)
-		  (if (not (null? params)) (set! actions (car params))))
-		 ((get-looks)
-		  looks)
-		 ((set-looks)
-		  (if (not (null? params)) (set! looks (car params))))
-		 ((run-actions)
-		  (for-each
-		   (lambda (action)
-		     (set! attr ((cdr action) attr)))
-		   actions))
-		 ((render)
-		  (for-each
-		   (lambda (look)
-		     ((cdr look) attr))
-		   looks))))))
-     (cond ((not (null? ',look))
-	    (mob 'set-looks
-		 (list (cons
-			'default-look
-			(lambda-look ,attr ,@look))))))
-     mob))
-
-(define-macro (define-mob mob-def)
-  (let ((name (car mob-def)) (def (cdr mob-def)))
-    `(define ,name
-       (lambda-mob ,@def))))
-
-(defmacro* lambda-mob (#:key (attr '(quote ())) (logic #f) (look #f))
-  `(let ((attr ,attr) (logic ,logic) (look ,look))
-     (lambda (option . params)
-       (case option
-	 ((get-attr)
-	  attr)
-	 ((set-attr)
-	  (if (not (null? params)) (set! attr (car params))))
-	 ((get-logic)
-	  logic)
-	 ((set-logic)
-	  (if (not (null? params)) (set! logic (car params))))
-	 ((get-look)
-	  look)
-	 ((set-look)
-	  (if (not (null? params)) (set! look (car params))))
-	 ((run-logic)
-	  (cond (logic
-		 (catch #t
-			(lambda () (set! attr (logic attr)))
-			(lambda (key . args) #f)))))
-	 ((render)
-	  (cond (look
-		 (catch #t
-			(lambda () (look attr))
-			(lambda (key . args) #f)))))))))
-
-
-(define (get-mob-attr mob var)
-  (let ((value (assoc-ref (mob 'get-attr) var)))
-    (if value (car value) #f)))
-
-(define (set-mob-attr! mob var value)
-  (mob 'set-attr (assoc-set! (mob 'get-attr) var (list value))))
-
-(define (set-mob-logic! mob logic)
-  (mob 'set-logic logic))
-
-(define (set-mob-look! mob look)
-  (mob 'set-look look))
-
-
-
-
-
 (define-macro (define-mob mob-head . body)
   (let ((name (car mob-head)) (attr (cdr mob-head)))
     `(define ,(string->symbol (string-concatenate (list "make-" (symbol->string name))))
-       (lambda-mob ,attr ,@body))))
+       (lambda ()
+	 (lambda-mob ,attr ,@body)))))
 
 (define-macro (lambda-mob attr . body)
-  `(lambda ()
-     (let ,(cons '(mob-id (gensym)) attr)
-       (lambda* (#:optional (option #f))
-	 (case option
-	   ((get-mob-id)
-	    mob-id)
-	   (else
-	    (catch #t
-		   (lambda () ,@body)
-		   (lambda (key . args) #f))))))))
+  `(let ,(cons '(mob-id (gensym)) attr)
+     (lambda* (#:optional (option #f))
+       (case option
+	 ((get-mob-id)
+	  mob-id)
+	 (else
+	  (catch #t
+		 (lambda () ,@body)
+		 (lambda (key . args) #f)))))))
