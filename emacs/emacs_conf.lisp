@@ -8,11 +8,13 @@
   (interactive)
   (cond ((not (get-process "gacela"))
 	 (launch-gacela)))
+  (process-send-string "gacela" "(begin ")
   (cond ((use-region-p)
 	 (process-send-region "gacela" (region-beginning) (region-end)))
 	(t
+	 (process-send-string "gacela" "(run-game) (clear-active-mobs)")
 	 (process-send-region "gacela" (point-min-marker) (point-max-marker))))
-  (process-send-string "gacela" "\n"))
+  (process-send-string "gacela" ")\n"))
 
 (define-key global-map [(ctrl x) (ctrl g)] 'send-to-gacela)
 
