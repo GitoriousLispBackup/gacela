@@ -167,6 +167,11 @@
 	  (set! audio #f))))
 
 
+;;; Resources Cache
+
+(define resources-cache (make-weak-value-hash-table))
+
+
 ;;; GaCeLa Functions
 
 (define set-frames-per-second #f)
