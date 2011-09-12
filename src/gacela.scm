@@ -171,6 +171,17 @@
 
 (define resources-cache (make-weak-value-hash-table))
 
+(define get-resource-from-cache #f)
+(define insert-resource-into-cache #f)
+
+(let ()
+  (set! get-resource-from-cache
+	(lambda (key)
+	  (hash-ref resources-cache key)))
+
+  (set! insert-resource-into-cache
+	(lambda (key res)
+	  (hash-set! resources-cache key res))))
 
 ;;; GaCeLa Functions
 

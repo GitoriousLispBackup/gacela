@@ -16,7 +16,11 @@
 
 
 (define* (load-font font-file #:key (size 40) (encoding ft_encoding_unicode))
-  (let ((font (ftglCreateTextureFont font-file)))
+  (let* ((key (list font-file))
+	 (font (get-resource-from-cache key)))
+    (cond ((not font)
+	   (set! font (ftglCreateTextureFont font-file))
+	   (insert-resource-into-cache key font)))
     (ftglSetFontFaceSize font size 72)
     (ftglSetFontCharMap font encoding)
     font))

@@ -86,22 +86,27 @@
 	       (zoomSurface surface zoomx zoomy 0))))))
 
 (define* (load-texture filename #:key (min-filter GL_LINEAR) (mag-filter GL_LINEAR))
-  (progn-textures
-   (receive
-    (image real-w real-h) (load-image-for-texture filename)
-    (cond (image
-	   (let ((width (surface-w image)) (height (surface-h image))
-		 (byteorder (if (= SDL_BYTEORDER SDL_LIL_ENDIAN)
-				(if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)
-				(if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)))
-		 (texture (car (glGenTextures 1))))
+  (let* ((key (list filename min-filter mag-filter))
+	 (res (get-resource-from-cache key)))
+    (cond (res res)
+	  (else
+	   (progn-textures
+	    (receive
+	     (image real-w real-h) (load-image-for-texture filename)
+	     (cond (image
+		    (let ((width (surface-w image)) (height (surface-h image))
+			  (byteorder (if (= SDL_BYTEORDER SDL_LIL_ENDIAN)
+					 (if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)
+					 (if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)))
+			  (texture (car (glGenTextures 1))))
 
-	     (glBindTexture GL_TEXTURE_2D texture)
-	     (glTexImage2D GL_TEXTURE_2D 0 4 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
-	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
-	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
-	     (set-texture-size! texture real-w real-h)
-	     texture))))))
+		      (glBindTexture GL_TEXTURE_2D texture)
+		      (glTexImage2D GL_TEXTURE_2D 0 4 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
+		      (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
+		      (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
+		      (set-texture-size! texture real-w real-h)
+		      (insert-resource-into-cache key texture)
+		      texture)))))))))
 
 (define* (draw-image filename #:optional (zoom 1))
   (let ((texture (load-texture filename)))
