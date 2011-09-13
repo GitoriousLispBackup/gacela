@@ -220,7 +220,7 @@ gacela_client (SCM rec_channel, SCM send_channel)
 	}
 	else {
 	  line_for_sending = realloc (line_for_sending, strlen (line_for_sending) + strlen (line) + 2);
-	  line_for_sending = strcat (line_for_sending, " ");
+	  line_for_sending = strcat (line_for_sending, "\n");
 	  line_for_sending = strcat (line_for_sending, line);
 	}
 
