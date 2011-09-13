@@ -7,20 +7,20 @@
 
 (define-mob (asteroid
 	     (image (load-texture "Asteroid.png"))
-	     (x 0) (y 0) (angle 0))
+	     (x 0) (y 0) (angle 0)
+	     (vx 1) (vy 1))
+  (set! x (+ x vx))
+  (set! y (+ y vy))
+  (cond ((> x max-x) (set! vx -1))
+	((< x min-x) (set! vx 1)))
+  (cond ((> y max-y) (set! vy -1))
+	((< y min-y) (set! vy 1)))
+  
   (translate x y)
   (rotate angle)
   (draw-texture image))
 
 (show-mob (make-asteroid))
-
-;; (define draw-asteroid
-;;   (let ((asteroid (load-texture "Asteroid.png")))
-;;     (lambda (a)
-;;       (to-origin)
-;;       (translate (assoc-ref a 'x) (assoc-ref a 'y))
-;;       (rotate (assoc-ref a 'angle))
-;;       (draw-texture asteroid))))
 
 ;; (define (move-asteroid a)
 ;;   (let ((x (assoc-ref a 'x)) (y (assoc-ref a 'y))
