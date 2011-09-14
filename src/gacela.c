@@ -178,6 +178,10 @@ opened_parens (char *line, int k)
 	    && line[i - 1] != '\\')
  	      break;
     }
+    else if (line[i] == ';') {
+      // Comment until endline
+      break;
+    }
     else if (line[i] == c)
       opened++;
     else if (line[i] == k)
