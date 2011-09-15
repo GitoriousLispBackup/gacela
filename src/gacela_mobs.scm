@@ -56,7 +56,14 @@
 	 `(show-mob-hash (,mob 'get-mob-id) (lambda () (,mob))))))
 
 (define-macro (hide-mob mob)
-  `(hide-mob-hash ',mob))
+  (cond ((list? mob)
+	 `(let ((m ,mob))
+	    (hide-mob-hash (m 'get-mob-id) m)))
+	(else
+	 `(hide-mob-hash (,mob 'get-mob-id) (lambda () (,mob))))))
+
+(define-macro (kill-me)
+  `(hide-mob-hash mob-id))
 
 (define (run-mobs mobs)
   (for-each
@@ -72,8 +79,8 @@
 (define-macro (define-mob mob-head . body)
   (let ((name (car mob-head)) (attr (cdr mob-head)))
     `(define ,(string->symbol (string-concatenate (list "make-" (symbol->string name))))
-       (lambda ()
-	 (lambda-mob ,attr ,@body)))))
+       (lambda* (#:key ,@attr)
+	 (lambda-mob () ,@body)))))
 
 (define-macro (lambda-mob attr . body)
   `(let ,(cons '(mob-id (gensym)) attr)

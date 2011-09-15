@@ -40,67 +40,31 @@
 	 (set! moving #t))
 	(else
 	 (set! moving #f)))
+  (cond ((key-pressed? 'space)
+	 (show-mob (make-shot #:x x #:y y #:angle angle))))
 
   (translate x y)
   (rotate angle)
   (draw-texture (if moving ship2 ship1)))
 
 (define-mob (shot (x 0) (y 0) (angle 0))
+  (let ((r (degrees-to-radians (- angle))))
+    (set! x (+ x (* 10 (sin r))))
+    (set! y (+ y (* 10 (cos r))))
+    (cond ((or (> x max-x)
+	       (< x min-x)
+	       (> y max-y)
+	       (< y min-y))
+	   (kill-me))))
+
   (translate x y)
   (rotate angle)
   (draw-line 10))
 
-;; (define (move-shots shots)
-;;   (cond ((null? shots) '())
-;; 	(else
-;; 	 (let* ((sh (car shots))
-;; 		(x (assoc-ref sh 'x)) (y (assoc-ref sh 'y))
-;; 		(angle (assoc-ref sh 'angle))
-;; 		(r (degrees-to-radians (- angle))))
-;; 	   (set! x (+ x (* 10 (sin r))))
-;; 	   (set! y (+ y (* 10 (cos r))))
-;; 	   (cond ((and (<= x max-x)
-;; 		       (>= x min-x)
-;; 		       (<= y max-y)
-;; 		       (>= y min-y))
-;; 		  (cons `((x . ,x) (y . ,y) (angle . ,angle))
-;; 			(move-shots (cdr shots))))
-;; 		 (else
-;; 		  (move-shots (cdr shots))))))))
 
 (show-mob (make-asteroid))
 (show-mob (make-ship))
 
-;; (define (ship-shot s)
-;;   (cond ((key-pressed? 'space)
-;; 	 `((x . ,(assoc-ref s 'x)) (y . ,(assoc-ref s 'y)) (angle . ,(assoc-ref s 'angle))))
-;; 	(else
-;; 	 #f)))
-
-;; (define (draw-shot sh)
-;;   (to-origin)
-;;   (translate (assoc-ref sh 'x) (assoc-ref sh 'y))
-;;   (rotate (assoc-ref sh 'angle))
-;;   (draw-line 10))
-
-;; (define (move-shots shots)
-;;   (cond ((null? shots) '())
-;; 	(else
-;; 	 (let* ((sh (car shots))
-;; 		(x (assoc-ref sh 'x)) (y (assoc-ref sh 'y))
-;; 		(angle (assoc-ref sh 'angle))
-;; 		(r (degrees-to-radians (- angle))))
-;; 	   (set! x (+ x (* 10 (sin r))))
-;; 	   (set! y (+ y (* 10 (cos r))))
-;; 	   (cond ((and (<= x max-x)
-;; 		       (>= x min-x)
-;; 		       (<= y max-y)
-;; 		       (>= y min-y))
-;; 		  (cons `((x . ,x) (y . ,y) (angle . ,angle))
-;; 			(move-shots (cdr shots))))
-;; 		 (else
-;; 		  (move-shots (cdr shots))))))))
-  
 ;; (define (make-asteroids n)
 ;;   (define (xy n r)
 ;;     (let ((n2 (- (random (* n 2)) n)))
