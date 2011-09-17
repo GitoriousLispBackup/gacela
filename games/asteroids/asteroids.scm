@@ -7,16 +7,16 @@
 
 (define-mob (asteroid
 	     (image (load-texture "Asteroid.png"))
-	     (x 0) (y 0) (angle 0)
-	     (vx 1) (vy 1))
-  (set! x (+ x vx))
-  (set! y (+ y vy))
+	     (x 0) (y 0) (angle 0) (dir 0))
+  (let ((r (degrees-to-radians (- dir))))
+    (set! x (+ x (sin r)))
+    (set! y (+ y (cos r))))
   (set! angle (+ angle 1))
 
-  (cond ((> x max-x) (set! vx -1))
-	((< x min-x) (set! vx 1)))
-  (cond ((> y max-y) (set! vy -1))
-	((< y min-y) (set! vy 1)))
+  (cond ((or (> x max-x) (< x min-x))
+	 (set! dir (* -1 dir))))
+  (cond ((or (> y max-y) (< y min-y))
+	 (set! dir (- 180 dir))))
   
   (translate x y)
   (rotate angle)
@@ -62,10 +62,21 @@
   (draw-line 10))
 
 
-(show-mob (make-asteroid))
+(define (init-asteroids n)
+  (define (xy n m)
+    (let ((n2 (- (random (* (- n m) 2)) (- n m))))
+      (if (> n2 0) (+ n2 m) (- n2 m))))
+
+  (cond ((> n 0)
+	 (let ((x (xy max-x 100)) (y (xy max-y 100))
+	       (angle (random 360)) (dir (- (random 360) 180)))
+	   (show-mob (make-asteroid #:x x #:y y #:angle angle #:dir dir)))
+	 (init-asteroids (- n 1)))))
+
+;(show-mob (make-asteroid))
+(init-asteroids 2)
 (show-mob (make-ship))
 
-;; (define (make-asteroids n)
 ;;   (define (xy n r)
 ;;     (let ((n2 (- (random (* n 2)) n)))
 ;;       (cond ((and (< n2 r) (>= n2 0)) r)
@@ -76,6 +87,13 @@
 ;; 	(else
 ;; 	 (cons `((x . ,(xy max-x 20)) (y . ,(xy max-y 20)) (angle . 0) (vx . 1) (vy . 1) (size . 95))
 ;; 	       (make-asteroids (- n 1))))))
+
+;;   (define (new-game n)
+;;     (set! asteroids (make-asteroids n))
+;;     (set! ship '((x . 0) (y . 0) (angle . 0) (moving . #f)))
+;;     (set! shots '()))
+
+;;   (new-game 2)
 
 ;; (define (killed-ship? s a)
 ;;   (cond ((null? a) #f)
@@ -112,12 +130,6 @@
 			   
 
 ;; (let ((asteroids #f) (ship #f) (shots #f))
-;;   (define (new-game n)
-;;     (set! asteroids (make-asteroids n))
-;;     (set! ship '((x . 0) (y . 0) (angle . 0) (moving . #f)))
-;;     (set! shots '()))
-
-;;   (new-game 2)
 
 ;;   (run-game
 ;;    (cond ((killed-ship? ship asteroids)
