@@ -63,30 +63,19 @@
 
 
 (define (init-asteroids n)
-  (define (xy n m)
-    (let ((n2 (- (random (* (- n m) 2)) (- n m))))
-      (if (> n2 0) (+ n2 m) (- n2 m))))
-
   (cond ((> n 0)
-	 (let ((x (xy max-x 100)) (y (xy max-y 100))
-	       (angle (random 360)) (dir (- (random 360) 180)))
-	   (show-mob (make-asteroid #:x x #:y y #:angle angle #:dir dir)))
-	 (init-asteroids (- n 1)))))
+	 (let ((x (- (random (* max-x 2)) max-x))
+	       (y (- (random (* max-y 2)) max-y)))
+	   (cond ((< (distance-between-points (list x y) '(0 0)) 120)
+		  (init-asteroids n))
+		 (else
+		  (let ((angle (random 360)) (dir (- (random 360) 180)))
+		    (show-mob (make-asteroid #:x x #:y y #:angle angle #:dir dir)))
+		  (init-asteroids (- n 1))))))))
 
-;(show-mob (make-asteroid))
+
 (init-asteroids 2)
 (show-mob (make-ship))
-
-;;   (define (xy n r)
-;;     (let ((n2 (- (random (* n 2)) n)))
-;;       (cond ((and (< n2 r) (>= n2 0)) r)
-;; 	    ((and (> n2 (- r)) (< n2 0)) (- r))
-;; 	    (else n2))))
-
-;;   (cond ((= n 0) '())
-;; 	(else
-;; 	 (cons `((x . ,(xy max-x 20)) (y . ,(xy max-y 20)) (angle . 0) (vx . 1) (vy . 1) (size . 95))
-;; 	       (make-asteroids (- n 1))))))
 
 ;;   (define (new-game n)
 ;;     (set! asteroids (make-asteroids n))
