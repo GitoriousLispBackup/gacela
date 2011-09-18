@@ -77,6 +77,11 @@
 (init-asteroids 2)
 (show-mob (make-ship))
 
+(let ((font (load-font "../tetris/lazy.ttf" #:size 20)))
+  (run-game
+   (render-text (format #f "Mobs: ~a" (length (get-active-mobs))) font)))
+
+
 ;;   (define (new-game n)
 ;;     (set! asteroids (make-asteroids n))
 ;;     (set! ship '((x . 0) (y . 0) (angle . 0) (moving . #f)))

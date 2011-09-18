@@ -31,7 +31,7 @@
 
   (set! hide-mob-hash
 	(lambda (key)
-	  (hash-remove! key)
+	  (hash-remove! active-mobs key)
 	  (set! changed #t)))
 
   (set! get-active-mobs
@@ -58,12 +58,9 @@
 (define-macro (hide-mob mob)
   (cond ((list? mob)
 	 `(let ((m ,mob))
-	    (hide-mob-hash (m 'get-mob-id) m)))
+	    (hide-mob-hash (m 'get-mob-id))))
 	(else
-	 `(hide-mob-hash (,mob 'get-mob-id) (lambda () (,mob))))))
-
-(define-macro (kill-me)
-  `(hide-mob-hash mob-id))
+	 `(hide-mob-hash (,mob 'get-mob-id)))))
 
 (define (run-mobs mobs)
   (for-each
@@ -79,16 +76,20 @@
 (define-macro (define-mob mob-head . body)
   (let ((name (car mob-head)) (attr (cdr mob-head)))
     `(define ,(string->symbol (string-concatenate (list "make-" (symbol->string name))))
-       (lambda* (#:key ,@attr)
+       (lambda* ,(if (null? attr) '() `(#:key ,@attr))
 	 (lambda-mob () ,@body)))))
 
 (define-macro (lambda-mob attr . body)
-  `(let ,(cons '(mob-id (gensym)) attr)
-     (lambda* (#:optional (option #f))
-       (case option
-	 ((get-mob-id)
-	  mob-id)
-	 (else
-	  (catch #t
-		 (lambda () ,@body)
-		 (lambda (key . args) #f)))))))
+  (let ((mob-id-symbol (gensym))
+	(type-mob
+    `(let ,(cons `(,mob-id-symbol (gensym)) attr)
+       (lambda* (#:optional (option #f))
+	 (define (kill-me)
+	   (hide-mob-hash ,mob-id-symbol))
+	 (case option
+	   ((get-mob-id)
+	    ,mob-id-symbol)
+	   (else
+	    (catch #t
+		   (lambda () ,@body)
+		   (lambda (key . args) #f))))))))
