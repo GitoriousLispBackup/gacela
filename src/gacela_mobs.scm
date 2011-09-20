@@ -77,19 +77,28 @@
   (let ((name (car mob-head)) (attr (cdr mob-head)))
     `(define ,(string->symbol (string-concatenate (list "make-" (symbol->string name))))
        (lambda* ,(if (null? attr) '() `(#:key ,@attr))
-	 (lambda-mob () ,@body)))))
+	 (the-mob ',name () ,attr ,@body)))))
 
-(define-macro (lambda-mob attr . body)
+(define-macro (the-mob type attr publish . body)
   (let ((mob-id-symbol (gensym))
-	(type-mob
-    `(let ,(cons `(,mob-id-symbol (gensym)) attr)
+	(type-symbol (gensym)))
+    `(let ((,mob-id-symbol (gensym))
+	   (,type-symbol ,type)
+	   ,@attr)
        (lambda* (#:optional (option #f))
 	 (define (kill-me)
 	   (hide-mob-hash ,mob-id-symbol))
 	 (case option
 	   ((get-mob-id)
 	    ,mob-id-symbol)
+	   ((get-type)
+	    ,type-symbol)
 	   (else
+	    (display ,(cons 'list (map (lambda (x) `(acons ',(car x) ,(car x) '())) publish)))
+	    (newline)
 	    (catch #t
 		   (lambda () ,@body)
 		   (lambda (key . args) #f))))))))
+
+(define-macro (lambda-mob attr . body)
+  `(the-mob 'undefined ,attr '() ,@body))
