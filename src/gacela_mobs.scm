@@ -94,7 +94,7 @@
 	   ((get-type)
 	    ,type-symbol)
 	   (else
-	    (display ,(cons 'list (map (lambda (x) `(acons ',(car x) ,(car x) '())) publish)))
+	    (display ,(cons 'list (map (lambda (x) `(cons ',(car x) ,(car x))) publish)))
 	    (newline)
 	    (catch #t
 		   (lambda () ,@body)
