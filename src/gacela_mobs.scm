@@ -94,11 +94,28 @@
 	   ((get-type)
 	    ,type-symbol)
 	   (else
-	    (display ,(cons 'list (map (lambda (x) `(cons ',(car x) ,(car x))) publish)))
-	    (newline)
 	    (catch #t
 		   (lambda () ,@body)
-		   (lambda (key . args) #f))))))))
+		   (lambda (key . args) #f))
+	    (cond ((not (null? ,publish))
+		   (display ,(cons 'list (map (lambda (x) `(cons ',(car x) ,(car x))) publish)))
+		   (publish-mob-data ,mob-id-symbol ,type-symbol ,(cons 'list (map (lambda (x) `(cons ',(car x) ,(car x))) publish)))))
+	    (newline)))))))
 
 (define-macro (lambda-mob attr . body)
   `(the-mob 'undefined ,attr '() ,@body))
+
+
+;;; Events Engine
+
+(define publish-mob-data #f)
+(define published-data (make-hash-table))
+
+(let ((nop #f))
+  (set! publish-mob-data
+	(lambda (mob-id mob-type data)
+	  (let ((t (hash-ref published-data mob-type))
+		(i (cons mob-id data)))
+	    (hash-set! published-data mob-type
+		       (cond (t (cons i t))
+			     (else (list i))))))))
