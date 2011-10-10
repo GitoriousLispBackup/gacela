@@ -63,6 +63,7 @@
 	 `(hide-mob-hash (,mob 'get-mob-id)))))
 
 (define (run-mobs mobs)
+  (clear-mob-data)
   (for-each
    (lambda (m)
      (glPushMatrix)
@@ -97,7 +98,7 @@
 	    (catch #t
 		   (lambda () ,@body)
 		   (lambda (key . args) #f))
-	    (cond ((not (null? ,publish))
+	    (cond ((not (null? ',publish))
 		   (display ,(cons 'list (map (lambda (x) `(cons ',(car x) ,(car x))) publish)))
 		   (publish-mob-data ,mob-id-symbol ,type-symbol ,(cons 'list (map (lambda (x) `(cons ',(car x) ,(car x))) publish)))))
 	    (newline)))))))
@@ -109,7 +110,11 @@
 ;;; Events Engine
 
 (define publish-mob-data #f)
+(define clear-mob-data #f)
+(define def-mobs-event #f)
+
 (define published-data (make-hash-table))
+(define mobs-events (make-hash-table))
 
 (let ((nop #f))
   (set! publish-mob-data
@@ -118,4 +123,20 @@
 		(i (cons mob-id data)))
 	    (hash-set! published-data mob-type
 		       (cond (t (cons i t))
-			     (else (list i))))))))
+			     (else (list i)))))))
+
+  (set! clear-mob-data
+	(lambda ()
+	  (hash-clear! published-data)))
+
+  (set! def-mobs-event
+	(lambda (type1 type2 fun)
+	  #f))
+)
+
+(define-macro (define-mobs-event type1 type2 . body)
+  `(def-mobs-event
+     ,type1
+     ,type2
+     ,(cond ((null? body) #f)
+	    (else `(lambda () ,@body)))))
