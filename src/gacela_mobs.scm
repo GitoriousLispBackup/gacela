@@ -71,16 +71,12 @@
 	 `(hide-mob-hash (,mob 'get-mob-id)))))
 
 (define* (run-mobs #:optional (mobs (get-active-mobs)))
-  (run-mobs-events)
-  (for-each (lambda (m) (m 'publish-data)) mobs)
-  (run-mobs-events)
   (for-each
    (lambda (m)
      (glPushMatrix)
      (m)
      (glPopMatrix))
-   mobs)
-  (clear-events-data))
+   mobs))
 
 
 ;;; Making mobs
@@ -93,85 +89,39 @@
 
 (define-macro (the-mob type attr publish . body)
   (let ((mob-id-symbol (gensym))
-	(type-symbol (gensym)))
+	(type-symbol (gensym))
+	(time-symbol (gensym))
+	(data-symbol (gensym))
+	(save-symbol (gensym)))
     `(let ((,mob-id-symbol (gensym))
 	   (,type-symbol ,type)
+	   (,time-symbol 0)
+	   (,data-symbol '())
 	   ,@attr)
        (lambda* (#:optional (option #f))
 	 (define (kill-me)
 	   (hide-mob-hash ,mob-id-symbol))
+	 (define (,save-symbol)
+	   (let ((time (get-frame-time)))
+	     (cond ((not (= time ,time-symbol))
+		    (set! ,time-symbol time)
+		    (set! ,data-symbol ,(cons 'list (map (lambda (x) `(cons ',(car x) ,(car x))) publish)))))))
+	 (define (map-mobs fun type)
+	   (let ((mobs (filter (lambda (m) (and (eq? (m 'get-type) type) (not (eq? (m 'get-mob-id) ,mob-id-symbol)))) (get-active-mobs))))
+	     (map (lambda (m) (fun (m 'get-data))) mobs)))
 	 (case option
 	   ((get-mob-id)
 	    ,mob-id-symbol)
 	   ((get-type)
 	    ,type-symbol)
 	   ((get-data)
-	    ,(cons 'list (map (lambda (x) `(cons ',(car x) ,(car x))) publish)))
+	    (,save-symbol)
+	    ,data-symbol)
 	   (else
+	    (,save-symbol)
 	    (catch #t
-		   (lambda () ,@body)
+	     	   (lambda () ,@body)
 		   (lambda (key . args) #f))))))))
 
 (define-macro (lambda-mob attr . body)
   `(the-mob 'undefined ,attr '() ,@body))
-
-
-;;; Events Engine
-
-(define def-mobs-event #f)
-(define run-mobs-events #f)
-(define clear-events-data #f)
-
-(define mobs-events (make-hash-table))
-(define returned-data (make-hash-table))
-
-(let ((nop #f))
-  (set! def-mobs-event
-	(lambda (pair fun)
-	  (cond ((not fun)
-		 (hash-remove! mobs-events pair))
-		(else
-		 (hash-set! mobs-events pair fun)))))
-
-  (set! run-mobs-events
-	(lambda* (#:optional (mobs (get-active-mobs)))
-	  (hash-for-each
-	   (lambda (types fun)
-	     (let* ((t1 (car types)) (t2 (cadr types))
-		    (mobs-t1 (filter (lambda (m) (eq? (m 'get-type) t1)) mobs))
-		    (mobs-t2 (filter (lambda (m) (eq? (m 'get-type) t2)) mobs)))
-	       (cond ((not (or (null? mobs-t1) (null? mobs-t2)))
-		      (for-each
-		       (lambda (m1)
-			 (let ((id1 (m1 'get-mob-id)))
-			   (for-each
-			    (lambda (m2)
-			      (let ((id2 (m2 'get-mob-id)))
-				(cond ((not (eq? id1 id2))
-				       (let ((res (catch #t
-							 (lambda () (fun (m1 'get-data) (m2 'get-data)))
-							 (lambda (key . args) #f))))
-					 (cond ((and (list? res) (>= (length res) 2))
-						(return-data id1 t2 (car res))
-						(return-data id2 t1 (cadr res)))))))))
-			    mobs-t2)))
-		       mobs-t1)))))
-	   mobs-events)))
-		  
-
-  (define (return-data mob-id mob-type data)
-    (let* ((key (list mob-id mob-type))
-	   (res (hash-ref returned-data key)))
-      (hash-set! returned-data key
-		 (cond (res (cons data res))
-		       (else (list data))))))
-
-  (set! clear-events-data
-	(lambda ()
-	  (hash-clear! returned-data))))
-
-(define-macro (define-mobs-event types-pair . body)
-  `(def-mobs-event
-     ',types-pair
-     ,(cond ((null? body) #f)
-	    (else `(lambda (,(car types-pair) ,(cadr types-pair)) ,@body)))))

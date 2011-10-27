@@ -187,6 +187,7 @@
 
 (define set-frames-per-second #f)
 (define init-frame-time #f)
+(define get-frame-time #f)
 (define delay-frame #f)
 
 (let ((time 0) (time-per-frame (/ 1000.0 *frames-per-second*)))
@@ -197,6 +198,10 @@
   (set! init-frame-time
 	(lambda ()
 	  (set! time (SDL_GetTicks))))
+
+  (set! get-frame-time
+	(lambda ()
+	  time))
 
   (set! delay-frame
 	(lambda ()
