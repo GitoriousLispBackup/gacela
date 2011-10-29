@@ -22,6 +22,19 @@
   (rotate angle)
   (draw-texture image))
 
+;; (define (killed-ship? s a)
+;;   (cond ((null? a) #f)
+;; 	(else
+;; 	 (or (< (distance-between-points (list (assoc-ref s 'x) (assoc-ref s 'y))
+;; 					 (list (assoc-ref (car a) 'x) (assoc-ref (car a) 'y)))
+;; 		(assoc-ref (car a) 'size))
+;; 	     (killed-ship? s (cdr a))))))
+
+(define-macro (killed-ship?)
+  `(
+    (map-mobs
+     (lambda (m)
+       
 (define-mob (ship
 	     (ship1 (load-texture "Ship1.png"))
 	     (ship2 (load-texture "Ship2.png"))
@@ -76,7 +89,7 @@
 
 (init-asteroids 2)
 (show-mob (make-ship))
-
+     
 (let ((font (load-font "../tetris/lazy.ttf" #:size 20)))
   (run-game
    (render-text (format #f "Mobs: ~a" (length (get-active-mobs))) font)))
