@@ -56,9 +56,9 @@
 	  (else (power (* p 2) n))))
   (power 1 n))
 
-(define-macro (pushnew elem list)
-  `(cond ((not (find (lambda (e) (eq? e ,elem)) ,list))
-	  (set! ,list (cons ,elem ,list)))))
+;(define-macro (pushnew elem list)
+;  `(cond ((not (find (lambda (e) (eq? e ,elem)) ,list))
+;	  (set! ,list (cons ,elem ,list)))))
 
 (define (assoc-multiple-set! alist . pairs)
   (define (amset! alist pairs)
