@@ -5,9 +5,16 @@
 (define max-y (/ (assoc-ref (get-game-properties) 'height) 2))
 (define min-y (- max-y))
 
+(define-macro (asteroid-killed?)
+  `(> (apply +
+	     (map-mobs
+	      (lambda (s) (if (< (distance-between-points (list (assoc-ref s 'x) (assoc-ref s 'y)) (list x y)) size) 1 0))
+	      'shot))
+      0))
+
 (define-mob (asteroid
 	     (image (load-texture "Asteroid.png"))
-	     (x 0) (y 0) (angle 0) (dir 0))
+	     (x 0) (y 0) (angle 0) (dir 0) (size 100))
   (let ((r (degrees-to-radians (- dir))))
     (set! x (+ x (sin r)))
     (set! y (+ y (cos r))))
@@ -18,23 +25,11 @@
   (cond ((or (> y max-y) (< y min-y))
 	 (set! dir (- 180 dir))))
   
+  (if (asteroid-killed?) (kill-me))
   (translate x y)
   (rotate angle)
   (draw-texture image))
 
-;; (define (killed-ship? s a)
-;;   (cond ((null? a) #f)
-;; 	(else
-;; 	 (or (< (distance-between-points (list (assoc-ref s 'x) (assoc-ref s 'y))
-;; 					 (list (assoc-ref (car a) 'x) (assoc-ref (car a) 'y)))
-;; 		(assoc-ref (car a) 'size))
-;; 	     (killed-ship? s (cdr a))))))
-
-(define-macro (killed-ship?)
-  `(
-    (map-mobs
-     (lambda (m)
-       
 (define-mob (ship
 	     (ship1 (load-texture "Ship1.png"))
 	     (ship2 (load-texture "Ship2.png"))
@@ -110,31 +105,6 @@
 ;; 		(assoc-ref (car a) 'size))
 ;; 	     (killed-ship? s (cdr a))))))
 
-;; (define (kill-asteroids s a)
-;;   (define (f1 s1 a)
-;;     (cond ((null? a)
-;; 	   (values a #f))
-;; 	  (else
-;; 	   (let ((a1 (car a)))
-;; 	     (cond ((< (distance-between-points (list (assoc-ref s1 'x) (assoc-ref s1 'y))
-;; 						(list (assoc-ref a1 'x) (assoc-ref a1 'y)))
-;; 		       (assoc-ref a1 'size))
-;; 		    (values (cdr a) #t))
-;; 		   (else
-;; 		    (receive (an k) (f1 s1 (cdr a))
-;; 			     (values (cons a1 an) k))))))))
-
-;;   (cond ((null? s)
-;; 	 (values s a))
-;; 	(else
-;; 	 (let ((s1 (car s)))
-;; 	   (receive (an k) (f1 s1 a)
-;; 		    (cond (k
-;; 			   (kill-asteroids (cdr s) an))
-;; 			  (else
-;; 			   (receive (sn an) (kill-asteroids (cdr s) an)
-;; 				    (values (cons s1 sn) an)))))))))
-			   
 
 ;; (let ((asteroids #f) (ship #f) (shots #f))
 
