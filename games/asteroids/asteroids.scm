@@ -15,17 +15,19 @@
 (define-mob (asteroid
 	     (image (load-texture "Asteroid.png"))
 	     (x 0) (y 0) (angle 0) (dir 0) (size 100))
-  (let ((r (degrees-to-radians (- dir))))
-    (set! x (+ x (sin r)))
-    (set! y (+ y (cos r))))
-  (set! angle (+ angle 1))
+  (cond ((asteroid-killed?)
+	 (kill-me))
+	(else
+	 (let ((r (degrees-to-radians (- dir))))
+	   (set! x (+ x (sin r)))
+	   (set! y (+ y (cos r))))
+	 (set! angle (+ angle 1))
 
-  (cond ((or (> x max-x) (< x min-x))
-	 (set! dir (* -1 dir))))
-  (cond ((or (> y max-y) (< y min-y))
-	 (set! dir (- 180 dir))))
+	 (cond ((or (> x max-x) (< x min-x))
+		(set! dir (* -1 dir))))
+	 (cond ((or (> y max-y) (< y min-y))
+		(set! dir (- 180 dir))))))
   
-  (if (asteroid-killed?) (kill-me))
   (translate x y)
   (rotate angle)
   (draw-texture image))
@@ -55,15 +57,25 @@
   (rotate angle)
   (draw-texture (if moving ship2 ship1)))
 
+(define-macro (shot-killed?)
+  `(> (apply +
+	     (map-mobs
+	      (lambda (a) (if (< (distance-between-points (list (assoc-ref a 'x) (assoc-ref a 'y)) (list x y)) (assoc-ref a 'size)) 1 0))
+	      'asteroid))
+      0))
+
 (define-mob (shot (x 0) (y 0) (angle 0))
-  (let ((r (degrees-to-radians (- angle))))
-    (set! x (+ x (* 10 (sin r))))
-    (set! y (+ y (* 10 (cos r))))
-    (cond ((or (> x max-x)
-	       (< x min-x)
-	       (> y max-y)
-	       (< y min-y))
-	   (kill-me))))
+  (cond ((shot-killed?)
+	 (kill-me))
+	(else
+	 (let ((r (degrees-to-radians (- angle))))
+	   (set! x (+ x (* 10 (sin r))))
+	   (set! y (+ y (* 10 (cos r))))
+	   (cond ((or (> x max-x)
+		      (< x min-x)
+		      (> y max-y)
+		      (< y min-y))
+		  (kill-me))))))
 
   (translate x y)
   (rotate angle)
