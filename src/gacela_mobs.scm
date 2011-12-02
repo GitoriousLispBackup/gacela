@@ -91,8 +91,7 @@
   (let ((mob-id-symbol (gensym))
 	(type-symbol (gensym))
 	(time-symbol (gensym))
-	(data-symbol (gensym))
-	(save-symbol (gensym)))
+	(data-symbol (gensym)))
     `(let ((,mob-id-symbol (gensym))
 	   (,type-symbol ,type)
 	   (,time-symbol 0)
@@ -101,11 +100,15 @@
        (lambda* (#:optional (option #f))
 	 (define (kill-me)
 	   (hide-mob-hash ,mob-id-symbol))
-	 (define (,save-symbol)
+	 (define (save-data)
 	   (let ((time (get-frame-time)))
 	     (cond ((not (= time ,time-symbol))
 		    (set! ,time-symbol time)
 		    (set! ,data-symbol ,(cons 'list (map (lambda (x) `(cons ',(car x) ,(car x))) publish)))))))
+	 (define (get-data)
+	   ,data-symbol)
+	 (define (filter-mobs type fun)
+	   #t)
 	 (define (map-mobs fun type)
 	   (let ((mobs (filter (lambda (m) (and (eq? (m 'get-type) type) (not (eq? (m 'get-mob-id) ,mob-id-symbol)))) (get-active-mobs))))
 	     (map (lambda (m) (fun (m 'get-data))) mobs)))
@@ -115,13 +118,26 @@
 	   ((get-type)
 	    ,type-symbol)
 	   ((get-data)
-	    (,save-symbol)
+	    (save-data)
 	    ,data-symbol)
 	   (else
-	    (,save-symbol)
+	    (save-data)
 	    (catch #t
 	     	   (lambda () ,@body)
 		   (lambda (key . args) #f))))))))
 
 (define-macro (lambda-mob attr . body)
   `(the-mob 'undefined ,attr '() ,@body))
+
+
+;;; Collisions
+
+(define-macro (lambda-mob-data attr . body)
+  `(lambda ,attr ,@body))
+
+(define-macro (define-collision-check name mobs . body)
+  `(defmacro* ,name (#:optional m)
+     `(let ,(cond (m `((mob-id (,m 'get-mob-id)) (mob-type (,m 'get-type))))
+		  (else `()))
+	
+	mob-id)))
