@@ -91,7 +91,7 @@ get_surface_pixels (SCM surface_smob)
 {
   SDL_Surface *surface = get_surface_address (surface_smob);
 
-  return scm_from_int (surface->pixels);
+  return scm_from_int ((int)surface->pixels);
 }
 
 SCM
@@ -202,7 +202,7 @@ gacela_SDL_DisplayFormat (SCM surface)
   SDL_Surface *new = SDL_DisplayFormat (get_surface_address (surface));
 
   if (new) {
-    return make_surface (scm_from_locale_string (get_surface_filename (surface)), new);
+    return make_surface (get_surface_filename (surface), new);
   }
   else {
     return SCM_BOOL_F;
@@ -215,7 +215,7 @@ gacela_SDL_DisplayFormatAlpha (SCM surface)
   SDL_Surface *new = SDL_DisplayFormatAlpha (get_surface_address (surface));
 
   if (new) {
-    return make_surface (scm_from_locale_string (get_surface_filename (surface)), new);
+    return make_surface (get_surface_filename (surface), new);
   }
   else {
     return SCM_BOOL_F;
@@ -418,8 +418,8 @@ gacela_Mix_CloseAudio (void)
 }
 
 
-void*
-SDL_register_functions (void* data)
+void
+init_guile_SDL ()
 {
   surface_tag = scm_make_smob_type ("surface", sizeof (struct surface));
   scm_set_smob_mark (surface_tag, mark_surface);
@@ -528,6 +528,4 @@ SDL_register_functions (void* data)
   scm_c_define_gsubr ("Mix_FreeMusic", 1, 0, 0, gacela_Mix_FreeMusic);
   scm_c_define_gsubr ("Mix_FreeChunk", 1, 0, 0, gacela_Mix_FreeChunk);
   scm_c_define_gsubr ("Mix_CloseAudio", 0, 0, 0, gacela_Mix_CloseAudio);
-
-  return NULL;
 }
