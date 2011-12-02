@@ -419,7 +419,7 @@ gacela_Mix_CloseAudio (void)
 
 
 void
-init_guile_SDL ()
+init_gacela_sdl (void *data)
 {
   surface_tag = scm_make_smob_type ("surface", sizeof (struct surface));
   scm_set_smob_mark (surface_tag, mark_surface);
@@ -528,4 +528,10 @@ init_guile_SDL ()
   scm_c_define_gsubr ("Mix_FreeMusic", 1, 0, 0, gacela_Mix_FreeMusic);
   scm_c_define_gsubr ("Mix_FreeChunk", 1, 0, 0, gacela_Mix_FreeChunk);
   scm_c_define_gsubr ("Mix_CloseAudio", 0, 0, 0, gacela_Mix_CloseAudio);
+}
+
+void
+gacela_sdl_init ()
+{
+  scm_c_define_module ("gacela sdl", init_gacela_sdl, NULL);
 }
