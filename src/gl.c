@@ -18,8 +18,6 @@
 #include <libguile.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include "gacela_GL.h"
-
 
 struct glTexture
 {
@@ -374,8 +372,8 @@ gacela_gluLookAt (SCM eyeX, SCM eyeY, SCM eyeZ, SCM centerX, SCM centerY, SCM ce
 }
 
 
-void*
-GL_register_functions (void* data)
+void
+init_gacela_gl (void *data)
 {
   glTexture_tag = scm_make_smob_type ("glTexture", sizeof (struct glTexture));
   scm_set_smob_free (glTexture_tag, free_glTexture);
@@ -482,6 +480,10 @@ GL_register_functions (void* data)
   scm_c_define_gsubr ("gluPerspective", 4, 0, 0, gacela_gluPerspective);
   scm_c_define_gsubr ("gluBuild2DMipmaps", 7, 0, 0, gacela_gluBuild2DMipmaps);
   scm_c_define_gsubr ("gluLookAt", 9, 0, 0, gacela_gluLookAt);
+}
 
-  return NULL;
+void
+scm_init_gacela_gl ()
+{
+  init_gacela_gl (NULL);
 }

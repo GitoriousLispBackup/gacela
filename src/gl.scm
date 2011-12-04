@@ -15,16 +15,11 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-(define* (load-font font-file #:key (size 40) (encoding ft_encoding_unicode))
-  (let* ((key (list font-file))
-	 (font (get-resource-from-cache key)))
-    (cond ((not font)
-	   (set! font (ftglCreateTextureFont font-file))
-	   (insert-resource-into-cache key font)))
-    (ftglSetFontFaceSize font size 72)
-    (ftglSetFontCharMap font encoding)
-    font))
+(define-module (gacela gl))
 
-(define* (render-text text font #:key (size #f))
-  (cond (size (ftglSetFontFaceSize font size 72)))
-  (ftglRenderFont font text FTGL_RENDER_ALL))
+(load-extension "libguile-gacela-gl" "scm_init_gacela_gl")
+
+(module-map (lambda (sym var)
+	      (if (not (eq? sym '%module-public-interface))
+		  (module-export! (current-module) (list sym))))
+	    (current-module))

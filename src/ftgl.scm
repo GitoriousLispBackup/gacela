@@ -15,9 +15,9 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-(define-module (gacela sdl))
+(define-module (gacela ftgl))
 
-(load-extension "libguile-gacela-sdl" "scm_init_gacela_sdl")
+(load-extension "libguile-gacela-ftgl" "scm_init_gacela_ftgl")
 
 (module-map (lambda (sym var)
 	      (if (not (eq? sym '%module-public-interface))

@@ -17,7 +17,6 @@
 
 #include <libguile.h>
 #include <FTGL/ftgl.h>
-#include "gacela_FTGL.h"
 
 struct font
 {
@@ -124,8 +123,8 @@ gacela_ftglRenderFont (SCM font, SCM string, SCM mode)
 }
 
 
-void*
-FTGL_register_functions (void* data)
+void
+init_gacela_ftgl (void *data)
 {
   font_tag = scm_make_smob_type ("font", sizeof (struct font));
   scm_set_smob_mark (font_tag, mark_font);
@@ -140,6 +139,11 @@ FTGL_register_functions (void* data)
   scm_c_define_gsubr ("ftglSetFontFaceSize", 3, 0, 0, gacela_ftglSetFontFaceSize);
   scm_c_define_gsubr ("ftglSetFontCharMap", 2, 0, 0, gacela_ftglSetFontCharMap);
   scm_c_define_gsubr ("ftglRenderFont", 3, 0, 0, gacela_ftglRenderFont);
+}
 
-  return NULL;
+
+void
+scm_init_gacela_ftgl ()
+{
+  init_gacela_ftgl (NULL);
 }

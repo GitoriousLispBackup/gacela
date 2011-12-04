@@ -21,7 +21,6 @@
 #include <SDL/SDL_image.h>
 #include <SDL/SDL_mixer.h>
 #include <SDL/SDL_rotozoom.h>
-#include "gacela_SDL.h"
 
 struct surface
 {
@@ -531,7 +530,7 @@ init_gacela_sdl (void *data)
 }
 
 void
-gacela_sdl_init ()
+scm_init_gacela_sdl ()
 {
-  scm_c_define_module ("gacela sdl", init_gacela_sdl, NULL);
+  init_gacela_sdl (NULL);
 }
