@@ -16,7 +16,10 @@
 
 
 (define-module (gacela ttf)
-  #:use-module (gacela ftgl))
+  #:use-module (gacela ftgl)
+  #:use-module (ice-9 optargs)
+  #:export (load-font
+	    render-text))
 
 (define* (load-font font-file #:key (size 40) (encoding ft_encoding_unicode))
   (let* ((key (list font-file))

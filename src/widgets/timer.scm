@@ -15,7 +15,16 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-;;; Timers
+(define-module (gacela widgets timer)
+  #:use-module (gacela sdl)
+  #:export (make-timer
+	    start-timer
+	    stop-timer
+	    get-time
+	    get-state
+	    pause-timer
+	    resume-timer))
+
 
 (define (make-timer)
   (let ((start 0) (paused 0) (state 'stopped))

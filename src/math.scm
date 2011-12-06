@@ -15,10 +15,12 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
-;;; Additional modules
-
-(use-modules (srfi srfi-1))
+(define-module (gacela math)
+  #:export (*pi*
+	    degrees-to-radians
+	    radians-to-degrees
+	    distance-between-points
+	    nearest-power-of-two))
 
 
 ;;; Constants
@@ -55,16 +57,3 @@
     (cond ((> (* p 2) n) p)
 	  (else (power (* p 2) n))))
   (power 1 n))
-
-;(define-macro (pushnew elem list)
-;  `(cond ((not (find (lambda (e) (eq? e ,elem)) ,list))
-;	  (set! ,list (cons ,elem ,list)))))
-
-(define (assoc-multiple-set! alist . pairs)
-  (define (amset! alist pairs)
-    (cond ((< (length pairs) 2)
-	   alist)
-	  (else
-	   (assoc-set! alist (car pairs) (cadr pairs))
-	   (amset! alist (cddr pairs)))))
-  (amset! alist pairs))
