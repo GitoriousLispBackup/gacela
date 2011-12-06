@@ -15,6 +15,47 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+(define-module (gacela video)
+  #:use-module (gacela sdl)
+  #:use-module (gacela gl)
+  #:use-module (gacela ftgl)
+  #:use-module (ice-9 optargs)
+  #:use-module (ice-9 receive)
+  #:export (with-color
+	    progn-textures
+	    draw
+	    load-image
+	    resize-surface
+	    load-texture
+	    draw-texture
+	    draw-line
+	    draw-quad
+	    draw-rectangle
+	    draw-square
+	    draw-cube
+	    add-light
+	    translate
+	    rotate
+	    to-origin
+	    set-camera
+	    camera-look
+	    load-font
+	    render-text))
+
+
+(define get-current-color #f)
+(define set-current-color #f)
+
+(let ((current-color '(1 1 1 1)))
+  (set! get-current-color
+	(lambda ()
+	  current-color))
+
+  (set! set-current-color
+	(lambda* (red green blue #:optional (alpha 1))
+	  (set! current-color (list red green blue alpha))
+	  (glColor4f red green blue alpha))))
+
 (define-macro (with-color color . code)
   (cond (color
 	 `(let ((original-color (get-current-color))
@@ -27,7 +68,6 @@
 
 (define-macro (progn-textures . code)
   `(let ((result #f))
-     (init-video-mode)
      (glEnable GL_TEXTURE_2D)
      (set! result (begin ,@code))
      (glDisable GL_TEXTURE_2D)
@@ -61,7 +101,6 @@
 	(else (glVertex2f x y))))
 
 (define (load-image filename)
-  (init-sdl)
   (let ((image (IMG_Load filename)))
     (cond (image
 	   (SDL_DisplayFormatAlpha image)))))
@@ -108,9 +147,9 @@
 		      (insert-resource-into-cache key texture)
 		      texture)))))))))
 
-(define* (draw-image filename #:optional (zoom 1))
-  (let ((texture (load-texture filename)))
-    (cond (texture (draw-texture texture zoom)))))
+;; (define* (draw-image filename #:optional (zoom 1))
+;;   (let ((texture (load-texture filename)))
+;;     (cond (texture (draw-texture texture zoom)))))
 
 (define* (draw-texture texture #:optional (zoom 1))
   (cond (texture
@@ -210,3 +249,20 @@
   (set! camera-look
 	(lambda ()
 	  (apply gluLookAt (append camera-eye camera-center camera-up)))))
+
+
+;;; Text and fonts
+
+(define* (load-font font-file #:key (size 40) (encoding ft_encoding_unicode))
+  (let* ((key (list font-file))
+	 (font (get-resource-from-cache key)))
+    (cond ((not font)
+	   (set! font (ftglCreateTextureFont font-file))
+	   (insert-resource-into-cache key font)))
+    (ftglSetFontFaceSize font size 72)
+    (ftglSetFontCharMap font encoding)
+    font))
+
+(define* (render-text text font #:key (size #f))
+  (cond (size (ftglSetFontFaceSize font size 72)))
+  (ftglRenderFont font text FTGL_RENDER_ALL))

@@ -136,19 +136,6 @@
   (glLoadIdentity)
   #t)
 
-(define get-current-color #f)
-(define set-current-color #f)
-
-(let ((current-color '(1 1 1 1)))
-  (set! get-current-color
-	(lambda ()
-	  current-color))
-
-  (set! set-current-color
-	(lambda* (red green blue #:optional (alpha 1))
-	  (set! current-color (list red green blue alpha))
-	  (glColor4f red green blue alpha))))
-
 
 ;;; Audio Subsystem
 
