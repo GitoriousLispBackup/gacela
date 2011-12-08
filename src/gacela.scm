@@ -25,38 +25,22 @@
 (define *mode* '2d)
 
 
-;;; Audio Subsystem
-
-(define init-audio #f)
-(define quit-audio #f)
-
-(let ((audio #f))
-  (set! init-audio
-	(lambda ()
-	  (cond ((not audio) (begin (init-sdl) (set! audio (Mix_OpenAudio 22050 MIX_DEFAULT_FORMAT 2 4096))))
-		(else audio))))
-
-  (set! quit-audio
-	(lambda ()
-	  (Mix_CloseAudio)
-	  (set! audio #f))))
-
-
 ;;; Resources Cache
 
 (define resources-cache (make-weak-value-hash-table))
 
-(define get-resource-from-cache #f)
-(define insert-resource-into-cache #f)
+(define from-cache #f)
+(define into-cache #f)
 
 (let ()
-  (set! get-resource-from-cache
+  (set! from-cache
 	(lambda (key)
 	  (hash-ref resources-cache key)))
 
-  (set! insert-resource-into-cache
+  (set! into-cache
 	(lambda (key res)
 	  (hash-set! resources-cache key res))))
+
 
 ;;; GaCeLa Functions
 

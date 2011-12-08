@@ -37,8 +37,6 @@
 	    with-color
 	    progn-textures
 	    draw
-	    load-image
-	    resize-surface
 	    load-texture
 	    draw-texture
 	    draw-line
@@ -78,8 +76,7 @@
 		   (set! screen (SDL_SetVideoMode width height bpp flags))
 		   (SDL_WM_SetCaption title "")
 		   (init-gl)
-		   (if (eq? mode '3d) (set-3d-mode) (set-2d-mode))))
-		(else #t))))
+		   (if (eq? mode '3d) (set-3d-mode) (set-2d-mode)))))))
 
   (set! get-screen-height
 	(lambda ()
@@ -222,7 +219,6 @@
 	   (SDL_DisplayFormatAlpha image)))))
   
 (define (load-image-for-texture filename)
-  (init-sdl)
   (let ((image (load-image filename)))
     (cond (image
 	   (let* ((width (surface-w image)) (height (surface-h image))
