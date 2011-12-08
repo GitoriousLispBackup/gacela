@@ -21,7 +21,20 @@
   #:use-module (gacela ftgl)
   #:use-module (ice-9 optargs)
   #:use-module (ice-9 receive)
-  #:export (with-color
+  #:export (init-video
+	    get-screen-height
+	    get-screen-width
+	    get-screen-bpp
+	    resize-screen
+	    quit-video
+	    clear-screen
+	    flip-screen
+	    set-2d-mode
+	    set-3d-mode
+	    3d-mode?
+	    get-current-color
+	    set-current-color
+	    with-color
 	    progn-textures
 	    draw
 	    load-image
@@ -33,15 +46,118 @@
 	    draw-rectangle
 	    draw-square
 	    draw-cube
-	    add-light
 	    translate
 	    rotate
 	    to-origin
+	    add-light
 	    set-camera
 	    camera-look
 	    load-font
 	    render-text))
 
+
+;;; Screen
+
+(define init-video #f)
+(define get-screen-height #f)
+(define get-screen-width #f)
+(define get-screen-bpp #f)
+(define resize-screen #f)
+(define quit-video #f)
+
+(let ((screen #f) (flags 0))
+  (set! init-video
+	(lambda* (width height bpp #:key (mode '2d) (title ""))
+	  (cond ((not screen)
+		 (SDL_Init SDL_INIT_VIDEO)
+		 (let ((info (SDL_GetVideoInfo)))
+		   (SDL_GL_SetAttribute SDL_GL_DOUBLEBUFFER 1)
+		   (set! flags (+ SDL_OPENGL SDL_GL_DOUBLEBUFFER SDL_HWPALETTE SDL_RESIZABLE
+				  (if (= (assoc-ref info 'hw_available) 0) SDL_SWSURFACE SDL_HWSURFACE)
+				  (if (= (assoc-ref info 'blit_hw) 0) 0 SDL_HWACCEL)))
+		   (set! screen (SDL_SetVideoMode width height bpp flags))
+		   (SDL_WM_SetCaption title "")
+		   (init-gl)
+		   (if (eq? mode '3d) (set-3d-mode) (set-2d-mode))))
+		(else #t))))
+
+  (set! get-screen-height
+	(lambda ()
+	  (surface-h screen)))
+
+  (set! get-screen-width
+	(lambda ()
+	  (surface-w screen)))
+
+  (set! get-screen-bpp
+	(lambda ()
+	  (surface-format-BytesPerPixel screen)))
+
+  (set! resize-screen
+	(lambda (width height)
+	  (cond (screen
+		 (set! screen (SDL_SetVideoMode width height (get-screen-bpp) flags))
+		 (resize-screen-GL width height)))))
+
+  (set! quit-video
+	(lambda ()
+	  (SDL_FreeSurface screen)
+	  (set! screen #f)
+	  (SDL_Quit))))
+
+(define (clear-screen)
+  (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT)))
+
+(define (flip-screen)
+  (SDL_GL_SwapBuffers))
+
+
+(define set-2d-mode #f)
+(define set-3d-mode #f)
+(define 3d-mode? #f)
+
+(let ((mode '2d))
+  (set! set-2d-mode
+	(lambda ()
+	  (set! mode '2d)
+	  (glDisable GL_DEPTH_TEST)
+	  (resize-screen-GL (get-screen-width) (get-screen-height))))
+
+  (set! set-3d-mode
+	(lambda ()
+	  (set! mode '3d)
+	  (glClearDepth 1)
+	  (glEnable GL_DEPTH_TEST)
+	  (glDepthFunc GL_LEQUAL)
+	  (resize-screen-GL (get-screen-width) (get-screen-height))))
+
+  (set! 3d-mode?
+	(lambda ()
+	  (eq? mode '3d))))
+
+
+(define (init-gl)
+  (glShadeModel GL_SMOOTH)
+  (glClearColor 0 0 0 0)
+  (glEnable GL_BLEND)
+  (glBlendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
+  (glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST))
+
+(define (resize-screen-GL width height)
+  (glViewport 0 0 width height)
+  (glMatrixMode GL_PROJECTION)
+  (glLoadIdentity)
+  (cond ((3d-mode?)
+	 (let ((ratio (if (= height 0) width (/ width height))))
+	   (gluPerspective 45 ratio 0.1 100)))
+	(else
+	 (let* ((w (/ width 2)) (h (/ height 2)))
+	   (glOrtho (- w) w (- h) h 0 1))))
+  (glMatrixMode GL_MODELVIEW)
+  (glLoadIdentity))
+
+
+;;; Drawing
 
 (define get-current-color #f)
 (define set-current-color #f)
@@ -147,10 +263,6 @@
 		      (insert-resource-into-cache key texture)
 		      texture)))))))))
 
-;; (define* (draw-image filename #:optional (zoom 1))
-;;   (let ((texture (load-texture filename)))
-;;     (cond (texture (draw-texture texture zoom)))))
-
 (define* (draw-texture texture #:optional (zoom 1))
   (cond (texture
 	 (let ((width (texture-w texture))
@@ -209,20 +321,14 @@
      (glNormal3f -1 0 0)
      (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) :texture (or texture-6 texture) #:color (or color-6 color)))))
 
-(define* (add-light #:key light position ambient (id GL_LIGHT1) (turn-on t))
-  (init-lighting)
-  (and light (glLightfv id GL_DIFFUSE (first light) (second light) (third light) (fourth light)))
-  (and light position (glLightfv GL_POSITION (first position) (second position) (third position) (fourth position)))
-  (and ambient (glLightfv id GL_AMBIENT (first ambient) (second ambient) (third ambient) (fourth ambient)))
-  (and turn-on (glEnable id))
-  id)
-
 (define* (translate x y #:optional (z 0))
   (glTranslatef x y z))
 
 (define* (rotate #:rest rot)
-  (cond ((3d-mode?) (apply 3d-rotate rot))
-	(else (apply 2d-rotate rot))))
+  (cond ((3d-mode?)
+	 (apply 3d-rotate rot))
+	(else
+	 (apply 2d-rotate rot))))
 
 (define (3d-rotate xrot yrot zrot)
   (glRotatef xrot 1 0 0)
@@ -235,6 +341,20 @@
 (define (to-origin)
   (glLoadIdentity)
   (cond ((3d-mode?) (camera-look))))
+
+
+;;; Lights
+
+(define* (add-light #:key light position ambient (id GL_LIGHT1) (turn-on t))
+  (init-lighting)
+  (and light (glLightfv id GL_DIFFUSE (first light) (second light) (third light) (fourth light)))
+  (and light position (glLightfv GL_POSITION (first position) (second position) (third position) (fourth position)))
+  (and ambient (glLightfv id GL_AMBIENT (first ambient) (second ambient) (third ambient) (fourth ambient)))
+  (and turn-on (glEnable id))
+  id)
+
+
+;;; Camera
 
 (define set-camera #f)
 (define camera-look #f)
