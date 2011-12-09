@@ -15,6 +15,15 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+(define-module (gacela events)
+  #:use-module (gacela sdl)
+  #:export (process-events
+	    quit?
+	    key?
+	    key-pressed?
+	    key-released?))
+
+
 (define (get-event events types)
   (cond ((null? events) '())
 	(else

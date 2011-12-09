@@ -98,9 +98,10 @@
 
   (set! quit-video
 	(lambda ()
-	  (SDL_FreeSurface screen)
-	  (set! screen #f)
-	  (SDL_Quit))))
+	  (cond (screen
+		 (SDL_FreeSurface screen)
+		 (set! screen #f)
+		 (SDL_Quit))))))
 
 (define (clear-screen)
   (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT)))

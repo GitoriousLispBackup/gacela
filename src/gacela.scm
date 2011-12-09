@@ -15,6 +15,14 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+(define-module (gacela gacela)
+  #:use-module (gacela events)
+  #:use-module (gacela video)
+  #:use-module (gacela audio)
+  #:use-module (ice-9 optargs)
+  #:export ())
+
+
 ;;; Default values for Gacela
 
 (define *title* "Gacela")
@@ -40,6 +48,10 @@
   (set! into-cache
 	(lambda (key res)
 	  (hash-set! resources-cache key res))))
+
+(define-macro (use-cache-with-procedure proc-name)
+  `(begin
+     (define ,(string->symbol (string-concatenate (list (symbol->string proc-name) "-without-cache"))) ,proc-name)))
 
 
 ;;; GaCeLa Functions

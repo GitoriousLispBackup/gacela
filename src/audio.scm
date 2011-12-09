@@ -33,5 +33,6 @@
 
   (set! quit-audio
 	(lambda ()
-	  (Mix_CloseAudio)
-	  (set! audio #f))))
+	  (cond (audio
+		 (Mix_CloseAudio)
+		 (set! audio #f))))))
