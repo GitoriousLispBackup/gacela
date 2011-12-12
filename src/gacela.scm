@@ -20,7 +20,28 @@
   #:use-module (gacela video)
   #:use-module (gacela audio)
   #:use-module (ice-9 optargs)
-  #:export ())
+  #:export (load-texture
+	    load-font)
+  #:re-export (get-current-color
+	       set-current-color
+	       with-color
+	       progn-textures
+	       draw
+	       draw-texture
+	       draw-line
+	       draw-quad
+	       draw-rectangle
+	       draw-square
+	       draw-cube
+	       translate
+	       rotate
+	       to-origin
+	       add-light
+	       set-camera
+	       camera-look
+	       render-text
+	       init-video
+	       quit-video))
 
 
 ;;; Default values for Gacela
@@ -49,37 +70,25 @@
 	(lambda (key res)
 	  (hash-set! resources-cache key res))))
 
-(define-macro (use-cache-with-procedure proc-name)
-  `(begin
-     (define ,(string->symbol (string-concatenate (list (symbol->string proc-name) "-without-cache"))) ,proc-name)))
+(define-macro (use-cache-with module proc)
+  (let* ((pwc (string->symbol (string-concatenate (list (symbol->string proc) "-without-cache")))))
+    `(begin
+       (define ,pwc (@ ,module ,proc))
+       (define (,proc . param)
+	 (let* ((key param)
+		(res (from-cache key)))
+	   (cond (res
+		  res)
+		 (else
+		  (set! res (apply ,pwc param))
+		  (into-cache key res)
+		  res)))))))
+
+(use-cache-with (gacela video) load-texture)
+(use-cache-with (gacela video) load-font)
 
 
 ;;; GaCeLa Functions
-
-(define set-frames-per-second #f)
-(define init-frame-time #f)
-(define get-frame-time #f)
-(define delay-frame #f)
-
-(let ((time 0) (time-per-frame (/ 1000.0 *frames-per-second*)))
-  (set! set-frames-per-second
-	(lambda (fps)
-	  (set! time-per-frame (/ 1000.0 fps))))
-
-  (set! init-frame-time
-	(lambda ()
-	  (set! time (SDL_GetTicks))))
-
-  (set! get-frame-time
-	(lambda ()
-	  time))
-
-  (set! delay-frame
-	(lambda ()
-	  (let ((frame-time (- (SDL_GetTicks) time)))
-	    (cond ((< frame-time time-per-frame)
-		   (SDL_Delay (- time-per-frame frame-time))))))))
-
 
 (define set-game-properties! #f)
 (define get-game-properties #f)

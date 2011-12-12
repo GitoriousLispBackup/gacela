@@ -19,6 +19,7 @@
   #:use-module (gacela sdl)
   #:use-module (gacela gl)
   #:use-module (gacela ftgl)
+  #:use-module (gacela math)
   #:use-module (ice-9 optargs)
   #:use-module (ice-9 receive)
   #:export (init-video
@@ -32,6 +33,10 @@
 	    set-2d-mode
 	    set-3d-mode
 	    3d-mode?
+	    set-frames-per-second
+	    init-frame-time
+	    get-frame-time
+	    delay-frame
 	    get-current-color
 	    set-current-color
 	    with-color
@@ -155,6 +160,33 @@
   (glLoadIdentity))
 
 
+;;; Frames per second
+
+(define set-frames-per-second #f)
+(define init-frame-time #f)
+(define get-frame-time #f)
+(define delay-frame #f)
+
+(let ((time 0) (time-per-frame (/ 1000.0 *frames-per-second*)))
+  (set! set-frames-per-second
+	(lambda (fps)
+	  (set! time-per-frame (/ 1000.0 fps))))
+
+  (set! init-frame-time
+	(lambda ()
+	  (set! time (SDL_GetTicks))))
+
+  (set! get-frame-time
+	(lambda ()
+	  time))
+
+  (set! delay-frame
+	(lambda ()
+	  (let ((frame-time (- (SDL_GetTicks) time)))
+	    (cond ((< frame-time time-per-frame)
+		   (SDL_Delay (- time-per-frame frame-time))))))))
+
+
 ;;; Drawing
 
 (define get-current-color #f)
@@ -238,27 +270,22 @@
 	       (zoomSurface surface zoomx zoomy 0))))))
 
 (define* (load-texture filename #:key (min-filter GL_LINEAR) (mag-filter GL_LINEAR))
-  (let* ((key (list filename min-filter mag-filter))
-	 (res (get-resource-from-cache key)))
-    (cond (res res)
-	  (else
-	   (progn-textures
-	    (receive
-	     (image real-w real-h) (load-image-for-texture filename)
-	     (cond (image
-		    (let ((width (surface-w image)) (height (surface-h image))
-			  (byteorder (if (= SDL_BYTEORDER SDL_LIL_ENDIAN)
-					 (if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)
-					 (if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)))
-			  (texture (car (glGenTextures 1))))
+  (progn-textures
+   (receive
+    (image real-w real-h) (load-image-for-texture filename)
+    (cond (image
+	   (let ((width (surface-w image)) (height (surface-h image))
+		 (byteorder (if (= SDL_BYTEORDER SDL_LIL_ENDIAN)
+				(if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)
+				(if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)))
+		 (texture (car (glGenTextures 1))))
 
-		      (glBindTexture GL_TEXTURE_2D texture)
-		      (glTexImage2D GL_TEXTURE_2D 0 4 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
-		      (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
-		      (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
-		      (set-texture-size! texture real-w real-h)
-		      (insert-resource-into-cache key texture)
-		      texture)))))))))
+	     (glBindTexture GL_TEXTURE_2D texture)
+	     (glTexImage2D GL_TEXTURE_2D 0 4 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
+	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
+	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
+	     (set-texture-size! texture real-w real-h)
+	     texture))))))
 
 (define* (draw-texture texture #:optional (zoom 1))
   (cond (texture
@@ -371,11 +398,7 @@
 ;;; Text and fonts
 
 (define* (load-font font-file #:key (size 40) (encoding ft_encoding_unicode))
-  (let* ((key (list font-file))
-	 (font (get-resource-from-cache key)))
-    (cond ((not font)
-	   (set! font (ftglCreateTextureFont font-file))
-	   (insert-resource-into-cache key font)))
+  (let ((font (ftglCreateTextureFont font-file)))
     (ftglSetFontFaceSize font size 72)
     (ftglSetFontCharMap font encoding)
     font))
