@@ -21,7 +21,13 @@
   #:use-module (gacela audio)
   #:use-module (ice-9 optargs)
   #:export (load-texture
-	    load-font)
+	    load-font
+	    init-gacela
+	    quit-gacela
+	    game-loop
+	    game-running?
+	    set-game-code)
+  #:export-syntax (game)
   #:re-export (get-current-color
 	       set-current-color
 	       with-color
@@ -39,9 +45,7 @@
 	       add-light
 	       set-camera
 	       camera-look
-	       render-text
-	       init-video
-	       quit-video))
+	       render-text))
 
 
 ;;; Default values for Gacela
@@ -58,17 +62,11 @@
 
 (define resources-cache (make-weak-value-hash-table))
 
-(define from-cache #f)
-(define into-cache #f)
+(define (from-cache key)
+  (hash-ref resources-cache key))
 
-(let ()
-  (set! from-cache
-	(lambda (key)
-	  (hash-ref resources-cache key)))
-
-  (set! into-cache
-	(lambda (key res)
-	  (hash-set! resources-cache key res))))
+(define (into-cache key res)
+  (hash-set! resources-cache key res))
 
 (define-macro (use-cache-with module proc)
   (let* ((pwc (string->symbol (string-concatenate (list (symbol->string proc) "-without-cache")))))
@@ -88,84 +86,85 @@
 (use-cache-with (gacela video) load-font)
 
 
-;;; GaCeLa Functions
+;;; Game Properties
 
 (define set-game-properties! #f)
 (define get-game-properties #f)
 
-(let ((ptitle *title*) (pwidth *width-screen*) (pheight *height-screen*) (pbpp *bpp-screen*) (pfps *frames-per-second*) (pmode *mode*))
-  (set! set-game-properties!
-	(lambda* (#:key title width height bpp fps mode)
-;	  (init-video-mode)
-	  (if title
-	      (begin
-		(set! ptitle title)
-		(if (video-mode-on?) (SDL_WM_SetCaption title ""))))
-	  (if (or width height bpp)
-	      (begin
-		(if width (set! pwidth width))
-		(if height (set! pheight height))
-		(if bpp (set! pbpp bpp))
-		(if (video-mode-on?) (resize-screen pwidth pheight pbpp))))
-	  (if fps
-	      (begin
-		(set! pfps fps)
-		(set-frames-per-second fps)))
-	  (if mode
-	      (begin
-		(set! pmode mode)
-		(if (video-mode-on?)
-		    (if (eq? mode '3d) (set-3d-mode) (set-2d-mode)))))
-	  (get-game-properties)))
+;; (let ((ptitle *title*) (pwidth *width-screen*) (pheight *height-screen*) (pbpp *bpp-screen*) (pfps *frames-per-second*) (pmode *mode*))
+;;   (set! set-game-properties!
+;; 	(lambda* (#:key title width height bpp fps mode)
+;; ;	  (init-video-mode)
+;; 	  (if title
+;; 	      (begin
+;; 		(set! ptitle title)
+;; 		(if (video-mode-on?) (SDL_WM_SetCaption title ""))))
+;; 	  (if (or width height bpp)
+;; 	      (begin
+;; 		(if width (set! pwidth width))
+;; 		(if height (set! pheight height))
+;; 		(if bpp (set! pbpp bpp))
+;; 		(if (video-mode-on?) (resize-screen pwidth pheight pbpp))))
+;; 	  (if fps
+;; 	      (begin
+;; 		(set! pfps fps)
+;; 		(set-frames-per-second fps)))
+;; 	  (if mode
+;; 	      (begin
+;; 		(set! pmode mode)
+;; 		(if (video-mode-on?)
+;; 		    (if (eq? mode '3d) (set-3d-mode) (set-2d-mode)))))
+;; 	  (get-game-properties)))
 
-  (set! get-game-properties
-	(lambda ()
-	  `((title . ,ptitle) (width . ,pwidth) (height . ,pheight) (bpp . ,pbpp) (fps . ,pfps) (mode . ,pmode)))))
+;;   (set! get-game-properties
+;; 	(lambda ()
+;; 	  `((title . ,ptitle) (width . ,pwidth) (height . ,pheight) (bpp . ,pbpp) (fps . ,pfps) (mode . ,pmode)))))
 
 
-(define-macro (run-game . code)
+;;; Main Loop
+
+(define loop-flag #f)
+(define game-code #f)
+
+(define-macro (game . code)
   `(let ((game-function ,(if (null? code)
 			     `(lambda () #f)
 			     `(lambda () ,@code))))
-     (init-video-mode)
      (set-game-code game-function)
      (cond ((not (game-running?))
 	    (game-loop)))))
 
-(define game-loop #f)
-(define game-running? #f)
-(define set-game-code #f)
+(define (init-gacela)
+  (call-with-new-thread (lambda () (game))))
 
-(let ((running #f) (game-code #f))
-  (set! game-loop
-	(lambda ()
-	  (refresh-active-mobs)
-	  (set! running #t)
-	  (quit! #f)
-	  (do () ((quit?))
-	    (init-frame-time)
-	    (check-connections)
-	    (eval-from-clients)
-	    (process-events)
-	    (cond ((not (quit?))
-		   (cond ((video-mode-on?)
-			  (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
-			  (to-origin)))
-		   (refresh-active-mobs)
-		   (if (procedure? game-code)
-		       (catch #t
-			      (lambda () (game-code))
-			      (lambda (key . args) #f)))
-		   (cond ((video-mode-on?)
-			  (run-mobs)
-			  (SDL_GL_SwapBuffers)))
-		   (delay-frame))))
-	  (set! running #f)))
+(define (quit-gacela)
+  (set! loop-flag #f))
 
-  (set! game-running?
-	(lambda ()
-	  running))
+(define (game-loop)
+;	  (refresh-active-mobs)
+  (set! loop-flag #t)
+  (init-video 640 480 32)
+;	  (quit! #f)
+  (while loop-flag
+;	    (init-frame-time)
+;	    (check-connections)
+	 (process-events)
+	 (cond ((not (quit?))
+		(clear-screen)
+		(to-origin)
+;		   (refresh-active-mobs)
+		(if (procedure? game-code)
+		    (catch #t
+			   (lambda () (game-code))
+			   (lambda (key . args) #f)))
+;			  (run-mobs)
+		(flip-screen)
+;		   (delay-frame))))
+		)))
+  (quit-video))
 
-  (set! set-game-code
-	(lambda (game-function)
-	  (set! game-code game-function))))
+(define (game-running?)
+  loop-flag)
+
+(define (set-game-code game-function)
+  (set! game-code game-function))

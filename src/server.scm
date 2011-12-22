@@ -15,6 +15,11 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
+(define-module (gacela server)
+  #:use-module (ice-9 optargs)
+  #:export (eval-from-client))
+
+
 (define start-server #f)
 (define check-connections #f)
 (define clean-closed-connections #f)
@@ -75,6 +80,7 @@
   (cond ((char-ready? rec-channel)
 	 (catch #t
 		(lambda ()
+		  (display "leido")(newline)
 		  (let ((exp (read rec-channel)))
 		    (cond ((eof-object? exp)
 			   (close rec-channel))
