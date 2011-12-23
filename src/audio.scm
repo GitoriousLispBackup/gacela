@@ -21,18 +21,14 @@
 	    quit-audio))
 
 
-(define init-audio #f)
-(define quit-audio #f)
+(define audio #f)
 
-(let ((audio #f))
-  (set! init-audio
-	(lambda ()
-	  (cond ((not audio)
-		 (SDL_Init SDL_INIT_AUDIO)
-		 (set! audio (Mix_OpenAudio 22050 MIX_DEFAULT_FORMAT 2 4096))))))
+(define (init-audio)
+  (cond ((not audio)
+	 (SDL_Init SDL_INIT_AUDIO)
+	 (set! audio (Mix_OpenAudio 22050 MIX_DEFAULT_FORMAT 2 4096)))))
 
-  (set! quit-audio
-	(lambda ()
-	  (cond (audio
-		 (Mix_CloseAudio)
-		 (set! audio #f))))))
+(define (quit-audio)
+  (cond (audio
+	 (Mix_CloseAudio)
+	 (set! audio #f))))

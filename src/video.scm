@@ -61,52 +61,41 @@
 
 ;;; Screen
 
-(define init-video #f)
-(define get-screen-height #f)
-(define get-screen-width #f)
-(define get-screen-bpp #f)
-(define resize-screen #f)
-(define quit-video #f)
+(define screen #f)
+(define flags 0)
 
-(let ((screen #f) (flags 0))
-  (set! init-video
-	(lambda* (width height bpp #:key (mode '2d) (title ""))
-	  (cond ((not screen)
-		 (SDL_Init SDL_INIT_VIDEO)
-		 (let ((info (SDL_GetVideoInfo)))
-		   (SDL_GL_SetAttribute SDL_GL_DOUBLEBUFFER 1)
-		   (set! flags (+ SDL_OPENGL SDL_GL_DOUBLEBUFFER SDL_HWPALETTE SDL_RESIZABLE
-				  (if (= (assoc-ref info 'hw_available) 0) SDL_SWSURFACE SDL_HWSURFACE)
-				  (if (= (assoc-ref info 'blit_hw) 0) 0 SDL_HWACCEL)))
-		   (set! screen (SDL_SetVideoMode width height bpp flags))
-		   (SDL_WM_SetCaption title "")
-		   (init-gl)
-		   (if (eq? mode '3d) (set-3d-mode) (set-2d-mode)))))))
+(define (init-video width height bpp #:key (mode '2d) (title ""))
+  (cond ((not screen)
+	 (SDL_Init SDL_INIT_VIDEO)
+	 (let ((info (SDL_GetVideoInfo)))
+	   (SDL_GL_SetAttribute SDL_GL_DOUBLEBUFFER 1)
+	   (set! flags (+ SDL_OPENGL SDL_GL_DOUBLEBUFFER SDL_HWPALETTE SDL_RESIZABLE
+			  (if (= (assoc-ref info 'hw_available) 0) SDL_SWSURFACE SDL_HWSURFACE)
+			  (if (= (assoc-ref info 'blit_hw) 0) 0 SDL_HWACCEL)))
+	   (set! screen (SDL_SetVideoMode width height bpp flags))
+	   (SDL_WM_SetCaption title "")
+	   (init-gl)
+	   (if (eq? mode '3d) (set-3d-mode) (set-2d-mode))))))
 
-  (set! get-screen-height
-	(lambda ()
-	  (surface-h screen)))
+(define (get-screen-height)
+  (surface-h screen))
 
-  (set! get-screen-width
-	(lambda ()
-	  (surface-w screen)))
+(define (get-screen-width)
+  (surface-w screen))
 
-  (set! get-screen-bpp
-	(lambda ()
-	  (surface-format-BytesPerPixel screen)))
+(define (get-screen-bpp)
+  (surface-format-BytesPerPixel screen))
 
-  (set! resize-screen
-	(lambda (width height)
-	  (cond (screen
-		 (set! screen (SDL_SetVideoMode width height (get-screen-bpp) flags))
-		 (resize-screen-GL width height)))))
+(define (resize-screen width height)
+  (cond (screen
+	 (set! screen (SDL_SetVideoMode width height (get-screen-bpp) flags))
+	 (resize-screen-GL width height))))
 
-  (set! quit-video
-	(lambda ()
-	  (cond (screen
-		 (SDL_FreeSurface screen)
-		 (set! screen #f)
-		 (SDL_Quit))))))
+(define (quit-video)
+  (cond (screen
+	 (SDL_FreeSurface screen)
+	 (set! screen #f)
+	 (SDL_Quit))))
 
 (define (clear-screen)
   (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT)))
@@ -115,28 +104,22 @@
   (SDL_GL_SwapBuffers))
 
 
-(define set-2d-mode #f)
-(define set-3d-mode #f)
-(define 3d-mode? #f)
+(define mode '2d)
 
-(let ((mode '2d))
-  (set! set-2d-mode
-	(lambda ()
-	  (set! mode '2d)
-	  (glDisable GL_DEPTH_TEST)
-	  (resize-screen-GL (get-screen-width) (get-screen-height))))
+(define (set-2d-mode)
+  (set! mode '2d)
+  (glDisable GL_DEPTH_TEST)
+  (resize-screen-GL (get-screen-width) (get-screen-height)))
 
-  (set! set-3d-mode
-	(lambda ()
-	  (set! mode '3d)
-	  (glClearDepth 1)
-	  (glEnable GL_DEPTH_TEST)
-	  (glDepthFunc GL_LEQUAL)
-	  (resize-screen-GL (get-screen-width) (get-screen-height))))
+(define (set-3d-mode)
+  (set! mode '3d)
+  (glClearDepth 1)
+  (glEnable GL_DEPTH_TEST)
+  (glDepthFunc GL_LEQUAL)
+  (resize-screen-GL (get-screen-width) (get-screen-height)))
 
-  (set! 3d-mode?
-	(lambda ()
-	  (eq? mode '3d))))
+(define (3d-mode?)
+  (eq? mode '3d))
 
 
 (define (init-gl)
@@ -189,18 +172,14 @@
 
 ;;; Drawing
 
-(define get-current-color #f)
-(define set-current-color #f)
+(define current-color '(1 1 1 1))
 
-(let ((current-color '(1 1 1 1)))
-  (set! get-current-color
-	(lambda ()
-	  current-color))
+(define (get-current-color)
+  current-color)
 
-  (set! set-current-color
-	(lambda* (red green blue #:optional (alpha 1))
-	  (set! current-color (list red green blue alpha))
-	  (glColor4f red green blue alpha))))
+(define* (set-current-color red green blue #:optional (alpha 1))
+  (set! current-color (list red green blue alpha))
+  (glColor4f red green blue alpha))
 
 (define-macro (with-color color . code)
   (cond (color
@@ -380,19 +359,17 @@
 
 ;;; Camera
 
-(define set-camera #f)
-(define camera-look #f)
+(define camera-eye '(0 0 0))
+(define camera-center '(0 0 -100))
+(define camera-up '(0 1 0))
 
-(let ((camera-eye '(0 0 0)) (camera-center '(0 0 -100)) (camera-up '(0 1 0)))
-  (set! set-camera
-	(lambda* (#:key eye center up)
-	  (cond (eye (set! camera-eye eye)))
-	  (cond (center (set! camera-center center)))
-	  (cond (up (set! camera-up up)))))
+(define* (set-camera #:key eye center up)
+  (cond (eye (set! camera-eye eye)))
+  (cond (center (set! camera-center center)))
+  (cond (up (set! camera-up up))))
 
-  (set! camera-look
-	(lambda ()
-	  (apply gluLookAt (append camera-eye camera-center camera-up)))))
+(define (camera-look)
+  (apply gluLookAt (append camera-eye camera-center camera-up)))
 
 
 ;;; Text and fonts
