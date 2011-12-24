@@ -64,7 +64,7 @@
 (define screen #f)
 (define flags 0)
 
-(define (init-video width height bpp #:key (mode '2d) (title ""))
+(define* (init-video width height bpp #:key (mode '2d) (title ""))
   (cond ((not screen)
 	 (SDL_Init SDL_INIT_VIDEO)
 	 (let ((info (SDL_GetVideoInfo)))
@@ -318,11 +318,11 @@
      (glNormal3f 0 1 0)
      (draw-quad (list size size size) (list -size size size) (list -size size -size) (list size size -size) #:texture (or texture-3 texture) #:color (or color-3 color))
      (glNormal3f 0 -1 0)
-     (draw-quad (list -size -size size) (list size -size size) (list size -size -size) (list -size -size -size) :texture (or texture-4 texture) #:color (or color-4 color))
+     (draw-quad (list -size -size size) (list size -size size) (list size -size -size) (list -size -size -size) #:texture (or texture-4 texture) #:color (or color-4 color))
      (glNormal3f 1 0 0)
-     (draw-quad (list size -size -size) (list size -size size) (list size size size) (list size size -size) :texture (or texture-5 texture) #:color (or color-5 color))
+     (draw-quad (list size -size -size) (list size -size size) (list size size size) (list size size -size) #:texture (or texture-5 texture) #:color (or color-5 color))
      (glNormal3f -1 0 0)
-     (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) :texture (or texture-6 texture) #:color (or color-6 color)))))
+     (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) #:texture (or texture-6 texture) #:color (or color-6 color)))))
 
 (define* (translate x y #:optional (z 0))
   (glTranslatef x y z))
@@ -348,13 +348,13 @@
 
 ;;; Lights
 
-(define* (add-light #:key light position ambient (id GL_LIGHT1) (turn-on t))
-  (init-lighting)
-  (and light (glLightfv id GL_DIFFUSE (first light) (second light) (third light) (fourth light)))
-  (and light position (glLightfv GL_POSITION (first position) (second position) (third position) (fourth position)))
-  (and ambient (glLightfv id GL_AMBIENT (first ambient) (second ambient) (third ambient) (fourth ambient)))
-  (and turn-on (glEnable id))
-  id)
+;; (define* (add-light #:key light position ambient (id GL_LIGHT1) (turn-on t))
+;;   (init-lighting)
+;;   (and light (glLightfv id GL_DIFFUSE (car light) (cadr light) (caddr light) (cadddr light)))
+;;   (and light position (glLightfv GL_POSITION (car position) (cadr position) (caddr position) (cadddr position)))
+;;   (and ambient (glLightfv id GL_AMBIENT (car ambient) (cadr ambient) (caddr ambient) (cadddr ambient)))
+;;   (and turn-on (glEnable id))
+;;   id)
 
 
 ;;; Camera
