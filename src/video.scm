@@ -145,29 +145,22 @@
 
 ;;; Frames per second
 
-(define set-frames-per-second #f)
-(define init-frame-time #f)
-(define get-frame-time #f)
-(define delay-frame #f)
+(define time 0)
+(define time-per-frame 50)   ;in ms
 
-;; (let ((time 0) (time-per-frame (/ 1000.0 *frames-per-second*)))
-;;   (set! set-frames-per-second
-;; 	(lambda (fps)
-;; 	  (set! time-per-frame (/ 1000.0 fps))))
+(define (set-frames-per-second fps)
+  (set! time-per-frame (/ 1000.0 fps)))
 
-;;   (set! init-frame-time
-;; 	(lambda ()
-;; 	  (set! time (SDL_GetTicks))))
+(define (init-frame-time)
+  (set! time (SDL_GetTicks)))
 
-;;   (set! get-frame-time
-;; 	(lambda ()
-;; 	  time))
+(define (get-frame-time)
+  time)
 
-;;   (set! delay-frame
-;; 	(lambda ()
-;; 	  (let ((frame-time (- (SDL_GetTicks) time)))
-;; 	    (cond ((< frame-time time-per-frame)
-;; 		   (SDL_Delay (- time-per-frame frame-time))))))))
+(define (delay-frame)
+  (let ((frame-time (- (SDL_GetTicks) time)))
+    (cond ((< frame-time time-per-frame)
+	   (SDL_Delay (- time-per-frame frame-time))))))
 
 
 ;;; Drawing

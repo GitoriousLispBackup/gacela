@@ -144,9 +144,8 @@
 ;	  (refresh-active-mobs)
   (set! loop-flag #t)
   (init-video 640 480 32)
-;	  (quit! #f)
   (while loop-flag
-;	    (init-frame-time)
+	 (init-frame-time)
 ;	    (check-connections)
 	 (process-events)
 	 (cond ((not (quit?))
@@ -159,8 +158,7 @@
 			   (lambda (key . args) #f)))
 ;			  (run-mobs)
 		(flip-screen)
-;		   (delay-frame))))
-		)))
+		(delay-frame))))
   (quit-video))
 
 (define (game-running?)
