@@ -274,8 +274,8 @@ gacela_SDL_GetVideoInfo (void)
   info = SDL_GetVideoInfo ();
   vi = scm_list_n (SCM_UNDEFINED);
 
-  vi = scm_cons (scm_cons (scm_from_locale_symbol ("blit_hw"), scm_from_int (info->blit_hw)), vi);
-  vi = scm_cons (scm_cons (scm_from_locale_symbol ("hw_available"), scm_from_int (info->hw_available)), vi);
+  vi = scm_cons (scm_cons (scm_from_utf8_symbol ("blit_hw"), scm_from_int (info->blit_hw)), vi);
+  vi = scm_cons (scm_cons (scm_from_utf8_symbol ("hw_available"), scm_from_int (info->hw_available)), vi);
 
   return vi;
 }
