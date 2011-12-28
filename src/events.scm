@@ -18,7 +18,7 @@
 (define-module (gacela events)
   #:use-module (gacela sdl)
   #:export (process-events
-	    quit?
+	    quit-signal?
 	    key?
 	    key-pressed?
 	    key-released?))
@@ -54,7 +54,7 @@
 	   (cond ((= (assoc-ref event 'type) SDL_QUIT) (set! quit-signal #t))))
 	 (process-screen-events (cdr events)))))
 
-(define (quit?)
+(define (quit-signal?)
   quit-signal)
 
 

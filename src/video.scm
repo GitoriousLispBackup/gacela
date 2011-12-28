@@ -26,10 +26,13 @@
 	    get-screen-height
 	    get-screen-width
 	    get-screen-bpp
+	    set-screen-bpp!
 	    resize-screen
 	    quit-video
 	    clear-screen
 	    flip-screen
+	    set-screen-title!
+	    get-screen-title
 	    set-2d-mode
 	    set-3d-mode
 	    3d-mode?
@@ -73,7 +76,7 @@
 			  (if (= (assoc-ref info 'hw_available) 0) SDL_SWSURFACE SDL_HWSURFACE)
 			  (if (= (assoc-ref info 'blit_hw) 0) 0 SDL_HWACCEL)))
 	   (set! screen (SDL_SetVideoMode width height bpp flags))
-	   (SDL_WM_SetCaption title "")
+	   (set-screen-title! title)
 	   (init-gl)
 	   (if (eq? mode '3d) (set-3d-mode) (set-2d-mode))))))
 
@@ -85,6 +88,10 @@
 
 (define (get-screen-bpp)
   (surface-format-BytesPerPixel screen))
+
+(define (set-screen-bpp! bpp)
+  (cond (screen
+	 (set! screen (SDL_SetVideoMode (get-screen-width) (get-screen-height) bpp flags)))))
 
 (define (resize-screen width height)
   (cond (screen
@@ -102,6 +109,16 @@
 
 (define (flip-screen)
   (SDL_GL_SwapBuffers))
+
+
+(define screen-title "")
+
+(define (set-screen-title! title)
+  (set! screen-title title)
+  (SDL_WM_SetCaption title ""))
+
+(define (get-screen-title)
+  screen-title)
 
 
 (define mode '2d)

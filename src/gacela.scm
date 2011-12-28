@@ -22,6 +22,8 @@
   #:use-module (ice-9 optargs)
   #:export (load-texture
 	    load-font
+	    set-game-properties!
+	    get-game-properties
 	    init-gacela
 	    quit-gacela
 	    game-loop
@@ -46,16 +48,6 @@
 	       set-camera
 	       camera-look
 	       render-text))
-
-
-;;; Default values for Gacela
-
-(define *title* "Gacela")
-(define *width-screen* 640)
-(define *height-screen* 480)
-(define *bpp-screen* 32)
-(define *frames-per-second* 20)
-(define *mode* '2d)
 
 
 ;;; Resources Cache
@@ -88,37 +80,31 @@
 
 ;;; Game Properties
 
-(define set-game-properties! #f)
-(define get-game-properties #f)
+(define title "Gacela")
+(define width-screen 640)
+(define height-screen 480)
+(define bpp-screen 32)
+(define frames-per-second 20)
+(define mode '2d)
 
-;; (let ((ptitle *title*) (pwidth *width-screen*) (pheight *height-screen*) (pbpp *bpp-screen*) (pfps *frames-per-second*) (pmode *mode*))
-;;   (set! set-game-properties!
-;; 	(lambda* (#:key title width height bpp fps mode)
-;; ;	  (init-video-mode)
-;; 	  (if title
-;; 	      (begin
-;; 		(set! ptitle title)
-;; 		(if (video-mode-on?) (SDL_WM_SetCaption title ""))))
-;; 	  (if (or width height bpp)
-;; 	      (begin
-;; 		(if width (set! pwidth width))
-;; 		(if height (set! pheight height))
-;; 		(if bpp (set! pbpp bpp))
-;; 		(if (video-mode-on?) (resize-screen pwidth pheight pbpp))))
-;; 	  (if fps
-;; 	      (begin
-;; 		(set! pfps fps)
-;; 		(set-frames-per-second fps)))
-;; 	  (if mode
-;; 	      (begin
-;; 		(set! pmode mode)
-;; 		(if (video-mode-on?)
-;; 		    (if (eq? mode '3d) (set-3d-mode) (set-2d-mode)))))
-;; 	  (get-game-properties)))
+(define* (set-game-properties! #:key title width height bpp fps mode)
+  (if title
+      (set-screen-title! title))
+  (if bpp
+      (set-screen-bpp! bpp))
+  (if (or width height)
+      (begin
+	(if (not width) (set! width (get-screen-width)))
+	(if (not height) (set! height (get-screen-height)))
+	(resize-screen width height)))
+  (if fps
+      (set-frames-per-second fps))
+  (if mode
+      (if (eq? mode '3d) (set-3d-mode) (set-2d-mode)))
+  (get-game-properties))
 
-;;   (set! get-game-properties
-;; 	(lambda ()
-;; 	  `((title . ,ptitle) (width . ,pwidth) (height . ,pheight) (bpp . ,pbpp) (fps . ,pfps) (mode . ,pmode)))))
+(define (get-game-properties)
+  `((title . ,(get-screen-title)) (width . ,(get-screen-width)) (height . ,(get-screen-height)) (bpp . ,(get-screen-bpp)) (fps . ,pfps) (mode . ,pmode)))
 
 
 ;;; Main Loop
