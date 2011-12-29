@@ -22,6 +22,12 @@
   #:use-module (ice-9 optargs)
   #:export (load-texture
 	    load-font
+	    *title*
+	    *width-screen*
+	    *height-screen*
+	    *bpp-screen*
+	    *frames-per-second*
+	    *mode*
 	    set-game-properties!
 	    get-game-properties
 	    init-gacela
@@ -80,12 +86,12 @@
 
 ;;; Game Properties
 
-(define title "Gacela")
-(define width-screen 640)
-(define height-screen 480)
-(define bpp-screen 32)
-(define frames-per-second 20)
-(define mode '2d)
+(define *title* "Gacela")
+(define *width-screen* 640)
+(define *height-screen* 480)
+(define *bpp-screen* 32)
+(define *frames-per-second* 20)
+(define *mode* '2d)
 
 (define* (set-game-properties! #:key title width height bpp fps mode)
   (if title
@@ -98,13 +104,13 @@
 	(if (not height) (set! height (get-screen-height)))
 	(resize-screen width height)))
   (if fps
-      (set-frames-per-second fps))
+      (set-frames-per-second! fps))
   (if mode
       (if (eq? mode '3d) (set-3d-mode) (set-2d-mode)))
   (get-game-properties))
 
 (define (get-game-properties)
-  `((title . ,(get-screen-title)) (width . ,(get-screen-width)) (height . ,(get-screen-height)) (bpp . ,(get-screen-bpp)) (fps . ,pfps) (mode . ,pmode)))
+  `((title . ,(get-screen-title)) (width . ,(get-screen-width)) (height . ,(get-screen-height)) (bpp . ,(get-screen-bpp)) (fps . ,(get-frames-per-second)) (mode . ,(if (3d-mode?) '3d '2d))))
 
 
 ;;; Main Loop
@@ -129,12 +135,14 @@
 (define (game-loop)
 ;	  (refresh-active-mobs)
   (set! loop-flag #t)
-  (init-video 640 480 32)
+  (init-video *width-screen* *height-screen* *bpp-screen* #:title *title* #:mode *mode* #:fps *frames-per-second*)
   (while loop-flag
 	 (init-frame-time)
 ;	    (check-connections)
 	 (process-events)
-	 (cond ((not (quit?))
+	 (cond ((quit-signal?)
+		(quit-gacela))
+	       (else
 		(clear-screen)
 		(to-origin)
 ;		   (refresh-active-mobs)

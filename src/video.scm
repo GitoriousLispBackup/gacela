@@ -36,7 +36,8 @@
 	    set-2d-mode
 	    set-3d-mode
 	    3d-mode?
-	    set-frames-per-second
+	    get-frames-per-second
+	    set-frames-per-second!
 	    init-frame-time
 	    get-frame-time
 	    delay-frame
@@ -67,7 +68,7 @@
 (define screen #f)
 (define flags 0)
 
-(define* (init-video width height bpp #:key (mode '2d) (title ""))
+(define* (init-video width height bpp #:key (mode '2d) (title "") (fps 20))
   (cond ((not screen)
 	 (SDL_Init SDL_INIT_VIDEO)
 	 (let ((info (SDL_GetVideoInfo)))
@@ -77,6 +78,7 @@
 			  (if (= (assoc-ref info 'blit_hw) 0) 0 SDL_HWACCEL)))
 	   (set! screen (SDL_SetVideoMode width height bpp flags))
 	   (set-screen-title! title)
+	   (set-frames-per-second! fps)
 	   (init-gl)
 	   (if (eq? mode '3d) (set-3d-mode) (set-2d-mode))))))
 
@@ -87,7 +89,7 @@
   (surface-w screen))
 
 (define (get-screen-bpp)
-  (surface-format-BytesPerPixel screen))
+  (* (surface-format-BytesPerPixel screen) 8))
 
 (define (set-screen-bpp! bpp)
   (cond (screen
@@ -163,9 +165,14 @@
 ;;; Frames per second
 
 (define time 0)
+(define frames-per-second 20)
 (define time-per-frame 50)   ;in ms
 
-(define (set-frames-per-second fps)
+(define (get-frames-per-second)
+  frames-per-second)
+
+(define (set-frames-per-second! fps)
+  (set! frames-per-second fps)
   (set! time-per-frame (/ 1000.0 fps)))
 
 (define (init-frame-time)
