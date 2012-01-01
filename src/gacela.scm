@@ -166,3 +166,120 @@
 
 (define (get-game-properties)
   `((title . ,(get-screen-title)) (width . ,(get-screen-width)) (height . ,(get-screen-height)) (bpp . ,(get-screen-bpp)) (fps . ,(get-frames-per-second)) (mode . ,(if (3d-mode?) '3d '2d))))
+
+
+;;; Mobs Factory
+
+(define mobs-table (make-hash-table))
+(define active-mobs '())
+(define changed #f))
+
+(define (show-mob-hash mob)
+  (hash-set! mobs-table (mob 'get-mob-id) mob)
+  (set! changed #t))
+
+(define (hide-mob-hash mob-id)
+  (hash-remove! mobs-table mob-id)
+  (set! changed #t))
+
+(define (refresh-active-mobs)
+  (cond (changed
+	 (set! changed #f)
+	 (set! active-mobs (hash-map->list (lambda (k v) v) mobs-table)))))
+
+(define (get-active-mobs)
+  active-mobs)
+
+(define (hide-all-mobs)
+  (set! changed #t)
+  (hash-clear! mobs-table))
+
+(define (mobs-changed?)
+  changed)
+
+
+(define-macro (show-mob mob)
+  (cond ((list? mob)
+	 `(let ((m ,mob))
+	    (show-mob-hash m)))
+	(else
+	 `(show-mob-hash (lambda* (#:optional (option #f)) (,mob option))))))
+
+(define-macro (hide-mob mob)
+  (cond ((list? mob)
+	 `(let ((m ,mob))
+	    (hide-mob-hash (m 'get-mob-id))))
+	(else
+	 `(hide-mob-hash (,mob 'get-mob-id)))))
+
+(define* (run-mobs #:optional (mobs (get-active-mobs)))
+  (for-each
+   (lambda (m)
+     (glPushMatrix)
+     (m)
+     (glPopMatrix))
+   mobs))
+
+
+;;; Making mobs
+
+(define-macro (define-mob mob-head . body)
+  (let ((name (car mob-head)) (attr (cdr mob-head)))
+    `(define ,(string->symbol (string-concatenate (list "make-" (symbol->string name))))
+       (lambda* ,(if (null? attr) '() `(#:key ,@attr))
+	 (the-mob ',name () ,attr ,@body)))))
+
+(define-macro (the-mob type attr publish . body)
+  (let ((mob-id-symbol (gensym))
+	(type-symbol (gensym))
+	(time-symbol (gensym))
+	(data-symbol (gensym)))
+    `(let ((,mob-id-symbol (gensym))
+	   (,type-symbol ,type)
+	   (,time-symbol 0)
+	   (,data-symbol '())
+	   ,@attr)
+       (lambda* (#:optional (option #f))
+	 (define (kill-me)
+	   (hide-mob-hash ,mob-id-symbol))
+	 (define (save-data)
+	   (let ((time (get-frame-time)))
+	     (cond ((not (= time ,time-symbol))
+		    (set! ,time-symbol time)
+		    (set! ,data-symbol ,(cons 'list (map (lambda (x) `(cons ',(car x) ,(car x))) publish)))))))
+	 (define (get-data)
+	   ,data-symbol)
+	 (define (filter-mobs type fun)
+	   #t)
+	 (define (map-mobs fun type)
+	   (let ((mobs (filter (lambda (m) (and (eq? (m 'get-type) type) (not (eq? (m 'get-mob-id) ,mob-id-symbol)))) (get-active-mobs))))
+	     (map (lambda (m) (fun (m 'get-data))) mobs)))
+	 (case option
+	   ((get-mob-id)
+	    ,mob-id-symbol)
+	   ((get-type)
+	    ,type-symbol)
+	   ((get-data)
+	    (save-data)
+	    ,data-symbol)
+	   (else
+	    (save-data)
+	    (catch #t
+	     	   (lambda () ,@body)
+		   (lambda (key . args) #f))))))))
+
+(define-macro (lambda-mob attr . body)
+  `(the-mob 'undefined ,attr '() ,@body))
+
+
+;;; Collisions
+
+;; (define-macro (lambda-mob-data attr . body)
+;;   `(lambda ,attr ,@body))
+
+;; (define-macro (define-collision-check name mobs . body)
+;;   `(defmacro* ,name (#:optional m)
+;;      `(let ,(cond (m `((mob-id (,m 'get-mob-id)) (mob-type (,m 'get-type))))
+;; 		  (else `()))
+	
+;; 	mob-id)))
