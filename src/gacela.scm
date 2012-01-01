@@ -84,39 +84,11 @@
 (use-cache-with (gacela video) load-font)
 
 
-;;; Game Properties
-
-(define *title* "Gacela")
-(define *width-screen* 640)
-(define *height-screen* 480)
-(define *bpp-screen* 32)
-(define *frames-per-second* 20)
-(define *mode* '2d)
-
-(define* (set-game-properties! #:key title width height bpp fps mode)
-  (if title
-      (set-screen-title! title))
-  (if bpp
-      (set-screen-bpp! bpp))
-  (if (or width height)
-      (begin
-	(if (not width) (set! width (get-screen-width)))
-	(if (not height) (set! height (get-screen-height)))
-	(resize-screen width height)))
-  (if fps
-      (set-frames-per-second! fps))
-  (if mode
-      (if (eq? mode '3d) (set-3d-mode) (set-2d-mode)))
-  (get-game-properties))
-
-(define (get-game-properties)
-  `((title . ,(get-screen-title)) (width . ,(get-screen-width)) (height . ,(get-screen-height)) (bpp . ,(get-screen-bpp)) (fps . ,(get-frames-per-second)) (mode . ,(if (3d-mode?) '3d '2d))))
-
-
 ;;; Main Loop
 
 (define loop-flag #f)
 (define game-code #f)
+(define game-loop-thread #f)
 
 (define-macro (game . code)
   `(let ((game-function ,(if (null? code)
@@ -126,10 +98,16 @@
      (cond ((not (game-running?))
 	    (game-loop)))))
 
+(define-macro (run-in-game-loop . code)
+  `(if game-loop-thread
+       (system-async-mark (lambda () ,@code) game-loop-thread)
+       (begin ,@code)))
+
 (define (init-gacela)
-  (call-with-new-thread (lambda () (game))))
+  (set! game-loop-thread (call-with-new-thread (lambda () (game)))))
 
 (define (quit-gacela)
+  (set! game-loop-thread #f)
   (set! loop-flag #f))
 
 (define (game-loop)
@@ -160,3 +138,31 @@
 
 (define (set-game-code game-function)
   (set! game-code game-function))
+
+
+;;; Game Properties
+
+(define *title* "Gacela")
+(define *width-screen* 640)
+(define *height-screen* 480)
+(define *bpp-screen* 32)
+(define *frames-per-second* 20)
+(define *mode* '2d)
+
+(define* (set-game-properties! #:key title width height bpp fps mode)
+  (if title
+      (set-screen-title! title))
+  (if bpp
+      (run-in-game-loop (set-screen-bpp! bpp)))
+  (if (or width height)
+      (begin
+	(if (not width) (set! width (get-screen-width)))
+	(if (not height) (set! height (get-screen-height)))
+	(run-in-game-loop (resize-screen width height))))
+  (if fps
+      (set-frames-per-second! fps))
+  (if mode
+      (if (eq? mode '3d) (set-3d-mode) (set-2d-mode))))
+
+(define (get-game-properties)
+  `((title . ,(get-screen-title)) (width . ,(get-screen-width)) (height . ,(get-screen-height)) (bpp . ,(get-screen-bpp)) (fps . ,(get-frames-per-second)) (mode . ,(if (3d-mode?) '3d '2d))))
