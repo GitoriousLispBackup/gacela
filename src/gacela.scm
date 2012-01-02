@@ -34,8 +34,16 @@
 	    quit-gacela
 	    game-loop
 	    game-running?
-	    set-game-code)
-  #:export-syntax (game)
+	    set-game-code
+	    show-mob-hash
+	    hide-mob-hash
+	    hide-all-mobs)
+  #:export-syntax (game
+		   show-mob
+		   hide-mob
+		   the-mob
+		   define-mob
+		   lambda-mob)
   #:re-export (get-current-color
 	       set-current-color
 	       with-color
@@ -53,7 +61,8 @@
 	       add-light
 	       set-camera
 	       camera-look
-	       render-text))
+	       render-text
+	       get-frame-time))
 
 
 ;;; Resources Cache
@@ -111,7 +120,7 @@
   (set! loop-flag #f))
 
 (define (game-loop)
-;	  (refresh-active-mobs)
+  (refresh-active-mobs)
   (set! loop-flag #t)
   (init-video *width-screen* *height-screen* *bpp-screen* #:title *title* #:mode *mode* #:fps *frames-per-second*)
   (while loop-flag
@@ -123,12 +132,12 @@
 	       (else
 		(clear-screen)
 		(to-origin)
-;		   (refresh-active-mobs)
+		(refresh-active-mobs)
 		(if (procedure? game-code)
 		    (catch #t
 			   (lambda () (game-code))
 			   (lambda (key . args) #f)))
-;			  (run-mobs)
+		(run-mobs)
 		(flip-screen)
 		(delay-frame))))
   (quit-video))
@@ -172,30 +181,30 @@
 
 (define mobs-table (make-hash-table))
 (define active-mobs '())
-(define changed #f))
+(define mobs-changed #f)
 
 (define (show-mob-hash mob)
   (hash-set! mobs-table (mob 'get-mob-id) mob)
-  (set! changed #t))
+  (set! mobs-changed #t))
 
 (define (hide-mob-hash mob-id)
   (hash-remove! mobs-table mob-id)
-  (set! changed #t))
+  (set! mobs-changed #t))
 
 (define (refresh-active-mobs)
-  (cond (changed
-	 (set! changed #f)
+  (cond (mobs-changed
+	 (set! mobs-changed #f)
 	 (set! active-mobs (hash-map->list (lambda (k v) v) mobs-table)))))
 
 (define (get-active-mobs)
   active-mobs)
 
 (define (hide-all-mobs)
-  (set! changed #t)
+  (set! mobs-changed #t)
   (hash-clear! mobs-table))
 
 (define (mobs-changed?)
-  changed)
+  mobs-changed)
 
 
 (define-macro (show-mob mob)
@@ -215,19 +224,11 @@
 (define* (run-mobs #:optional (mobs (get-active-mobs)))
   (for-each
    (lambda (m)
-     (glPushMatrix)
-     (m)
-     (glPopMatrix))
+     (glmatrix-block (m)))
    mobs))
 
 
 ;;; Making mobs
-
-(define-macro (define-mob mob-head . body)
-  (let ((name (car mob-head)) (attr (cdr mob-head)))
-    `(define ,(string->symbol (string-concatenate (list "make-" (symbol->string name))))
-       (lambda* ,(if (null? attr) '() `(#:key ,@attr))
-	 (the-mob ',name () ,attr ,@body)))))
 
 (define-macro (the-mob type attr publish . body)
   (let ((mob-id-symbol (gensym))
@@ -267,6 +268,12 @@
 	    (catch #t
 	     	   (lambda () ,@body)
 		   (lambda (key . args) #f))))))))
+
+(define-macro (define-mob mob-head . body)
+  (let ((name (car mob-head)) (attr (cdr mob-head)))
+    `(define ,(string->symbol (string-concatenate (list "make-" (symbol->string name))))
+       (lambda* ,(if (null? attr) '() `(#:key ,@attr))
+	 (the-mob ',name () ,attr ,@body)))))
 
 (define-macro (lambda-mob attr . body)
   `(the-mob 'undefined ,attr '() ,@body))

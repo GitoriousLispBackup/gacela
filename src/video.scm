@@ -60,7 +60,11 @@
 	    set-camera
 	    camera-look
 	    load-font
-	    render-text))
+	    render-text)
+  #:export-syntax (glmatrix-block)
+  #:re-export (glPushMatrix
+	       glPopMatrix))
+
 
 
 ;;; Screen
@@ -361,6 +365,13 @@
 (define (to-origin)
   (glLoadIdentity)
   (cond ((3d-mode?) (camera-look))))
+
+(define-macro (glmatrix-block . code)
+  `(let ((result #f))
+     (glPushMatrix)
+     (set! result (begin ,@code))
+     (glPopMatrix)
+     result))
 
 
 ;;; Lights
