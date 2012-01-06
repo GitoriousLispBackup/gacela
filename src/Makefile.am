@@ -1,4 +1,2 @@
-bin_PROGRAMS = gacela
-gacela_SOURCES = gacela.c gacela_SDL.c gacela_GL.c gacela_FTGL.c
-gacela_LDADD = @GUILE_LDFLAGS@
-
+lib_LTLIBRARIES = libguile-gacela-sdl.la
+libguile_gacela_sdl_la_SOURCES = sdl.c
