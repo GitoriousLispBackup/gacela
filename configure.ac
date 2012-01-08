@@ -3,15 +3,16 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_PROG_CC
 AC_PROG_LIBTOOL
 GUILE_FLAGS
-CFLAGS="$CFLAGS -I/usr/include/freetype2"
-AC_CHECK_LIB(readline, main, AC_MSG_ERROR([*** readline library not found!]))
-AC_CHECK_LIB(SDL, main, AC_MSG_ERROR([*** SDL library not found!]))
-AC_CHECK_LIB(SDL_image, main, AC_MSG_ERROR([*** SDL_image library not found!]))
-AC_CHECK_LIB(SDL_gfx, main, AC_MSG_ERROR([*** SDL_gfx library not found!]))
-AC_CHECK_LIB(SDL_mixer, main, AC_MSG_ERROR([*** SDL_mixer library not found!]))
-AC_CHECK_LIB(GL, main, AC_MSG_ERROR([*** GL library not found!]))
-AC_CHECK_LIB(GLU, main, AC_MSG_ERROR([*** GLU library not found!]))
-AC_CHECK_LIB(ftgl, main, AC_MSG_ERROR([*** FTGL library not found!]))
+
+for sdllib in SDL SDL_image SDL_gfx SDL_mixer ; do
+    AC_CHECK_LIB(${sdllib}, main, [SDL_LIBS="-l${sdllib} $SDL_LIBS"], AC_MSG_ERROR([*** ${sdllib} library not found!]))
+done
+for gllib in GL GLU ; do
+    AC_CHECK_LIB(${gllib}, main, [GL_LIBS="-l${gllib} $GL_LIBS"], AC_MSG_ERROR([*** ${gllib} library not found!]))
+done
+AC_CHECK_LIB(ftgl, main, [FTGL_LIBS="-lftgl $FTGL_LIBS"], AC_MSG_ERROR([*** FTGL library not found!]))
+
+AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([src/sdl.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([
