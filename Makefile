@@ -192,6 +192,7 @@ PACKAGE_URL =
 PACKAGE_VERSION = 0.5
 PATH_SEPARATOR = :
 RANLIB = ranlib
+SDL_LIBS = -lSDL_mixer -lSDL_gfx -lSDL_image -lSDL 
 SED = /bin/sed
 SET_MAKE = 
 SHELL = /bin/bash
