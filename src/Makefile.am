@@ -1,4 +1,10 @@
-lib_LTLIBRARIES = libguile-gacela-sdl.la
+lib_LTLIBRARIES = libguile-gacela-sdl.la libguile-gacela-gl.la libguile-gacela-ftgl.la
 libguile_gacela_sdl_la_SOURCES = sdl.c
 libguile_gacela_sdl_la_LIBADD = $(SDL_LIBS)
 libguile_gacela_sdl_la_CFLAGS = $(GUILE_CFLAGS)
+libguile_gacela_gl_la_SOURCES = gl.c
+libguile_gacela_gl_la_LIBADD = $(GL_LIBS)
+libguile_gacela_gl_la_CFLAGS = $(GUILE_CFLAGS)
+libguile_gacela_ftgl_la_SOURCES = ftgl.c
+libguile_gacela_ftgl_la_LIBADD = $(FTGL_LIBS)
+libguile_gacela_ftgl_la_CFLAGS = $(GUILE_CFLAGS) -I/usr/include/freetype2

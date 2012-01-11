@@ -616,6 +616,8 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
+FTGL_LIBS
+GL_LIBS
 SDL_LIBS
 GUILE_LDFLAGS
 GUILE_CFLAGS
@@ -12328,8 +12330,9 @@ $as_echo "$GUILE_LDFLAGS" >&6; }
 
 
 
+
 for lib in SDL SDL_image SDL_gfx SDL_mixer ; do
-    as_ac_Lib=`$as_echo "ac_cv_lib_${lib}''_main" | $as_tr_sh`
+	as_ac_Lib=`$as_echo "ac_cv_lib_${lib}''_main" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -l${lib}" >&5
 $as_echo_n "checking for main in -l${lib}... " >&6; }
 if eval \${$as_ac_Lib+:} false; then :
@@ -12362,15 +12365,16 @@ eval ac_res=\$$as_ac_Lib
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
-  SDL_LIBS="-l${lib} $SDL_LIBS"
+  SDL_LIBS="${SDL_LIBS} -l${lib}"
 else
   as_fn_error $? "*** ${lib} library not found!" "$LINENO" 5
 fi
 
-done
+    done
+
 
 for lib in GL GLU ; do
-    as_ac_Lib=`$as_echo "ac_cv_lib_${lib}''_main" | $as_tr_sh`
+	as_ac_Lib=`$as_echo "ac_cv_lib_${lib}''_main" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -l${lib}" >&5
 $as_echo_n "checking for main in -l${lib}... " >&6; }
 if eval \${$as_ac_Lib+:} false; then :
@@ -12403,19 +12407,23 @@ eval ac_res=\$$as_ac_Lib
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
-  GL_LIBS="-l${lib} $GL_LIBS"
+  GL_LIBS="${GL_LIBS} -l${lib}"
 else
   as_fn_error $? "*** ${lib} library not found!" "$LINENO" 5
 fi
 
-done
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -lftgl" >&5
-$as_echo_n "checking for main in -lftgl... " >&6; }
-if ${ac_cv_lib_ftgl_main+:} false; then :
+    done
+
+
+for lib in ftgl ; do
+	as_ac_Lib=`$as_echo "ac_cv_lib_${lib}''_main" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for main in -l${lib}" >&5
+$as_echo_n "checking for main in -l${lib}... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lftgl  $LIBS"
+LIBS="-l${lib}  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -12429,21 +12437,25 @@ return main ();
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_ftgl_main=yes
+  eval "$as_ac_Lib=yes"
 else
-  ac_cv_lib_ftgl_main=no
+  eval "$as_ac_Lib=no"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_ftgl_main" >&5
-$as_echo "$ac_cv_lib_ftgl_main" >&6; }
-if test "x$ac_cv_lib_ftgl_main" = xyes; then :
-  FTGL_LIBS="-lftgl $FTGL_LIBS"
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  FTGL_LIBS="${FTGL_LIBS} -l${lib}"
 else
-  as_fn_error $? "*** FTGL library not found!" "$LINENO" 5
+  as_fn_error $? "*** ${lib} library not found!" "$LINENO" 5
 fi
+
+    done
+
 
 
 
