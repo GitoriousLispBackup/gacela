@@ -37,11 +37,13 @@
 	    set-game-code
 	    show-mob-hash
 	    hide-mob-hash
-	    hide-all-mobs)
+	    hide-all-mobs
+	    get-mob-function-name)
   #:export-syntax (game
 		   show-mob
 		   hide-mob
 		   the-mob
+		   define-mob-function
 		   define-mob
 		   lambda-mob)
   #:re-export (get-current-color
@@ -230,7 +232,16 @@
 
 ;;; Making mobs
 
-(define-macro (the-mob type attr publish . body)
+(define mob-functions (make-hash-table))
+
+(define (get-mob-function-name mob-name)
+  (let ((name (hash-ref mob-functions mob-name)))
+    (cond ((not name)
+	   (set! name (gensym))
+	   (hash-set! mob-functions mob-name name)))
+    name))
+
+(define-macro (the-mob type attr publish fun-name)
   (let ((mob-id-symbol (gensym))
 	(type-symbol (gensym))
 	(time-symbol (gensym))
@@ -265,18 +276,29 @@
 	    ,data-symbol)
 	   (else
 	    (save-data)
-	    (catch #t
-	     	   (lambda () ,@body)
-		   (lambda (key . args) #f))))))))
+	    (,fun-name 123)))))))
+
+(define-macro (define-mob-function head . body)
+  (let ((fun-name (car head)) (attr (cdr head)))
+    `(define (,fun-name data)
+       (catch #t
+	      (lambda* () ,@body)
+	      (lambda (key . args) #f))))
 
 (define-macro (define-mob mob-head . body)
-  (let ((name (car mob-head)) (attr (cdr mob-head)))
-    `(define ,(string->symbol (string-concatenate (list "make-" (symbol->string name))))
-       (lambda* ,(if (null? attr) '() `(#:key ,@attr))
-	 (the-mob ',name () ,attr ,@body)))))
+  (let* ((name (car mob-head)) (attr (cdr mob-head))
+	 (fun-name (get-mob-function-name name)))
+    `(begin
+       (define-mob-function ,(cons fun-name attr) ,@body)
+       (define ,(string->symbol (string-concatenate (list "make-" (symbol->string name))))
+	 (lambda* ,(if (null? attr) '() `(#:key ,@attr))
+	   (the-mob ',name () ,attr ,fun-name))))))
 
 (define-macro (lambda-mob attr . body)
-  `(the-mob 'undefined ,attr '() ,@body))
+  (let ((fun-name (gensym)))
+    `(begin
+       (define-mob-function ,(cons fun-name attr) ,@body)
+       (the-mob 'undefined ,attr '() ,fun-name))))
 
 
 ;;; Collisions
