@@ -279,11 +279,21 @@
 	    (,fun-name 123)))))))
 
 (define-macro (define-mob-function head . body)
-  (let ((fun-name (car head)) (attr (cdr head)))
-    `(define (,fun-name data)
-       (catch #t
-	      (lambda* () ,@body)
-	      (lambda (key . args) #f))))
+  (let ((fun-name (car head)) (attr (map (lambda (a) (if (list? a) a (list a #f))) (cdr head)))
+	(data-symbol (gensym))
+	(body-fun
+	 `(catch #t
+		 (lambda* () ,@body)
+		 (lambda (key . args) #f))))
+    `(define (,fun-name ,data-symbol)
+       (let ,attr
+	 ,@(map
+	    (lambda (a)
+	      `(let ((val (assoc-ref ,data-symbol ',(car a))))
+		 (cond (val (set! ,(car a) val)))))
+	    attr)
+	 ,body-fun
+	 (list ,@(map (lambda (a) `(cons ',(car a) ,(car a))) attr))))))
 
 (define-macro (define-mob mob-head . body)
   (let* ((name (car mob-head)) (attr (cdr mob-head))
