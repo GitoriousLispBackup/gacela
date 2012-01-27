@@ -13,7 +13,7 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-
+MAKE=make
 
 
 pkgdatadir = $(datadir)/gacela
@@ -38,13 +38,9 @@ subdir = .
 DIST_COMMON = README $(am__configure_deps) $(dist_doc_DATA) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/config.h.in $(top_srcdir)/configure COPYING \
-	config.guess config.rpath config.sub depcomp install-sh \
-	ltmain.sh missing
+	config.guess config.sub depcomp install-sh ltmain.sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
-	$(top_srcdir)/m4/ltoptions.m4 $(top_srcdir)/m4/ltsugar.m4 \
-	$(top_srcdir)/m4/ltversion.m4 $(top_srcdir)/m4/lt~obsolete.m4 \
-	$(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -137,7 +133,7 @@ AUTOHEADER = ${SHELL} /home/jsancho/proyectos/gacela/trunk/missing --run autohea
 AUTOMAKE = ${SHELL} /home/jsancho/proyectos/gacela/trunk/missing --run automake-1.11
 AWK = mawk
 CC = gcc
-CCDEPMODE = depmode=gcc3
+CCDEPMODE = depmode=none
 CFLAGS = -g -O2
 CPP = gcc -E
 CPPFLAGS = 
@@ -153,8 +149,6 @@ ECHO_T =
 EGREP = /bin/grep -E
 EXEEXT = 
 FGREP = /bin/grep -F
-FTGL_LIBS =  -lftgl
-GL_LIBS =  -lGL -lGLU
 GREP = /bin/grep
 GUILE = /usr/bin/guile
 GUILE_CFLAGS = -pthread -I/usr/include/guile/2.0  
@@ -194,9 +188,8 @@ PACKAGE_URL =
 PACKAGE_VERSION = 0.5
 PATH_SEPARATOR = :
 RANLIB = ranlib
-SDL_LIBS =  -lSDL -lSDL_image -lSDL_gfx -lSDL_mixer
 SED = /bin/sed
-SET_MAKE = 
+SET_MAKE = MAKE=make
 SHELL = /bin/bash
 STRIP = strip
 VERSION = 0.5
@@ -207,7 +200,7 @@ abs_top_srcdir = /home/jsancho/proyectos/gacela/trunk
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
-am__include = include
+am__include = #
 am__leading_dot = .
 am__quote = 
 am__tar = ${AMTAR} chof - "$$tardir"
@@ -254,7 +247,6 @@ top_builddir = .
 top_srcdir = .
 SUBDIRS = src
 dist_doc_DATA = README
-ACLOCAL_AMFLAGS = -I m4
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 

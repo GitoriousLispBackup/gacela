@@ -38,14 +38,17 @@
 	    show-mob-hash
 	    hide-mob-hash
 	    hide-all-mobs
-	    get-mob-function-name)
+	    get-current-mob-id
+	    get-mob-function-name
+	    map-mobs)
   #:export-syntax (game
 		   show-mob
 		   hide-mob
 		   the-mob
 		   define-mob-function
 		   define-mob
-		   lambda-mob)
+		   lambda-mob
+		   define-checking-mobs)
   #:re-export (get-current-color
 	       set-current-color
 	       with-color
@@ -223,11 +226,18 @@
 	(else
 	 `(hide-mob-hash (,mob 'get-mob-id)))))
 
+(define current-mob-id #f)
+
+(define (get-current-mob-id)
+  current-mob-id)
+
 (define* (run-mobs #:optional (mobs (get-active-mobs)))
   (for-each
    (lambda (m)
+     (set! current-mob-id (m 'get-mob-id))
      (glmatrix-block (m)))
-   mobs))
+   mobs)
+  (set! current-mob-id #f))
 
 
 ;;; Making mobs
@@ -304,8 +314,15 @@
        (the-mob 'undefined '() ,fun-name))))
 
 
-;;; Collisions
+;;; Functions for checking mobs (collisions and more)
 
+(define (map-mobs fun)
+  (let ((mobs (filter (lambda (m) (not (eq? (m 'get-mob-id) (get-current-mob-id)))) (get-active-mobs))))
+    (map fun mobs)))
+
+(define-macro (define-checking-mobs head mob-attr . body)
+  `(define ,head
+     
 ;; (define-macro (lambda-mob-data attr . body)
 ;;   `(lambda ,attr ,@body))
 
