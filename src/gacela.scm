@@ -262,11 +262,6 @@
 	   (cond ((not (= time mob-time))
 		  (set! mob-time time)
 		  (set! saved-data mob-data)))))
-;       (define (filter-mobs type fun)
-;	 #t)
-;       (define (map-mobs fun type)
-;	 (let ((mobs (filter (lambda (m) (and (eq? (m 'get-type) type) (not (eq? (m 'get-mob-id) ,mob-id-symbol)))) (get-active-mobs))))
-;	   (map (lambda (m) (fun (m 'get-data))) mobs)))
        (case option
 	 ((get-mob-id)
 	  mob-id)
@@ -316,19 +311,15 @@
 
 ;;; Functions for checking mobs (collisions and more)
 
-(define (map-mobs fun)
-  (let ((mobs (filter (lambda (m) (not (eq? (m 'get-mob-id) (get-current-mob-id)))) (get-active-mobs))))
-    (map fun mobs)))
+(define (map-mobs fun type)
+  (let ((mobs (filter (lambda (m) (and (eq? (m 'get-type) type) (not (eq? (m 'get-mob-id) (get-current-mob-id))))) (get-active-mobs))))
+    (map (lambda (m) (fun (m 'get-data))) mobs)))
 
-(define-macro (define-checking-mobs head mob-attr . body)
-  `(define ,head
-     
-;; (define-macro (lambda-mob-data attr . body)
-;;   `(lambda ,attr ,@body))
-
-;; (define-macro (define-collision-check name mobs . body)
-;;   `(defmacro* ,name (#:optional m)
-;;      `(let ,(cond (m `((mob-id (,m 'get-mob-id)) (mob-type (,m 'get-type))))
-;; 		  (else `()))
-	
-;; 	mob-id)))
+(define-macro (define-checking-mobs head mob-def . body)
+  (let ((type (car mob-def)) (attr (cdr mob-def)))
+    `(define ,head
+       (map-mobs
+	(lambda (m)
+	  (let ,(map (lambda (a) `(,(car a) (assoc-ref m ',(cadr a)))) attr)
+	    ,@body))
+	',type))))
