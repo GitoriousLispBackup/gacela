@@ -49,10 +49,13 @@
 
 (define (process-screen-events events)
   (set! quit-signal #f)
+  (process-screen-events-recursive events))
+
+(define (process-screen-events-recursive events)
   (cond ((not (null? events))
 	 (let ((event (car events)))
 	   (cond ((= (assoc-ref event 'type) SDL_QUIT) (set! quit-signal #t))))
-	 (process-screen-events (cdr events)))))
+	 (process-screen-events-recursive (cdr events)))))
 
 (define (quit-signal?)
   quit-signal)
@@ -66,11 +69,14 @@
 
 (define (process-keyboard-events events)
   (clear-key-state)
+  (process-keyboard-events-recursive events))
+
+(define (process-keyboard-events-recursive events)
   (cond ((not (null? events))
 	 (let ((event (car events)))
 	   (cond ((= (assoc-ref event 'type) SDL_KEYDOWN) (key-press (assoc-ref event 'key.keysym.sym)))
 		 ((= (assoc-ref event 'type) SDL_KEYUP) (key-release (assoc-ref event 'key.keysym.sym)))))
-	 (process-keyboard-events (cdr events)))))
+	 (process-keyboard-events-recursive (cdr events)))))
 
 (define (key? key)
   (hash-ref keymap (get-keycode key)))

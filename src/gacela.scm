@@ -37,6 +37,7 @@
 	    set-game-code
 	    show-mob-hash
 	    hide-mob-hash
+	    get-active-mobs
 	    hide-all-mobs
 	    get-current-mob-id
 	    get-mob-function-name
@@ -67,7 +68,10 @@
 	       set-camera
 	       camera-look
 	       render-text
-	       get-frame-time))
+	       get-frame-time
+	       key?
+	       key-pressed?
+	       key-released?))
 
 
 ;;; Resources Cache
@@ -81,7 +85,7 @@
   (hash-set! resources-cache key res))
 
 (define-macro (use-cache-with module proc)
-  (let* ((pwc (string->symbol (string-concatenate (list (symbol->string proc) "-without-cache")))))
+  (let ((pwc (string->symbol (string-concatenate (list (symbol->string proc) "-without-cache")))))
     `(begin
        (define ,pwc (@ ,module ,proc))
        (define (,proc . param)
@@ -104,6 +108,33 @@
 (define game-code #f)
 (define game-loop-thread #f)
 
+(define-macro (run-in-game-loop proc)
+  (let ((pgl (string->symbol (string-concatenate (list (symbol->string proc) "-in-game-loop"))))
+	(flag-symbol (gensym))
+	(value-symbol (gensym)))
+    `(begin
+       (define ,pgl ,proc)
+       (define (,proc . param)
+	 (cond ((and game-loop-thread (not (eq? game-loop-thread (current-thread))))
+		(let ((,flag-symbol #f))
+		  (define ,value-symbol)
+		  (system-async-mark
+		   (lambda ()
+		     (catch #t
+			   (lambda () (set! ,value-symbol (apply ,pgl param)))
+			   (lambda (key . args) #f))
+		     (set! ,flag-symbol #t))
+		   game-loop-thread)
+		  (while (not ,flag-symbol))
+		  ,value-symbol))
+	       (else
+		(apply ,pgl param)))))))
+
+(run-in-game-loop load-texture)
+(run-in-game-loop load-font)
+(run-in-game-loop set-screen-bpp!)
+(run-in-game-loop resize-screen)
+
 (define-macro (game . code)
   `(let ((game-function ,(if (null? code)
 			     `(lambda () #f)
@@ -112,13 +143,10 @@
      (cond ((not (game-running?))
 	    (game-loop)))))
 
-(define-macro (run-in-game-loop . code)
-  `(if game-loop-thread
-       (system-async-mark (lambda () ,@code) game-loop-thread)
-       (begin ,@code)))
-
 (define (init-gacela)
-  (set! game-loop-thread (call-with-new-thread (lambda () (game)))))
+  (set! game-loop-thread (call-with-new-thread (lambda () (game))))
+  (while (not loop-flag))
+  #t)
 
 (define (quit-gacela)
   (set! game-loop-thread #f)
@@ -126,8 +154,8 @@
 
 (define (game-loop)
   (refresh-active-mobs)
-  (set! loop-flag #t)
   (init-video *width-screen* *height-screen* *bpp-screen* #:title *title* #:mode *mode* #:fps *frames-per-second*)
+  (set! loop-flag #t)
   (while loop-flag
 	 (init-frame-time)
 ;	    (check-connections)
@@ -167,16 +195,17 @@
   (if title
       (set-screen-title! title))
   (if bpp
-      (run-in-game-loop (set-screen-bpp! bpp)))
+      (set-screen-bpp! bpp))
   (if (or width height)
       (begin
 	(if (not width) (set! width (get-screen-width)))
 	(if (not height) (set! height (get-screen-height)))
-	(run-in-game-loop (resize-screen width height))))
+	(resize-screen width height)))
   (if fps
       (set-frames-per-second! fps))
   (if mode
-      (if (eq? mode '3d) (set-3d-mode) (set-2d-mode))))
+      (if (eq? mode '3d) (set-3d-mode) (set-2d-mode)))
+  (get-game-properties))
 
 (define (get-game-properties)
   `((title . ,(get-screen-title)) (width . ,(get-screen-width)) (height . ,(get-screen-height)) (bpp . ,(get-screen-bpp)) (fps . ,(get-frames-per-second)) (mode . ,(if (3d-mode?) '3d '2d))))
