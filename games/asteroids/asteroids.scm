@@ -1,3 +1,7 @@
+(use-modules (gacela gacela)
+	     (gacela math))
+(init-gacela)
+
 (set-game-properties! #:title "Gacela Asteroids")
 
 (define max-x (/ (assoc-ref (get-game-properties) 'width) 2))
@@ -5,17 +9,19 @@
 (define max-y (/ (assoc-ref (get-game-properties) 'height) 2))
 (define min-y (- max-y))
 
-(define-macro (asteroid-killed?)
-  `(> (apply +
-	     (map-mobs
-	      (lambda (s) (if (< (distance-between-points (list (assoc-ref s 'x) (assoc-ref s 'y)) (list x y)) size) 1 0))
-	      'shot))
-      0))
+
+;;; Asteroids
+
+(define-checking-mobs (asteroid-shots x y size) (shot (sx x) (sy y))
+  (if (< (distance-between-points (list sx sy) (list x y)) size) 1 0))
+
+(define (asteroid-killed? x y size)
+  (> (apply + (asteroid-shots x y size)) 0))
 
 (define-mob (asteroid
 	     (image (load-texture "Asteroid.png"))
 	     (x 0) (y 0) (angle 0) (dir 0) (size 100))
-  (cond ((asteroid-killed?)
+  (cond ((asteroid-killed? x y size)
 	 (kill-me))
 	(else
 	 (let ((r (degrees-to-radians (- dir))))
@@ -32,40 +38,45 @@
   (rotate angle)
   (draw-texture image))
 
+
+;;; Ship
+
 (define-mob (ship
 	     (ship1 (load-texture "Ship1.png"))
 	     (ship2 (load-texture "Ship2.png"))
 	     (x 0) (y 0) (angle 0)
 	     (moving #f))
   (cond ((key? 'left) (set! angle (+ angle 5)))
-	((key? 'right) (set! angle (- angle 5))))
+  	((key? 'right) (set! angle (- angle 5))))
   (cond ((key? 'up)
-	 (let ((r (degrees-to-radians (- angle))))
-	   (set! x (+ x (* 4 (sin r))))
-	   (set! y (+ y (* 4 (cos r)))))
-	 (cond ((> x max-x) (set! x min-x))
-	       ((< x min-x) (set! x max-x)))
-	 (cond ((> y max-y) (set! y min-y))
-	       ((< y min-y) (set! y max-y)))
-	 (set! moving #t))
-	(else
-	 (set! moving #f)))
+  	 (let ((r (degrees-to-radians (- angle))))
+  	   (set! x (+ x (* 4 (sin r))))
+  	   (set! y (+ y (* 4 (cos r)))))
+  	 (cond ((> x max-x) (set! x min-x))
+  	       ((< x min-x) (set! x max-x)))
+  	 (cond ((> y max-y) (set! y min-y))
+  	       ((< y min-y) (set! y max-y)))
+  	 (set! moving #t))
+  	(else
+  	 (set! moving #f)))
   (cond ((key-pressed? 'space)
-	 (show-mob (make-shot #:x x #:y y #:angle angle))))
+  	 (show-mob (make-shot #:x x #:y y #:angle angle))))
 
   (translate x y)
   (rotate angle)
   (draw-texture (if moving ship2 ship1)))
 
-(define-macro (shot-killed?)
-  `(> (apply +
-	     (map-mobs
-	      (lambda (a) (if (< (distance-between-points (list (assoc-ref a 'x) (assoc-ref a 'y)) (list x y)) (assoc-ref a 'size)) 1 0))
-	      'asteroid))
-      0))
+
+;;; Shots
+
+(define-checking-mobs (impacted-shots x y) (asteroid (ax x) (ay y) (size size))
+  (if (< (distance-between-points (list ax ay) (list x y)) size) 1 0))
+
+(define (shot-killed? x y)
+  (> (apply + (impacted-shots x y)) 0))
 
 (define-mob (shot (x 0) (y 0) (angle 0))
-  (cond ((shot-killed?)
+  (cond ((shot-killed? x y)
 	 (kill-me))
 	(else
 	 (let ((r (degrees-to-radians (- angle))))
@@ -81,6 +92,8 @@
   (rotate angle)
   (draw-line 10))
 
+
+;;; Game
 
 (define (init-asteroids n)
   (cond ((> n 0)
@@ -98,7 +111,7 @@
 (show-mob (make-ship))
      
 (let ((font (load-font "../tetris/lazy.ttf" #:size 20)))
-  (run-game
+  (game
    (render-text (format #f "Mobs: ~a" (length (get-active-mobs))) font)))
 
 
