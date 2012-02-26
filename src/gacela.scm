@@ -41,7 +41,8 @@
 	    hide-all-mobs
 	    get-current-mob-id
 	    get-mob-function-name
-	    map-mobs)
+	    map-mobs
+	    translate-mob)
   #:export-syntax (game
 		   show-mob
 		   hide-mob
@@ -71,7 +72,8 @@
 	       get-frame-time
 	       key?
 	       key-pressed?
-	       key-released?))
+	       key-released?
+	       3d-mode?))
 
 
 ;;; Resources Cache
@@ -261,12 +263,13 @@
   current-mob-id)
 
 (define* (run-mobs #:optional (mobs (get-active-mobs)))
-  (for-each
-   (lambda (m)
-     (set! current-mob-id (m 'get-mob-id))
-     (glmatrix-block (m)))
-   mobs)
-  (set! current-mob-id #f))
+  (let ((sorted-mobs (sort mobs (lambda (m1 m2) (< (m1 'get-z-index) (m2 'get-z-index))))))
+    (for-each
+     (lambda (m)
+       (set! current-mob-id (m 'get-mob-id))
+       (glmatrix-block (m)))
+     sorted-mobs)
+    (set! current-mob-id #f)))
 
 
 ;;; Making mobs
@@ -282,6 +285,7 @@
 
 (define-macro (the-mob type init-data fun-name)
   `(let ((mob-id (gensym))
+	 (mob-z-index 0)
 	 (mob-time 0)
 	 (mob-data ,init-data)
 	 (saved-data ,init-data))
@@ -294,6 +298,8 @@
        (case option
 	 ((get-mob-id)
 	  mob-id)
+	 ((get-z-index)
+	  mob-z-index)
 	 ((get-type)
 	  ,type)
 	 ((get-data)
@@ -301,26 +307,36 @@
 	  saved-data)
 	 (else
 	  (save-data)
-	  (set! mob-data (,fun-name mob-id mob-data)))))))
+	  (let ((res (,fun-name mob-id mob-data)))
+	    (set! mob-z-index (car res))
+	    (set! mob-data (cadr res))))))))
 
 (define-macro (define-mob-function head . body)
   (let ((fun-name (car head))
 	(attr (map (lambda (a) (if (list? a) a (list a #f))) (cdr head)))
 	(mob-id-symbol (gensym))
+	(mob-id-z-index (gensym))
 	(data-symbol (gensym)))
     `(define (,fun-name ,mob-id-symbol ,data-symbol)
-       (define (kill-me)
-	 (hide-mob-hash ,mob-id-symbol))
-       (let ,attr
-	 ,@(map
-	    (lambda (a)
-	      `(let ((val (assoc-ref ,data-symbol ',(car a))))
-		 (cond (val (set! ,(car a) val)))))
-	    attr)
-	 (catch #t
-		(lambda* () ,@body)
-		(lambda (key . args) #f))
-	 (list ,@(map (lambda (a) `(cons ',(car a) ,(car a))) attr))))))
+       (let ((,mob-id-z-index 0))
+	 (define (kill-me)
+	   (hide-mob-hash ,mob-id-symbol))
+	 (define* (translate x y #:optional (z 0))
+	   (cond ((3d-mode?)
+		  (translate-mob x y z))
+		 (else
+		  (set! ,mob-id-z-index (+ ,mob-id-z-index z))
+		  (translate-mob x y))))
+	 (let ,attr
+	   ,@(map
+	      (lambda (a)
+		`(let ((val (assoc-ref ,data-symbol ',(car a))))
+		   (cond (val (set! ,(car a) val)))))
+	      attr)
+	   (catch #t
+		  (lambda* () ,@body)
+		  (lambda (key . args) #f))
+	   (list ,mob-id-z-index (list ,@(map (lambda (a) `(cons ',(car a) ,(car a))) attr))))))))
 
 (define-macro (define-mob mob-head . body)
   (let* ((name (car mob-head)) (attr (cdr mob-head))
@@ -339,6 +355,8 @@
 
 
 ;;; Functions for checking mobs (collisions and more)
+
+(define translate-mob translate)
 
 (define (map-mobs fun type)
   (let ((mobs (filter (lambda (m) (and (eq? (m 'get-type) type) (not (eq? (m 'get-mob-id) (get-current-mob-id))))) (get-active-mobs))))
