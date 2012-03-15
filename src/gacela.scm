@@ -33,6 +33,7 @@
 	    init-gacela
 	    quit-gacela
 	    game-loop
+	    gacela-script
 	    game-running?
 	    set-game-code
 	    show-mob-hash
@@ -146,11 +147,16 @@
 	    (game-loop)))))
 
 (define (init-gacela)
-  (set! game-loop-thread (call-with-new-thread (lambda () (game))))
+  (hide-all-mobs)
+  (set-game-code (lambda () #f))
+  (cond ((not game-loop-thread)
+	 (set! game-loop-thread (call-with-new-thread (lambda () (game))))))
   (while (not loop-flag))
   #t)
 
 (define (quit-gacela)
+  (hide-all-mobs)
+  (set-game-code (lambda () #f))
   (set! game-loop-thread #f)
   (set! loop-flag #f))
 
@@ -176,6 +182,9 @@
 		(flip-screen)
 		(delay-frame))))
   (quit-video))
+
+(define (gacela-script args)
+  (while loop-flag (sleep 1)))
 
 (define (game-running?)
   loop-flag)

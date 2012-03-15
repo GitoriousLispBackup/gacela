@@ -1,3 +1,11 @@
+#!/usr/bin/guile \
+-e gacela-script -s
+!#
+
+(use-modules (gacela gacela)
+	     (gacela widgets timer))
+(init-gacela)
+
 (set-game-properties! #:title "Gacela Tetris" #:fps 15)
 
 (define (tetramine-i)
@@ -119,7 +127,7 @@
 	  (set! points (+ points (* (more-lines-better l) 10)))
 	  (set! lines (+ lines l)))))
 
-(define game #f)
+(define game-func #f)
 (define display-game-over #f)
 (define tetramine #f)
 
@@ -131,7 +139,7 @@
       (font (load-font "lazy.ttf" #:size 20))
       (game-over #f))
 
-  (set! game
+  (set! game-func
 	(lambda ()
 	  (if game-over (display-game-over) (tetramine))))
 
@@ -183,8 +191,8 @@
 (let ((frame 0.0) (fps (make-timer)) (update (make-timer)))
   (start-timer update)
   (start-timer fps)
-  (run-game
-   (game)
+  (game
+   (game-func)
    (set! frame (+ frame 1))
    (cond ((> (get-time update) 1000)
 	  (display (/ frame (/ (get-time fps) 1000.0)))

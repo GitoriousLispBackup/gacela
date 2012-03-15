@@ -1,3 +1,7 @@
+#!/usr/bin/guile \
+-e gacela-script -s
+!#
+
 (use-modules (gacela gacela)
 	     (gacela math))
 (init-gacela)
