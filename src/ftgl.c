@@ -22,12 +22,13 @@ struct font
 {
   SCM filename;
   FTGLfont *font_address;
+  int size;
 };
 
 static scm_t_bits font_tag;
 
 SCM
-make_font (SCM file, FTGLfont *font_address)
+make_font (SCM file, SCM size, FTGLfont *font_address)
 {
   SCM smob;
   struct font *font;
@@ -35,6 +36,7 @@ make_font (SCM file, FTGLfont *font_address)
   font = (struct font *) scm_gc_malloc (sizeof (struct font), "font");
 
   font->filename = SCM_BOOL_F;
+  font->size = scm_to_int (size);
   font->font_address = NULL;
 
   SCM_NEWSMOB (smob, font_tag, font);
@@ -83,7 +85,9 @@ print_font (SCM font_smob, SCM port, scm_print_state *pstate)
 
   scm_puts ("#<font \"", port);
   scm_display (font->filename, port);
-  scm_puts ("\">", port);
+  scm_puts ("\", size ", port);
+  scm_display (scm_from_int (font->size), port);
+  scm_puts (">", port);
 
   /* non-zero means success */
   return 1;
@@ -91,12 +95,12 @@ print_font (SCM font_smob, SCM port, scm_print_state *pstate)
 
 
 SCM
-gacela_ftglCreateTextureFont (SCM file)
+gacela_ftglCreateTextureFont (SCM file, SCM size)
 {
   FTGLfont *font_address = ftglCreateTextureFont (scm_to_locale_string (file));
 
   if (font_address) {
-    return make_font (file, font_address);
+    return make_font (file, size, font_address);
   }
   else {
     return SCM_BOOL_F;
@@ -135,7 +139,7 @@ init_gacela_ftgl (void *data)
   scm_c_define ("ft_encoding_unicode", scm_from_int (ft_encoding_unicode));
   scm_c_define ("FTGL_RENDER_ALL", scm_from_int (FTGL_RENDER_ALL));
 
-  scm_c_define_gsubr ("ftglCreateTextureFont", 1, 0, 0, gacela_ftglCreateTextureFont);
+  scm_c_define_gsubr ("ftglCreateTextureFont", 2, 0, 0, gacela_ftglCreateTextureFont);
   scm_c_define_gsubr ("ftglSetFontFaceSize", 3, 0, 0, gacela_ftglSetFontFaceSize);
   scm_c_define_gsubr ("ftglSetFontCharMap", 2, 0, 0, gacela_ftglSetFontCharMap);
   scm_c_define_gsubr ("ftglRenderFont", 3, 0, 0, gacela_ftglRenderFont);
