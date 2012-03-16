@@ -58,6 +58,16 @@ get_font_address (SCM font_smob)
 }
 
 SCM
+get_font_size (SCM font_smob)
+{
+  struct font *font;
+
+  scm_assert_smob_type (font_tag, font_smob);
+  font = (struct font *) SCM_SMOB_DATA (font_smob);
+  return scm_from_int (font->size);
+}
+
+SCM
 mark_font (SCM font_smob)
 {
   struct font *font = (struct font *) SCM_SMOB_DATA (font_smob);
@@ -114,6 +124,12 @@ gacela_ftglSetFontFaceSize (SCM font, SCM size, SCM res)
 }
 
 SCM
+gacela_ftglGetFontFaceSize (SCM font)
+{
+  return scm_from_int (ftglGetFontFaceSize (get_font_address (font)));
+}
+
+SCM
 gacela_ftglSetFontCharMap (SCM font, SCM encoding)
 {
   return scm_from_int (ftglSetFontCharMap (get_font_address (font), scm_to_int (encoding)));
@@ -135,12 +151,14 @@ init_gacela_ftgl (void *data)
   scm_set_smob_free (font_tag, free_font);
   scm_set_smob_print (font_tag, print_font);
   //  scm_set_smob_equalp (surface_tag, equalp_surface);
+  scm_c_define_gsubr ("font-size", 1, 0, 0, get_font_size);
 
   scm_c_define ("ft_encoding_unicode", scm_from_int (ft_encoding_unicode));
   scm_c_define ("FTGL_RENDER_ALL", scm_from_int (FTGL_RENDER_ALL));
 
   scm_c_define_gsubr ("ftglCreateTextureFont", 2, 0, 0, gacela_ftglCreateTextureFont);
   scm_c_define_gsubr ("ftglSetFontFaceSize", 3, 0, 0, gacela_ftglSetFontFaceSize);
+  scm_c_define_gsubr ("ftglGetFontFaceSize", 1, 0, 0, gacela_ftglGetFontFaceSize);
   scm_c_define_gsubr ("ftglSetFontCharMap", 2, 0, 0, gacela_ftglSetFontCharMap);
   scm_c_define_gsubr ("ftglRenderFont", 3, 0, 0, gacela_ftglRenderFont);
 }

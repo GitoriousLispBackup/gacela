@@ -408,5 +408,9 @@
     font))
 
 (define* (render-text text font #:key (size #f))
-  (cond (size (ftglSetFontFaceSize font size 72)))
+  (cond (size
+	 (cond ((not (= (ftglGetFontFaceSize font) size))
+		(ftglSetFontFaceSize font size 72))))
+	((not (= (ftglGetFontFaceSize font) (font-size font)))
+	 (ftglSetFontFaceSize font (font-size font) 72)))
   (ftglRenderFont font text FTGL_RENDER_ALL))
