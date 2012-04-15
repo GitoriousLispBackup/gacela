@@ -268,6 +268,8 @@
 
 (define current-mob-id #f)
 
+(define translate-mob translate)
+
 (define (get-current-mob-id)
   current-mob-id)
 
@@ -315,10 +317,13 @@
 	  (save-data)
 	  saved-data)
 	 (else
-	  (save-data)
-	  (let ((res (,fun-name mob-id mob-data)))
-	    (set! mob-z-index (car res))
-	    (set! mob-data (cadr res))))))))
+	  (cond ((keyword? option)
+		 (assoc-ref saved-data (keyword->symbol option)))
+		(else
+		 (save-data)
+		 (let ((res (,fun-name mob-id mob-data)))
+		   (set! mob-z-index (car res))
+		   (set! mob-data (cadr res))))))))))
 
 (define-macro (define-mob-function head . body)
   (let ((fun-name (car head))
@@ -365,8 +370,6 @@
 
 ;;; Functions for checking mobs (collisions and more)
 
-(define translate-mob translate)
-
 (define (map-mobs fun type)
   (let ((mobs (filter (lambda (m) (and (eq? (m 'get-type) type) (not (eq? (m 'get-mob-id) (get-current-mob-id))))) (get-active-mobs))))
     (map (lambda (m) (fun (m 'get-data))) mobs)))
@@ -379,3 +382,10 @@
 	  (let ,(map (lambda (a) `(,(car a) (assoc-ref m ',(cadr a)))) attr)
 	    ,@body))
 	',type))))
+
+
+;;; Scenes
+
+(define-macro (define-scene name . body)
+  `(define (,name)
+     ,@body))
