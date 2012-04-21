@@ -357,7 +357,7 @@
 	 (fun-name (get-mob-function-name name)))
     `(begin
        (define-mob-function ,(cons fun-name attr) ,@body)
-       (define ,(string->symbol (string-concatenate (list "make-" (symbol->string name))))
+       (define ,name
 	 (lambda* ,(if (null? attr) '() `(#:key ,@attr))
 	   (the-mob ',name (list ,@(map (lambda (a) `(cons ',(car a) ,(car a))) attr)) ,fun-name))))))
 
