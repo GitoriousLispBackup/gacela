@@ -294,7 +294,7 @@
 	   (hash-set! mob-functions mob-name name)))
     name))
 
-(define-macro (the-mob type init-data fun-name)
+(define-macro (the-mob mob-name init-data)
   `(let ((mob-id (gensym))
 	 (mob-z-index 0)
 	 (mob-time 0)
@@ -312,7 +312,7 @@
 	 ((get-z-index)
 	  mob-z-index)
 	 ((get-type)
-	  ,type)
+	  (procedure-name ,mob-name))
 	 ((get-data)
 	  (save-data)
 	  saved-data)
@@ -321,17 +321,16 @@
 		 (assoc-ref saved-data (keyword->symbol option)))
 		(else
 		 (save-data)
-		 (let ((res (,fun-name mob-id mob-data)))
+		 (let ((res (,mob-name mob-id mob-data)))
 		   (set! mob-z-index (car res))
 		   (set! mob-data (cadr res))))))))))
 
-(define-macro (define-mob-function head . body)
-  (let ((fun-name (car head))
-	(attr (map (lambda (a) (if (list? a) a (list a #f))) (cdr head)))
+(define-macro (define-mob-function attr . body)
+  (let ((attr (map (lambda (a) (if (list? a) a (list a #f))) attr))
 	(mob-id-symbol (gensym))
 	(mob-id-z-index (gensym))
 	(data-symbol (gensym)))
-    `(define (,fun-name ,mob-id-symbol ,data-symbol)
+    `(lambda (,mob-id-symbol ,data-symbol)
        (let ((,mob-id-z-index 0))
 	 (define (kill-me)
 	   (hide-mob-hash ,mob-id-symbol))
@@ -353,13 +352,21 @@
 	   (list ,mob-id-z-index (list ,@(map (lambda (a) `(cons ',(car a) ,(car a))) attr))))))))
 
 (define-macro (define-mob mob-head . body)
-  (let* ((name (car mob-head)) (attr (cdr mob-head))
-	 (fun-name (get-mob-function-name name)))
-    `(begin
-       (define-mob-function ,(cons fun-name attr) ,@body)
-       (define ,name
+  (let* ((name (car mob-head))
+	 (attr (cdr mob-head))
+	 (make-fun-symbol (gensym))
+	 (mob-fun-symbol (gensym))
+	 (params-symbol (gensym)))
+    `(define (,name . ,params-symbol)
+       (define ,make-fun-symbol
 	 (lambda* ,(if (null? attr) '() `(#:key ,@attr))
-	   (the-mob ',name (list ,@(map (lambda (a) `(cons ',(car a) ,(car a))) attr)) ,fun-name))))))
+	   (the-mob ,name (list ,@(map (lambda (a) `(cons ',(car a) ,(car a))) attr)))))
+       (define ,mob-fun-symbol
+	 (define-mob-function ,attr ,@body))
+       (cond ((or (null? ,params-symbol) (keyword? (car ,params-symbol)))
+	      (apply ,make-fun-symbol ,params-symbol))
+	     (else
+	      (apply ,mob-fun-symbol ,params-symbol))))))
 
 (define-macro (lambda-mob attr . body)
   (let ((fun-name (gensym)))
