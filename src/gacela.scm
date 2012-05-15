@@ -53,6 +53,7 @@
 		   lambda-mob
 		   define-checking-mobs)
   #:re-export (get-current-color
+	       get-texture-properties
 	       set-current-color
 	       with-color
 	       progn-textures

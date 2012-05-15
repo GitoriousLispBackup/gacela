@@ -47,6 +47,7 @@
 	    progn-textures
 	    draw
 	    load-texture
+	    get-texture-properties
 	    draw-texture
 	    draw-line
 	    draw-quad
@@ -285,6 +286,9 @@
 	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
 	     (set-texture-size! texture real-w real-h)
 	     texture))))))
+
+(define (get-texture-properties texture)
+  `((width . ,(texture-w texture)) (height . ,(texture-h texture))))
 
 (define* (draw-texture texture #:optional (zoom 1))
   (cond (texture
