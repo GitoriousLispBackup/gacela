@@ -341,7 +341,7 @@
 		 (else
 		  (set! ,mob-id-z-index (+ ,mob-id-z-index z))
 		  (translate-mob x y))))
-	 (let ,attr
+	 (let* ,attr
 	   ,@(map
 	      (lambda (a)
 		`(let ((val (assoc-ref ,data-symbol ',(car a))))
