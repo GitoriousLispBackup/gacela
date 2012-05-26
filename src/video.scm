@@ -62,9 +62,7 @@
 	    camera-look
 	    load-font
 	    render-text)
-  #:export-syntax (glmatrix-block)
-  #:re-export (glPushMatrix
-	       glPopMatrix))
+  #:export-syntax (glmatrix-block))
 
 
 

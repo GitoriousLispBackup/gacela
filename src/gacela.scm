@@ -52,29 +52,8 @@
 		   define-mob
 		   lambda-mob
 		   define-checking-mobs)
-  #:re-export (get-current-color
-	       get-texture-properties
-	       set-current-color
-	       with-color
-	       progn-textures
-	       draw
-	       draw-texture
-	       draw-line
-	       draw-quad
-	       draw-rectangle
-	       draw-square
-	       draw-cube
-	       translate
-	       rotate
-	       to-origin
-	       add-light
-	       set-camera
-	       camera-look
-	       render-text
+  #:re-export (translate
 	       get-frame-time
-	       key?
-	       key-pressed?
-	       key-released?
 	       3d-mode?))
 
 
