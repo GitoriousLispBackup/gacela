@@ -288,11 +288,14 @@
 (define (get-texture-properties texture)
   `((width . ,(texture-w texture)) (height . ,(texture-h texture))))
 
-(define* (draw-texture texture #:optional (zoom 1))
+(define* (draw-texture texture #:key (zoom 1) (sprite '((0 0) (1 1))))
   (cond (texture
 	 (let ((width (texture-w texture))
 	       (height (texture-h texture)))
-	   (draw-rectangle (* zoom width) (* zoom height) #:texture texture)))))
+	   (draw-rectangle (* zoom width (- (caadr sprite) (caar sprite)))
+			   (* zoom height (- (cadadr sprite) (cadar sprite)))
+			   #:texture texture
+			   #:texture-coord sprite)))))
 
 (define* (draw-line length #:optional color)
   (let ((l (/ length 2)))
@@ -301,28 +304,29 @@
 	  (else
 	   (draw (list 0 l) (list 0 (- l)))))))
 
-(define* (draw-quad v1 v2 v3 v4 #:key texture color)
+(define* (draw-quad v1 v2 v3 v4 #:key texture color (texture-coord '((0 0) (1 1))))
   (cond (texture
 	 (progn-textures
 	  (glBindTexture GL_TEXTURE_2D texture)
 	  (begin-draw 4)
-	  (draw-vertex v1 #:texture-coord '(0 0))
-	  (draw-vertex v2 #:texture-coord '(1 0))
-	  (draw-vertex v3 #:texture-coord '(1 1))
-	  (draw-vertex v4 #:texture-coord '(0 1))
+	  (draw-vertex v1 #:texture-coord (car texture-coord))
+	  (draw-vertex v2 #:texture-coord (list (caadr texture-coord) (cadar texture-coord)))
+	  (draw-vertex v3 #:texture-coord (cadr texture-coord))
+	  (draw-vertex v4 #:texture-coord (list (caar texture-coord) (cadadr texture-coord)))
 	  (glEnd)))
 	(color
 	 (with-color color (draw v1 v2 v3 v4)))
 	(else
 	 (draw v1 v2 v3 v4))))
 
-(define* (draw-rectangle width height #:key texture color)
+(define* (draw-rectangle width height #:key texture color texture-coord)
   (let ((w (/ width 2)) (h (/ height 2)))
     (draw-quad (list (- w) h 0)
 	       (list w h 0)
 	       (list w (- h) 0)
 	       (list (- w) (- h) 0)
 	       #:texture texture
+	       #:texture-coord texture-coord
 	       #:color color)))
 
 (define* (draw-square #:key (size 1) texture color)
