@@ -20,9 +20,7 @@
   #:use-module (gacela video)
   #:use-module (gacela audio)
   #:use-module (ice-9 optargs)
-  #:export (load-texture
-	    load-font
-	    *title*
+  #:export (*title*
 	    *width-screen*
 	    *height-screen*
 	    *bpp-screen*
@@ -55,34 +53,6 @@
   #:re-export (translate
 	       get-frame-time
 	       3d-mode?))
-
-
-;;; Resources Cache
-
-(define resources-cache (make-weak-value-hash-table))
-
-(define (from-cache key)
-  (hash-ref resources-cache key))
-
-(define (into-cache key res)
-  (hash-set! resources-cache key res))
-
-(define-macro (use-cache-with module proc)
-  (let ((pwc (string->symbol (string-concatenate (list (symbol->string proc) "-without-cache")))))
-    `(begin
-       (define ,pwc (@ ,module ,proc))
-       (define (,proc . param)
-	 (let* ((key param)
-		(res (from-cache key)))
-	   (cond (res
-		  res)
-		 (else
-		  (set! res (apply ,pwc param))
-		  (into-cache key res)
-		  res)))))))
-
-(use-cache-with (gacela video) load-texture)
-(use-cache-with (gacela video) load-font)
 
 
 ;;; Main Loop

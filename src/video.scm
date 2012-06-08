@@ -20,6 +20,7 @@
   #:use-module (gacela gl)
   #:use-module (gacela ftgl)
   #:use-module (gacela math)
+  #:use-module (gacela utils)
   #:use-module (ice-9 optargs)
   #:use-module (ice-9 receive)
   #:export (init-video
@@ -47,6 +48,7 @@
 	    progn-textures
 	    draw
 	    load-texture
+	    load-texture-without-cache
 	    get-texture-properties
 	    draw-texture
 	    draw-line
@@ -61,6 +63,7 @@
 	    set-camera
 	    camera-look
 	    load-font
+	    load-font-without-texture
 	    render-text)
   #:export-syntax (glmatrix-block))
 
@@ -267,7 +270,7 @@
 	  (else (let ((zoomx (/ (+ width 0.5) old-width)) (zoomy (/ (+ height 0.5) old-height)))
 	       (zoomSurface surface zoomx zoomy 0))))))
 
-(define* (load-texture filename #:key (min-filter GL_LINEAR) (mag-filter GL_LINEAR))
+(define* (load-texture-without-cache filename #:key (min-filter GL_LINEAR) (mag-filter GL_LINEAR))
   (progn-textures
    (receive
     (image real-w real-h) (load-image-for-texture filename)
@@ -284,6 +287,8 @@
 	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
 	     (set-texture-size! texture real-w real-h)
 	     texture))))))
+
+(define load-texture (use-cache-with load-texture-without-cache))
 
 (define (get-texture-properties texture)
   `((width . ,(texture-w texture)) (height . ,(texture-h texture))))
@@ -407,11 +412,13 @@
 
 ;;; Text and fonts
 
-(define* (load-font font-file #:key (size 40) (encoding ft_encoding_unicode))
+(define* (load-font-without-cache font-file #:key (size 40) (encoding ft_encoding_unicode))
   (let ((font (ftglCreateTextureFont font-file size)))
     (ftglSetFontFaceSize font size 72)
     (ftglSetFontCharMap font encoding)
     font))
+
+(define load-font (use-cache-with load-font-without-cache))
 
 (define* (render-text text font #:key (size #f))
   (cond (size
