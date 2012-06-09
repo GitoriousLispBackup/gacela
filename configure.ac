@@ -1,9 +1,9 @@
-AC_INIT([gacela], [0.5], [jsf@jsancho.org])
+AC_INIT([gacela],[0.5],[jsf@jsancho.org])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 LT_INIT
 AC_PROG_CC
-AC_PROG_LIBTOOL
-GUILE_FLAGS
+LT_INIT
+PKG_CHECK_MODULES([GUILE], [guile-2.0])
 
 AC_DEFUN([GACELA_DEPS],
     for lib in $1 ; do
