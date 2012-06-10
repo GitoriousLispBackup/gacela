@@ -196,6 +196,12 @@ gacela_SDL_GetTicks (void)
 }
 
 SCM
+gacela_SDL_GetError (void)
+{
+  return scm_from_locale_string (SDL_GetError ());
+}
+
+SCM
 gacela_SDL_DisplayFormat (SCM surface)
 {
   SDL_Surface *new = SDL_DisplayFormat (get_surface_address (surface));
@@ -501,6 +507,7 @@ init_gacela_sdl (void *data)
   scm_c_define_gsubr ("SDL_Flip", 1, 0, 0, gacela_SDL_Flip);
   scm_c_define_gsubr ("SDL_Delay", 1, 0, 0, gacela_SDL_Delay);
   scm_c_define_gsubr ("SDL_GetTicks", 0, 0, 0, gacela_SDL_GetTicks);
+  scm_c_define_gsubr ("SDL_GetError", 0, 0, 0, gacela_SDL_GetError);
   scm_c_define_gsubr ("SDL_DisplayFormat", 1, 0, 0, gacela_SDL_DisplayFormat);
   scm_c_define_gsubr ("SDL_DisplayFormatAlpha", 1, 0, 0, gacela_SDL_DisplayFormatAlpha);
   scm_c_define_gsubr ("SDL_MapRGB", 4, 0, 0, gacela_SDL_MapRGB);
