@@ -39,6 +39,8 @@
 	    3d-mode?
 	    get-frames-per-second
 	    set-frames-per-second!
+	    get-fullscreen
+	    set-fullscreen!
 	    init-frame-time
 	    get-frame-time
 	    delay-frame
@@ -74,16 +76,18 @@
 (define screen #f)
 (define flags 0)
 
-(define* (init-video width height bpp #:key (mode '2d) (title "") (fps 20))
+(define* (init-video width height bpp #:key (mode '2d) (title "") (fps 20) (fullscreen 'off))
   (SDL_Init SDL_INIT_VIDEO)
   (let ((info (SDL_GetVideoInfo)))
     (SDL_GL_SetAttribute SDL_GL_DOUBLEBUFFER 1)
     (set! flags (+ SDL_OPENGL SDL_GL_DOUBLEBUFFER SDL_HWPALETTE SDL_RESIZABLE
 		   (if (= (assoc-ref info 'hw_available) 0) SDL_SWSURFACE SDL_HWSURFACE)
-		   (if (= (assoc-ref info 'blit_hw) 0) 0 SDL_HWACCEL)))
+		   (if (= (assoc-ref info 'blit_hw) 0) 0 SDL_HWACCEL)
+		   (if (eq? fullscreen 'on) SDL_FULLSCREEN 0)))
     (set! screen (SDL_SetVideoMode width height bpp flags))
     (set-screen-title! title)
     (set-frames-per-second! fps)
+    (set-fullscreen! fullscreen #f)
     (init-gl)
     (if (eq? mode '3d) (set-3d-mode) (set-2d-mode))))
 
@@ -98,7 +102,7 @@
 
 (define (set-screen-bpp! bpp)
   (cond (screen
-	 (set! screen (SDL_SetVideoMode (get-screen-width) (get-screen-height) bpp flags)))))
+	 (set! screen (SDL_SetVideoMode (get-screen-width) (get-screen-height) (get-screen-bpp) flags)))))
 
 (define (resize-screen width height)
   (cond (screen
@@ -144,6 +148,19 @@
 
 (define (3d-mode?)
   (eq? mode '3d))
+
+
+(define fullscreen 'off)
+
+(define* (set-fullscreen! fs #:optional (toggle #t))
+  (cond ((or (and (eq? fullscreen 'on) (eq? fs 'off))
+	     (and (eq? fullscreen 'off) (eq? fs 'on)))
+	 (set! fullscreen fs)
+	 (cond (toggle
+		(SDL_WM_ToggleFullScreen screen))))))
+
+(define (get-fullscreen)
+  fullscreen)
 
 
 (define (init-gl)

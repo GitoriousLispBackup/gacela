@@ -177,6 +177,12 @@ gacela_SDL_WM_SetCaption (SCM title, SCM icon)
 }
 
 SCM
+gacela_SDL_WM_ToggleFullScreen(SCM surface)
+{
+  return scm_from_int (SDL_WM_ToggleFullScreen (get_surface_address (surface)));
+}
+
+SCM
 gacela_SDL_Flip (SCM screen)
 {
   return scm_from_int (SDL_Flip (get_surface_address (screen)));
@@ -504,6 +510,7 @@ init_gacela_sdl (void *data)
   scm_c_define_gsubr ("SDL_SetVideoMode", 4, 0, 0, gacela_SDL_SetVideoMode);
   scm_c_define_gsubr ("SDL_FreeSurface", 1, 0, 0, gacela_SDL_FreeSurface);
   scm_c_define_gsubr ("SDL_WM_SetCaption", 2, 0, 0, gacela_SDL_WM_SetCaption);
+  scm_c_define_gsubr ("SDL_WM_ToggleFullScreen", 1, 0, 0, gacela_SDL_WM_ToggleFullScreen);
   scm_c_define_gsubr ("SDL_Flip", 1, 0, 0, gacela_SDL_Flip);
   scm_c_define_gsubr ("SDL_Delay", 1, 0, 0, gacela_SDL_Delay);
   scm_c_define_gsubr ("SDL_GetTicks", 0, 0, 0, gacela_SDL_GetTicks);

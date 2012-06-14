@@ -151,8 +151,9 @@
 (define *bpp-screen* 32)
 (define *frames-per-second* 20)
 (define *mode* '2d)
+(define *fullscreen* 'off)
 
-(define* (set-game-properties! #:key title width height bpp fps mode)
+(define* (set-game-properties! #:key title width height bpp fps mode fullscreen)
   (if title
       (set-screen-title! title))
   (if bpp
@@ -166,10 +167,12 @@
       (set-frames-per-second! fps))
   (if mode
       (if (eq? mode '3d) (set-3d-mode) (set-2d-mode)))
+  (if fullscreen
+      (set-fullscreen! fullscreen))
   (get-game-properties))
 
 (define (get-game-properties)
-  `((title . ,(get-screen-title)) (width . ,(get-screen-width)) (height . ,(get-screen-height)) (bpp . ,(get-screen-bpp)) (fps . ,(get-frames-per-second)) (mode . ,(if (3d-mode?) '3d '2d))))
+  `((title . ,(get-screen-title)) (width . ,(get-screen-width)) (height . ,(get-screen-height)) (bpp . ,(get-screen-bpp)) (fps . ,(get-frames-per-second)) (mode . ,(if (3d-mode?) '3d '2d)) (fullscreen . ,(get-fullscreen))))
 
 
 ;;; Mobs Factory
