@@ -18,6 +18,7 @@
 (define-module (gacela gacela)
   #:use-module (gacela events)
   #:use-module (gacela video)
+  #:use-module ((gacela video) #:renamer (symbol-prefix-proc 'video:))
   #:use-module (gacela audio)
   #:use-module (ice-9 optargs)
   #:export (*title*
@@ -129,6 +130,7 @@
 			   (lambda () (game-code))
 			   (lambda (key . args) #f)))
 		(run-mobs)
+		(draw-bricks)
 		(flip-screen)
 		(delay-frame))))
   (quit-video))
@@ -349,3 +351,36 @@
 (define-macro (define-scene name . body)
   `(define (,name)
      ,@body))
+
+
+;;; Bricks Factory
+
+(define active-bricks '())
+
+(define* (draw-bricks #:optional (bricks active-bricks))
+  (cond ((not (null? bricks))
+	 ((car bricks))
+	 (draw-bricks (cdr bricks)))))
+
+(define (show-brick brick)
+  (set! active-bricks (cons brick active-bricks)))
+
+(define-macro (simple-brick brick-code)
+  (let ((name (gensym)))
+    `(begin
+       (define (,name)
+	 ,brick-code)
+       (show-brick ,name)
+       ,name)))
+
+
+;;; Primitive bricks
+
+(define (draw-square . args)
+  (simple-brick (apply video:draw-square args)))
+
+
+(module-map (lambda (sym var)
+	      (if (not (eq? sym '%module-public-interface))
+		  (module-export! (current-module) (list sym))))
+	    (current-module))
