@@ -34,7 +34,6 @@
 	    game-loop
 	    gacela-script
 	    game-running?
-	    set-game-code
 	    show-mob-hash
 	    hide-mob-hash
 	    get-active-mobs
@@ -59,7 +58,6 @@
 ;;; Main Loop
 
 (define loop-flag #f)
-(define game-code #f)
 (define game-loop-thread #f)
 
 (define-macro (run-in-game-loop proc)
@@ -90,24 +88,19 @@
 (run-in-game-loop resize-screen)
 
 (define-macro (game . code)
-  `(let ((game-function ,(if (null? code)
-			     `(lambda () #f)
-			     `(lambda () ,@code))))
-     (set-game-code game-function)
-     (cond ((not (game-running?))
-	    (game-loop)))))
+  (if (null? code)
+      #f
+      `(call-with-new-thread (lambda () ,@code))))
 
 (define (init-gacela)
   (hide-all-mobs)
-  (set-game-code (lambda () #f))
   (cond ((not game-loop-thread)
-	 (set! game-loop-thread (call-with-new-thread (lambda () (game))))))
+	 (set! game-loop-thread (call-with-new-thread (lambda () (cond ((not (game-running?)) (game-loop))))))))
   (while (not loop-flag))
   #t)
 
 (define (quit-gacela)
   (hide-all-mobs)
-  (set-game-code (lambda () #f))
   (set! game-loop-thread #f)
   (set! loop-flag #f))
 
@@ -125,10 +118,6 @@
 		(clear-screen)
 		(to-origin)
 		(refresh-active-mobs)
-		(if (procedure? game-code)
-		    (catch #t
-			   (lambda () (game-code))
-			   (lambda (key . args) #f)))
 		(run-mobs)
 		(draw-bricks)
 		(flip-screen)
@@ -140,9 +129,6 @@
 
 (define (game-running?)
   loop-flag)
-
-(define (set-game-code game-function)
-  (set! game-code game-function))
 
 
 ;;; Game Properties
