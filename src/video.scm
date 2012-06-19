@@ -67,6 +67,8 @@
 	    load-font
 	    load-font-without-texture
 	    render-text)
+  #:re-export (glPushMatrix
+	       glPopMatrix)
   #:export-syntax (glmatrix-block))
 
 
