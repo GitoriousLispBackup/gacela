@@ -348,8 +348,8 @@
 	 ((car bricks))
 	 (draw-bricks (cdr bricks)))))
 
-(define (show-brick brick)
-  (set! active-bricks (cons brick active-bricks)))
+(define-macro (show-brick brick-name)
+  `(set! active-bricks (cons (lambda () (,brick-name)) active-bricks)))
 
 (define-macro (simple-brick brick-code)
   (let ((name (gensym)))
@@ -362,8 +362,10 @@
 
 ;;; Primitive bricks
 
-(define (draw-square . args)
-  (simple-brick (apply video:draw-square args)))
+(define-macro (draw-square . args)
+  `(simple-brick (apply video:draw-square ',args)))
+
+(re-export video:draw-square)
 
 
 (module-map (lambda (sym var)
