@@ -58,8 +58,8 @@
 	    draw-rectangle
 	    draw-square
 	    draw-cube
-	    translate
-	    rotate
+	    gltranslate
+	    glrotate
 	    to-origin
 	    add-light
 	    set-camera
@@ -374,10 +374,10 @@
      (glNormal3f -1 0 0)
      (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) #:texture (or texture-6 texture) #:color (or color-6 color)))))
 
-(define* (translate x y #:optional (z 0))
+(define* (gltranslate x y #:optional (z 0))
   (glTranslatef x y z))
 
-(define* (rotate #:rest rot)
+(define* (glrotate #:rest rot)
   (cond ((3d-mode?)
 	 (apply 3d-rotate rot))
 	(else

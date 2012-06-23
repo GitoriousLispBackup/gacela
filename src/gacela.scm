@@ -50,8 +50,8 @@
 		   define-mob
 		   lambda-mob
 		   define-checking-mobs)
-  #:re-export (translate
-	       get-frame-time
+  #:re-export ;(translate
+	      ( get-frame-time
 	       3d-mode?))
 
 
@@ -119,7 +119,7 @@
 		(to-origin)
 		(refresh-active-mobs)
 		(run-mobs)
-		(draw-bricks)
+		(draw-views)
 		(flip-screen)
 		(delay-frame))))
   (quit-video))
@@ -339,33 +339,31 @@
      ,@body))
 
 
-;;; Bricks Factory
+;;; Views Factory
 
-(define active-bricks '())
+(define active-views (make-hash-table))
 
-(define* (draw-bricks #:optional (bricks active-bricks))
-  (cond ((not (null? bricks))
-	 ((car bricks))
-	 (draw-bricks (cdr bricks)))))
+(define* (draw-views #:optional (views (hash-map->list (lambda (k v) v) active-views)))
+  (cond ((not (null? views))
+	 (catch #t
+		  (lambda* () ((car views)))
+		  (lambda (key . args) #f))
+	 (draw-views (cdr views)))))
 
-(define-macro (show-brick brick-name)
-  `(set! active-bricks (cons (lambda () (,brick-name)) active-bricks)))
+(define-macro (define-view name content)
+  `(begin
+     (hash-set! active-views ',name (lambda () (glmatrix-block ,content)))
+     ',name))
 
-(define-macro (simple-brick brick-code)
-  (let ((name (gensym)))
+
+;;; Views Primitives
+
+(define-macro (translate x y view-or-z . view)
+  (let* ((z (if (null? view) 0 view-or-z))
+	 (view (if (null? view) view-or-z (car view))))
     `(begin
-       (define (,name)
-	 ,brick-code)
-       (show-brick ,name)
-       ,name)))
-
-
-;;; Primitive bricks
-
-(define-macro (draw-square . args)
-  `(simple-brick (apply video:draw-square ',args)))
-
-(re-export video:draw-square)
+       (gltranslate ,x ,y ,z)
+       ,view)))
 
 
 (module-map (lambda (sym var)
