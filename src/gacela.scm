@@ -50,8 +50,8 @@
 		   define-mob
 		   lambda-mob
 		   define-checking-mobs)
-  #:re-export ;(translate
-	      ( get-frame-time
+  #:re-export (translate
+	       get-frame-time
 	       3d-mode?))
 
 
@@ -350,20 +350,20 @@
 		  (lambda (key . args) #f))
 	 (draw-views (cdr views)))))
 
-(define-macro (define-view name content)
-  `(begin
-     (hash-set! active-views ',name (lambda () (glmatrix-block ,content)))
-     ',name))
+;; (define-macro (define-view name content)
+;;   `(begin
+;;      (hash-set! active-views ',name (lambda () (glmatrix-block ,content)))
+;;      ',name))
 
 
 ;;; Views Primitives
 
-(define-macro (translate x y view-or-z . view)
-  (let* ((z (if (null? view) 0 view-or-z))
-	 (view (if (null? view) view-or-z (car view))))
-    `(begin
-       (gltranslate ,x ,y ,z)
-       ,view)))
+;(define-macro (translate x y view-or-z . view)
+;  (let* ((z (if (null? view) 0 view-or-z))
+;	 (view (if (null? view) view-or-z (car view))))
+;    `(begin
+;       (gltranslate ,x ,y ,z)
+;       ,view)))
 
 
 (module-map (lambda (sym var)
