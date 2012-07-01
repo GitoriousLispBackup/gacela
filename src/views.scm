@@ -15,7 +15,7 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-(define-module (gacela draw)
+(define-module (gacela views)
   #:use-module (gacela gacela)
   #:use-module ((gacela video) #:renamer (symbol-prefix-proc 'video:))
   #:use-module ((gacela gl) #:select (glPushMatrix glPopMatrix))
@@ -26,8 +26,20 @@
      (hash-set! active-views ',name (lambda () (video:glmatrix-block ,content)))
      ',name))
 
-(define (square . params)
-  (define-view tmp (apply video:draw-square params)))
+(define-macro (lambda-mesh . content)
+  `(lambda () ,content))
+
+(define-macro (define-basic-meshes . symbols)
+  (cond ((null? symbols)
+	 `#t)
+	(else
+	 `(begin
+	    (define (,(caar symbols) . params) (lambda-visible (video:glmatrix-block (apply ,(cadar symbols) params))))
+	    (define-basic-meshes ,@(cdr symbols))))))
+
+(define-basic-meshes
+  (rectangle video:draw-rectangle)
+  (square video:draw-square))
 
 (module-map (lambda (sym var)
 	      (if (not (eq? sym '%module-public-interface))
