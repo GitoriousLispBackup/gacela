@@ -18,7 +18,6 @@
 (define-module (gacela gacela)
   #:use-module (gacela events)
   #:use-module (gacela video)
-  #:use-module ((gacela video) #:renamer (symbol-prefix-proc 'video:))
   #:use-module (gacela audio)
   #:use-module (ice-9 optargs)
   #:export (*title*
@@ -119,7 +118,7 @@
 		(to-origin)
 		(refresh-active-mobs)
 		(run-mobs)
-		(draw-views)
+		(draw-meshes)
 		(flip-screen)
 		(delay-frame))))
   (quit-video))
@@ -341,29 +340,14 @@
 
 ;;; Views Factory
 
-(define active-views (make-hash-table))
+(define default-view (make-hash-table))
 
-(define* (draw-views #:optional (views (hash-map->list (lambda (k v) v) active-views)))
-  (cond ((not (null? views))
+(define* (draw-meshes #:optional (meshes (hash-map->list (lambda (k v) v) default-view)))
+  (cond ((not (null? meshes))
 	 (catch #t
-		  (lambda* () ((car views)))
+		  (lambda () (glmatrix-block ((car meshes))))
 		  (lambda (key . args) #f))
-	 (draw-views (cdr views)))))
-
-;; (define-macro (define-view name content)
-;;   `(begin
-;;      (hash-set! active-views ',name (lambda () (glmatrix-block ,content)))
-;;      ',name))
-
-
-;;; Views Primitives
-
-;(define-macro (translate x y view-or-z . view)
-;  (let* ((z (if (null? view) 0 view-or-z))
-;	 (view (if (null? view) view-or-z (car view))))
-;    `(begin
-;       (gltranslate ,x ,y ,z)
-;       ,view)))
+	 (draw-meshes (cdr meshes)))))
 
 
 (module-map (lambda (sym var)

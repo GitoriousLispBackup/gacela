@@ -26,15 +26,17 @@
      (hash-set! active-views ',name (lambda () (video:glmatrix-block ,content)))
      ',name))
 
-(define-macro (lambda-mesh . content)
-  `(lambda () ,content))
+(define-macro (mesh . content)
+  `(let ((x 0) (y 0) (z 0)
+	(angle 0))
+     (lambda () ,content)))
 
 (define-macro (define-basic-meshes . symbols)
   (cond ((null? symbols)
 	 `#t)
 	(else
 	 `(begin
-	    (define (,(caar symbols) . params) (lambda-visible (video:glmatrix-block (apply ,(cadar symbols) params))))
+	    (define (,(caar symbols) . params) (mesh (apply ,(cadar symbols) params)))
 	    (define-basic-meshes ,@(cdr symbols))))))
 
 (define-basic-meshes
