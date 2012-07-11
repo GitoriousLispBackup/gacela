@@ -377,11 +377,11 @@
 (define* (translate x y #:optional (z 0))
   (glTranslatef x y z))
 
-(define* (rotate #:rest rot)
+(define (rotate . rot)
   (cond ((3d-mode?)
 	 (apply 3d-rotate rot))
 	(else
-	 (apply 2d-rotate rot))))
+	 (2d-rotate (car (last-pair rot))))))
 
 (define (3d-rotate xrot yrot zrot)
   (glRotatef xrot 1 0 0)

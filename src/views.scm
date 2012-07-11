@@ -26,22 +26,69 @@
      (hash-set! active-views ',name (lambda () (video:glmatrix-block ,content)))
      ',name))
 
-(define-macro (mesh . content)
-  `(let ((x 0) (y 0) (z 0)
-	(angle 0))
-     (lambda () ,content)))
+(define (mesh primitive)
+  (let ((x 0) (y 0) (z 0)
+	(ax 0) (ay 0) (az 0)
+	(rx 0) (ry 0) (rz 0))
+    (lambda (option . params)
+      (case option
+	((draw)
+	 (video:glatrix-block
+	  (video:rotate rx ry rz)
+	  (video:translate x y z)
+	  (video:rotate ax ay az)
+	  (primitive)))
+	((get-properties)
+	 `((x . ,x) (y . ,y) (z . ,z) (ax . ,ax) (ay . ,ay) (az . ,az) (rx . ,rx) (ry . ,ry) (rz . ,rz)))))))
 
-(define-macro (define-basic-meshes . symbols)
+(define-macro (define-mob mob-head . body)
+  (let* ((name (car mob-head))
+	 (attr (cdr mob-head))
+	 (make-fun-symbol (gensym))
+	 (mob-fun-symbol (gensym))
+	 (params-symbol (gensym)))
+    `(define (,name . ,params-symbol)
+       (define ,make-fun-symbol
+	 (lambda* ,(if (null? attr) '() `(#:key ,@attr))
+	   (the-mob ,name (list ,@(map (lambda (a) `(cons ',(car a) ,(car a))) attr)))))
+       (define ,mob-fun-symbol
+	 (define-mob-function ,attr ,@body))
+       (cond ((or (null? ,params-symbol) (keyword? (car ,params-symbol)))
+	      (apply ,make-fun-symbol ,params-symbol))
+	     (else
+	      (apply ,mob-fun-symbol ,params-symbol))))))
+
+
+(define-macro (define-mesh name . mesh)
+  (let* ((make-fun-symbol (gensym))
+	 (mesh-fun-symbol (gensym))
+	 (params-symbol (gensym)))
+    `(define ,name
+       (let ((,make-fun-symbol
+	      (lambda ()))
+	     (,mesh-fun-symbol
+	      (lambda ())))
+	 (lambda (. ,params-symbol)
+	   (cond ((or (null? ,params-symbol) (keyword? (car ,params-symbol)))
+		  (apply ,make-fun-symbol ,params-symbol))
+		 (else
+		  (apply ,mesh-fun-symbol ,params-symbol))))))))
+	 
+
+(define-macro (define-primitives . symbols)
   (cond ((null? symbols)
 	 `#t)
 	(else
 	 `(begin
-	    (define (,(caar symbols) . params) (mesh (apply ,(cadar symbols) params)))
-	    (define-basic-meshes ,@(cdr symbols))))))
+	    (define (,(caar symbols) . params) (mesh (lambda () (apply ,(cadar symbols) params))))
+	    (define-primitives ,@(cdr symbols))))))
 
-(define-basic-meshes
+; (define-macro (,(caar symbols) . params) (let ((f ',(cadar symbols))) `(mesh (lambda () (apply ,f ',params)))))
+
+(define-primitives
   (rectangle video:draw-rectangle)
   (square video:draw-square))
+
 
 (module-map (lambda (sym var)
 	      (if (not (eq? sym '%module-public-interface))
