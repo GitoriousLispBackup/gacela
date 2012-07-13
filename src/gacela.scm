@@ -345,7 +345,7 @@
 (define* (draw-meshes #:optional (meshes (hash-map->list (lambda (k v) v) default-view)))
   (cond ((not (null? meshes))
 	 (catch #t
-		  (lambda () (glmatrix-block ((car meshes))))
+		  (lambda () ((car meshes) 'draw))
 		  (lambda (key . args) #f))
 	 (draw-meshes (cdr meshes)))))
 
