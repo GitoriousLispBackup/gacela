@@ -30,8 +30,9 @@
   (let ((x 0) (y 0) (z 0)
 	(ax 0) (ay 0) (az 0)
 	(rx 0) (ry 0) (rz 0)
-	(id (gensym)))
-    (let ((get-properties
+	(id (gensym))
+	(properties '()))
+    (let ((inner-properties
 	   (lambda ()
 	     `((id . ,id) (x . ,x) (y . ,y) (z . ,z) (ax . ,ax) (ay . ,ay) (az . ,az) (rx . ,rx) (ry . ,ry) (rz . ,rz)))))
       (lambda (option . params)
@@ -54,10 +55,16 @@
 	   (set! rx (+ rx (car params)))
 	   (set! ry (+ ry (cadr params)))
 	   (set! rz (+ rz (caddr params))))
-	  ((get-properties)
-	   (get-properties))
-	  ((get-property)
-	   (assoc-ref (get-properties) (car params))))))))
+	  ((inner-properties)
+	   (inner-properties))
+	  ((inner-property)
+	   (assoc-ref (inner-properties) (car params)))
+	  ((properties)
+	   properties)
+	  ((property)
+	   (assoc-ref properties (car params)))
+	  ((property-set!)
+	   (set! properties (assoc-set! properties (car params) (cadr params)))))))))
 
 (define* (show mesh #:optional (view default-view))
   (let ((id (mesh 'get-property 'id)))
@@ -87,9 +94,13 @@
   (cond ((null? symbols)
 	 `#t)
 	(else
-	 `(begin
-	    (define (,(caar symbols) . params) (mesh (lambda () (apply ,(cadar symbols) params))))
-	    (define-primitives ,@(cdr symbols))))))
+	 (let ((origin (caar symbols))
+	       (dest (cadar symbols)))
+	   `(begin
+	      ,(if (and (list? origin) (list? dest))
+		   `(define* ,origin #f)
+		   `(define (,origin . params) (mesh (lambda () (apply ,dest params)))))
+	      (define-primitives ,@(cdr symbols)))))))
 
 (define-primitives
   (rectangle video:draw-rectangle)
