@@ -67,12 +67,12 @@
 	   (set! properties (assoc-set! properties (car params) (cadr params)))))))))
 
 (define* (show mesh #:optional (view default-view))
-  (let ((id (mesh 'get-property 'id)))
+  (let ((id (mesh 'inner-property 'id)))
     (if (not (hash-ref view id))
 	(hash-set! view id mesh))))
 
 (define* (hide mesh #:optional (view default-view))
-  (hash-remove! view (mesh 'get-property 'id)))
+  (hash-remove! view (mesh 'inner-property 'id)))
 
 (define* (translate mesh x y #:optional (z 0))
   (mesh 'translate x y z)

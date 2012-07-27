@@ -16,11 +16,12 @@
 
 
 (define-module (gacela utils)
-  #:export (use-cache-with))
+  #:use-module (ice-9 session)
+  #:export (use-cache-with
+	    procedure-header))
 
 
 ;;; Cache for procedures
-
 (define (use-cache-with proc)
   (let ((cache (make-weak-value-hash-table)))
     (lambda (. param)
@@ -31,3 +32,11 @@
 	       (set! res (apply proc param))
 	       (hash-set! cache key res)
 	       res))))))
+
+
+;;; Retrive header definition of a procedure
+ (define (procedure-header proc)
+   (let* ((args (procedure-arguments proc))
+ 	 (name (procedure-name proc))
+ 	 (required (cdar args)))
+     (cons name required)))
