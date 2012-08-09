@@ -90,6 +90,12 @@
       (mesh 'rotate 0 0 (car params)))
   mesh)
 
+
+;;; Primitives
+
+(define (basic proc)
+  ((@ (system vm program) program-lambda-list) proc))
+
 (define-macro (define-primitives . symbols)
   (cond ((null? symbols)
 	 `#t)
