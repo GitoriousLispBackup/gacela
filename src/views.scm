@@ -42,7 +42,7 @@
 	    (video:rotate ax ay az)
 	    (video:translate x y z)
 	    (video:rotate rx ry rz)
-	    (primitive)))
+	    (primitive (assoc-ref properties 'args))))
 	  ((translate)
 	   (set! x (+ x (car params)))
 	   (set! y (+ y (cadr params)))
@@ -93,8 +93,11 @@
 
 ;;; Primitives
 
-(define (basic proc)
-  ((@ (system vm program) program-lambda-list) proc))
+(define-macro (primitive proc)
+  `(lambda (. params)
+     (let ((m (mesh (lambda (args) (apply ,proc args)))))
+       (m 'property-set! 'args params)
+       m)))
 
 (define-macro (define-primitives . symbols)
   (cond ((null? symbols)
