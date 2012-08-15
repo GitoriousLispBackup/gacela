@@ -42,7 +42,7 @@
 	    (video:rotate ax ay az)
 	    (video:translate x y z)
 	    (video:rotate rx ry rz)
-	    (primitive (assoc-ref properties 'args))))
+	    (primitive properties)))
 	  ((translate)
 	   (set! x (+ x (car params)))
 	   (set! y (+ y (cadr params)))
@@ -61,6 +61,8 @@
 	   (assoc-ref (inner-properties) (car params)))
 	  ((properties)
 	   properties)
+	  ((properties-set!)
+	   (set! properties (car params)))
 	  ((property)
 	   (assoc-ref properties (car params)))
 	  ((property-set!)
@@ -95,8 +97,8 @@
 
 (define-macro (primitive proc)
   `(lambda (. params)
-     (let ((m (mesh (lambda (args) (apply ,proc args)))))
-       (m 'property-set! 'args params)
+     (let ((m (mesh (lambda (props) (apply ,proc ((@ (gacela utils) arguments-apply) ,proc props))))))
+       (m 'properties-set! ((@ (gacela utils) arguments-calling) ,proc params))
        m)))
 
 (define-macro (define-primitives . symbols)
@@ -106,9 +108,7 @@
 	 (let ((origin (caar symbols))
 	       (dest (cadar symbols)))
 	   `(begin
-	      ,(if (and (list? origin) (list? dest))
-		   `(define* ,origin #f)
-		   `(define (,origin . params) (mesh (lambda () (apply ,dest params)))))
+	      (define ,origin (primitive ,dest))
 	      (define-primitives ,@(cdr symbols)))))))
 
 (define-primitives
