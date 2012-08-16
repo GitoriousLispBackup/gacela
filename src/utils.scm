@@ -44,7 +44,10 @@
 (define (required-arguments args values)
   "Return an alist with required arguments and their values"
   (define (f vars values)
-    (cond ((or (null? vars) (null? values)) '())
+    (cond ((null? vars) '())
+	  ((null? values) (assoc-set! (f (cdr vars) '())
+				      (car vars)
+				      undefined))
 	  (else (assoc-set! (f (cdr vars) (cdr values))
 			    (car vars)
 			    (car values)))))
