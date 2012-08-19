@@ -118,7 +118,7 @@
 		(to-origin)
 		(refresh-active-mobs)
 		(run-mobs)
-		(draw-meshes)
+		(run-extensions)
 		(flip-screen)
 		(delay-frame))))
   (quit-video))
@@ -128,6 +128,26 @@
 
 (define (game-running?)
   loop-flag)
+
+
+;;; Extensions to main loop
+
+(define extensions '())
+
+(define (add-extension! proc pri)
+  "Add an extension with a priority to the main loop"
+  (set! extensions
+	(sort (assoc-set! extensions proc pri)
+	      (lambda (a b)
+		(< (cdr a) (cdr b))))))
+
+(define (remove-extension! proc)
+  "Remove an extension from the main loop"
+  (set! extensions
+	(assoc-remove! extensions proc)))
+
+(define (run-extensions)
+  (for-each (lambda (x) ((car x))) extensions))
 
 
 ;;; Game Properties
@@ -336,18 +356,6 @@
 (define-macro (define-scene name . body)
   `(define (,name)
      ,@body))
-
-
-;;; Views Factory
-
-(define default-view (make-hash-table))
-
-(define* (draw-meshes #:optional (meshes (hash-map->list (lambda (k v) v) default-view)))
-  (cond ((not (null? meshes))
-	 (catch #t
-		  (lambda () ((car meshes) 'draw))
-		  (lambda (key . args) #f))
-	 (draw-meshes (cdr meshes)))))
 
 
 (module-map (lambda (sym var)

@@ -21,6 +21,18 @@
   #:use-module ((gacela gl) #:select (glPushMatrix glPopMatrix))
   #:use-module (ice-9 optargs))
 
+
+(define default-view (make-hash-table))
+
+(define* (draw-meshes #:optional (meshes (hash-map->list (lambda (k v) v) default-view)))
+  (cond ((not (null? meshes))
+	 (catch #t
+		  (lambda () (mesh-draw (car meshes)))
+		  (lambda (key . args) #f))
+	 (draw-meshes (cdr meshes)))))
+
+(add-extension! draw-meshes 50)
+
 (define-macro (define-view name content)
   `(begin
      (hash-set! active-views ',name (lambda () (video:glmatrix-block ,content)))
@@ -86,13 +98,20 @@
 	  "property-set!"
 	  (set! properties (assoc-set! properties prop-name value))))))))
 
-(define mesh-properties-set!
-  (let ((f (record-accessor mesh-type 'properties-set!)))
-    (lambda (mesh new-properties)
-      ((f mesh) new-properties))))
+(define (mesh-draw mesh)
+  (((record-accessor mesh-type 'draw) mesh)))
+
+(define (mesh-inner-property mesh prop-name)
+  (((record-accessor mesh-type 'inner-property) mesh) prop-name))
+
+(define (mesh-properties mesh)
+  (((record-accessor mesh-type 'properties) mesh)))
+
+(define (mesh-properties-set! mesh new-properties)
+  (((record-accessor mesh-type 'properties-set!) mesh) new-properties))
 
 (define* (show mesh #:optional (view default-view))
-  (let ((id (mesh 'inner-property 'id)))
+  (let ((id (mesh-inner-property mesh 'id)))
     (if (not (hash-ref view id))
 	(hash-set! view id mesh))))
 
