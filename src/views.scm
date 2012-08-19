@@ -26,47 +26,70 @@
      (hash-set! active-views ',name (lambda () (video:glmatrix-block ,content)))
      ',name))
 
-(define (mesh primitive)
-  (let ((x 0) (y 0) (z 0)
-	(ax 0) (ay 0) (az 0)
-	(rx 0) (ry 0) (rz 0)
-	(id (gensym))
-	(properties '()))
-    (let ((inner-properties
-	   (lambda ()
-	     `((id . ,id) (x . ,x) (y . ,y) (z . ,z) (ax . ,ax) (ay . ,ay) (az . ,az) (rx . ,rx) (ry . ,ry) (rz . ,rz)))))
-      (lambda (option . params)
-	(case option
-	  ((draw)
-	   (video:glmatrix-block
-	    (video:rotate ax ay az)
-	    (video:translate x y z)
-	    (video:rotate rx ry rz)
-	    (primitive properties)))
-	  ((translate)
-	   (set! x (+ x (car params)))
-	   (set! y (+ y (cadr params)))
-	   (set! z (+ z (caddr params))))
-	  ((turn)
-	   (set! ax (+ ax (car params)))
-	   (set! ay (+ ay (cadr params)))
-	   (set! az (+ az (caddr params))))
-	  ((rotate)
-	   (set! rx (+ rx (car params)))
-	   (set! ry (+ ry (cadr params)))
-	   (set! rz (+ rz (caddr params))))
-	  ((inner-properties)
-	   (inner-properties))
-	  ((inner-property)
-	   (assoc-ref (inner-properties) (car params)))
-	  ((properties)
-	   properties)
-	  ((properties-set!)
-	   (set! properties (car params)))
-	  ((property)
-	   (assoc-ref properties (car params)))
-	  ((property-set!)
-	   (set! properties (assoc-set! properties (car params) (cadr params)))))))))
+(define mesh-type
+  (make-record-type "mesh" 
+		    '(draw translate turn rotate inner-properties inner-property properties properties-set! property property-set!)))
+
+(define mesh-constructor (record-constructor mesh-type))
+(define mesh? (record-predicate mesh-type))
+
+(define (mesh proc)
+  (apply
+   mesh-constructor
+   (let ((px 0) (py 0) (pz 0)
+	 (ax 0) (ay 0) (az 0)
+	 (rx 0) (ry 0) (rz 0)
+	 (id (gensym))
+	 (properties '()))
+     (let ((inner-properties
+	    (lambda ()
+	      `((id . ,id) (x . ,px) (y . ,py) (z . ,pz) (ax . ,ax) (ay . ,ay) (az . ,az) (rx . ,rx) (ry . ,ry) (rz . ,rz)))))
+       (list
+	(lambda ()
+	  "draw"
+	  (video:glmatrix-block
+	   (video:rotate ax ay az)
+	   (video:translate px py pz)
+	   (video:rotate rx ry rz)
+	   (proc properties)))
+	(lambda (x y z)
+	  "translate"
+	  (set! px (+ px x))
+	  (set! py (+ py y))
+	  (set! pz (+ pz z)))
+	(lambda (x y z)
+	  "turn"
+	  (set! ax (+ ax x))
+	  (set! ay (+ ay y))
+	  (set! az (+ az z)))
+	(lambda (x y z)
+	  "rotate"
+	  (set! rx (+ rx x))
+	  (set! ry (+ ry y))
+	  (set! rz (+ rz z)))
+	(lambda ()
+	  "inner-properties"
+	  (inner-properties))
+	(lambda (prop-name)
+	  "inner-property"
+	  (assoc-ref (inner-properties) prop-name))
+	(lambda ()
+	  "properties"
+	  properties)
+	(lambda (new-properties)
+	  "properties-set!"
+	  (set! properties new-properties))
+	(lambda (prop-name)
+	  "property"
+	  (assoc-ref properties prop-name))
+	(lambda (prop-name value)
+	  "property-set!"
+	  (set! properties (assoc-set! properties prop-name value))))))))
+
+(define mesh-properties-set!
+  (let ((f (record-accessor mesh-type 'properties-set!)))
+    (lambda (mesh new-properties)
+      ((f mesh) new-properties))))
 
 (define* (show mesh #:optional (view default-view))
   (let ((id (mesh 'inner-property 'id)))
@@ -98,7 +121,7 @@
 (define-macro (primitive proc)
   `(lambda (. params)
      (let ((m (mesh (lambda (props) (apply ,proc ((@ (gacela utils) arguments-apply) ,proc props))))))
-       (m 'properties-set! ((@ (gacela utils) arguments-calling) ,proc params))
+       (mesh-properties-set! m ((@ (gacela utils) arguments-calling) ,proc params))
        m)))
 
 (define-macro (define-primitives . symbols)
