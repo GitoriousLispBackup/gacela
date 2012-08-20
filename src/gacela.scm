@@ -49,8 +49,7 @@
 		   define-mob
 		   lambda-mob
 		   define-checking-mobs)
-  #:re-export (translate
-	       get-frame-time
+  #:re-export (get-frame-time
 	       3d-mode?))
 
 

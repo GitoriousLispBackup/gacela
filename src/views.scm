@@ -31,31 +31,40 @@
 		  (lambda (key . args) #f))
 	 (draw-meshes (cdr meshes)))))
 
-(add-extension! draw-meshes 50)
-
 (define-macro (define-view name content)
   `(begin
      (hash-set! active-views ',name (lambda () (video:glmatrix-block ,content)))
      ',name))
 
+
+;;; Meshes
+
 (define mesh-type
   (make-record-type "mesh" 
-		    '(draw translate turn rotate inner-properties inner-property properties properties-set! property property-set!)))
+		    '(draw translate turn rotate inner-properties inner-property properties properties-set! property property-set!)
+		    (lambda (record port)
+		      (format port "#<mesh: ~a" (mesh-inner-property record 'type))
+		      (for-each (lambda (x)
+				  (cond (((@ (gacela utils) bound?) (cdr x))
+					 (format port " ~a" x))))
+				(mesh-properties record))
+		      (display ">" port))))
+		      
 
 (define mesh-constructor (record-constructor mesh-type))
 (define mesh? (record-predicate mesh-type))
 
-(define (mesh proc)
+(define* (mesh proc #:optional mesh-type)
   (apply
    mesh-constructor
    (let ((px 0) (py 0) (pz 0)
 	 (ax 0) (ay 0) (az 0)
 	 (rx 0) (ry 0) (rz 0)
-	 (id (gensym))
+	 (id (gensym)) (type mesh-type)
 	 (properties '()))
      (let ((inner-properties
 	    (lambda ()
-	      `((id . ,id) (x . ,px) (y . ,py) (z . ,pz) (ax . ,ax) (ay . ,ay) (az . ,az) (rx . ,rx) (ry . ,ry) (rz . ,rz)))))
+	      `((id . ,id) (type . ,type) (x . ,px) (y . ,py) (z . ,pz) (ax . ,ax) (ay . ,ay) (az . ,az) (rx . ,rx) (ry . ,ry) (rz . ,rz)))))
        (list
 	(lambda ()
 	  "draw"
@@ -101,6 +110,9 @@
 (define (mesh-draw mesh)
   (((record-accessor mesh-type 'draw) mesh)))
 
+(define (mesh-inner-properties mesh)
+  (((record-accessor mesh-type 'inner-properties) mesh)))
+
 (define (mesh-inner-property mesh prop-name)
   (((record-accessor mesh-type 'inner-property) mesh) prop-name))
 
@@ -110,36 +122,44 @@
 (define (mesh-properties-set! mesh new-properties)
   (((record-accessor mesh-type 'properties-set!) mesh) new-properties))
 
+(define (mesh-property mesh prop-name)
+  (((record-accessor mesh-type 'property) mesh) prop-name))
+
+(define (mesh-property-set! mesh prop-name value)
+  (((record-accessor mesh-type 'property-set!) mesh) prop-name value))
+
 (define* (show mesh #:optional (view default-view))
   (let ((id (mesh-inner-property mesh 'id)))
     (if (not (hash-ref view id))
 	(hash-set! view id mesh))))
 
 (define* (hide mesh #:optional (view default-view))
-  (hash-remove! view (mesh 'inner-property 'id)))
+  (hash-remove! view (mesh-inner-property mesh 'id)))
 
 (define* (translate mesh x y #:optional (z 0))
-  (mesh 'translate x y z)
+  (((record-accessor mesh-type 'translate) mesh) x y z)
   mesh)
 
 (define (turn mesh . params)
-  (if (>= (length params) 3)
-      (apply mesh (cons 'turn params))
-      (mesh 'turn 0 0 (car params)))
+  (apply ((record-accessor mesh-type 'turn) mesh)
+	 (if (>= (length params) 3)
+	     params
+	     (list 0 0 (car params))))
   mesh)
 
 (define (rotate mesh . params)
-  (if (>= (length params) 3)
-      (apply mesh (cons 'rotate params))
-      (mesh 'rotate 0 0 (car params)))
+  (apply ((record-accessor mesh-type 'rotate) mesh)
+	 (if (>= (length params) 3)
+	     params
+	     (list 0 0 (car params))))
   mesh)
 
 
 ;;; Primitives
 
-(define-macro (primitive proc)
+(defmacro* primitive (proc #:optional type)
   `(lambda (. params)
-     (let ((m (mesh (lambda (props) (apply ,proc ((@ (gacela utils) arguments-apply) ,proc props))))))
+     (let ((m (mesh (lambda (props) (apply ,proc ((@ (gacela utils) arguments-apply) ,proc props))) ,type)))
        (mesh-properties-set! m ((@ (gacela utils) arguments-calling) ,proc params))
        m)))
 
@@ -150,7 +170,7 @@
 	 (let ((origin (caar symbols))
 	       (dest (cadar symbols)))
 	   `(begin
-	      (define ,origin (primitive ,dest))
+	      (define ,origin (primitive ,dest ',origin))
 	      (define-primitives ,@(cdr symbols)))))))
 
 (define-primitives
@@ -162,3 +182,7 @@
 	      (if (not (eq? sym '%module-public-interface))
 		  (module-export! (current-module) (list sym))))
 	    (current-module))
+
+
+;;; Adding extensions to the main loop
+(add-extension! draw-meshes 50)

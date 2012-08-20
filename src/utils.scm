@@ -18,7 +18,8 @@
 (define-module (gacela utils)
   #:export (use-cache-with
 	    arguments-calling
-	    arguments-apply))
+	    arguments-apply
+	    bound?))
 
 
 ;;; Cache for procedures
