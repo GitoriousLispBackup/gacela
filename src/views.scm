@@ -24,6 +24,23 @@
 
 ;;; Views
 
+(define view-type
+  (make-record-type "view" 
+		    '(id controllers meshes)
+		    (lambda (record port)
+		      (format port "#<view: ~a controllers / ~a meshes>"
+			      (length (hash-map->list (lambda x x) (view-controllers record)))
+			      (length (hash-map->list (lambda x x) (view-meshes record)))))))
+
+(define view? (record-predicate view-type))
+(define view-id (record-accessor view-type 'id))
+(define view-controllers (record-accessor view-type 'controllers))
+(define view-meshes (record-accessor view-type 'meshes))
+(define (make-view) ((record-constructor view-type) (gensym) (make-hash-table) (make-hash-table)))
+
+
+(define active-views (make-hash-table))
+
 (define default-view (make-hash-table))
 
 (define* (draw-meshes #:optional (meshes (hash-map->list (lambda (k v) v) default-view)))
@@ -32,11 +49,6 @@
 		  (lambda () (mesh-draw (car meshes)))
 		  (lambda (key . args) #f))
 	 (draw-meshes (cdr meshes)))))
-
-(define-macro (define-view name content)
-  `(begin
-     (hash-set! active-views ',name (lambda () (video:glmatrix-block ,content)))
-     ',name))
 
 
 ;;; Meshes
@@ -55,7 +67,7 @@
 
 (define mesh? (record-predicate mesh-type))
 
-(define* (mesh proc #:optional mesh-type)
+(define* (make-mesh proc #:optional mesh-type)
   (apply
    (record-constructor mesh-type)
    (let ((px 0) (py 0) (pz 0)
@@ -158,9 +170,9 @@
 
 ;;; Primitives
 
-(defmacro* primitive (proc #:optional type)
+(defmacro* define-primitive (proc #:optional type)
   `(lambda (. params)
-     (let ((m (mesh (lambda (props) (apply ,proc ((@ (gacela utils) arguments-apply) ,proc props))) ,type)))
+     (let ((m (make-mesh (lambda (props) (apply ,proc ((@ (gacela utils) arguments-apply) ,proc props))) ,type)))
        (mesh-properties-set! m ((@ (gacela utils) arguments-calling) ,proc params))
        m)))
 
@@ -171,7 +183,7 @@
 	 (let ((origin (caar symbols))
 	       (dest (cadar symbols)))
 	   `(begin
-	      (define ,origin (primitive ,dest ',origin))
+	      (define ,origin (define-primitive ,dest ',origin))
 	      (define-primitives ,@(cdr symbols)))))))
 
 (define-primitives
