@@ -22,6 +22,8 @@
   #:use-module (ice-9 optargs))
 
 
+;;; Views
+
 (define default-view (make-hash-table))
 
 (define* (draw-meshes #:optional (meshes (hash-map->list (lambda (k v) v) default-view)))
@@ -51,12 +53,11 @@
 		      (display ">" port))))
 		      
 
-(define mesh-constructor (record-constructor mesh-type))
 (define mesh? (record-predicate mesh-type))
 
 (define* (mesh proc #:optional mesh-type)
   (apply
-   mesh-constructor
+   (record-constructor mesh-type)
    (let ((px 0) (py 0) (pz 0)
 	 (ax 0) (ay 0) (az 0)
 	 (rx 0) (ry 0) (rz 0)
