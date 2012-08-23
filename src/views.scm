@@ -26,29 +26,52 @@
 
 (define view-type
   (make-record-type "view" 
-		    '(id controllers meshes)
+		    '(id controllers meshes priority)
 		    (lambda (record port)
 		      (format port "#<view: ~a controllers / ~a meshes>"
 			      (length (hash-map->list (lambda x x) (view-controllers record)))
 			      (length (hash-map->list (lambda x x) (view-meshes record)))))))
 
+(define* (make-view #:optional (priority 0)) ((record-constructor view-type) (gensym) (make-hash-table) (make-hash-table) priority))
 (define view? (record-predicate view-type))
 (define view-id (record-accessor view-type 'id))
 (define view-controllers (record-accessor view-type 'controllers))
 (define view-meshes (record-accessor view-type 'meshes))
-(define (make-view) ((record-constructor view-type) (gensym) (make-hash-table) (make-hash-table)))
+(define view-priority (record-accessor view-type 'priority))
 
+(define activated-views '())
+(define (sort-views views-alist)
+  (sort views-alist
+	(lambda (v1 v2)
+	  (< (view-priority (cdr v1)) (view-priority (cdr v2))))))
 
-(define active-views (make-hash-table))
+(define (activate-view view)
+  (set! activated-views
+	(sort-views (assoc-set! activated-views (view-id view) view)))
+  view)
 
-(define default-view (make-hash-table))
+(define (view-actived? view)
+  (and (assoc (view-id view) activated-views) #t))
 
-(define* (draw-meshes #:optional (meshes (hash-map->list (lambda (k v) v) default-view)))
+(define (view-priority-set! view priority)
+  ((record-modifier view-type 'priority) view priority)
+  (set! activated-views (sort-views activated-views)))
+
+(define* (run-views #:optional (views activated-views))
+  (cond ((not (null? views))
+	 ; controllers go here
+	 (draw-meshes (hash-map->list (lambda (k v) v) (view-meshes (cdar views))))
+	 (run-views (cdr views)))))
+
+(define (draw-meshes meshes)
   (cond ((not (null? meshes))
 	 (catch #t
 		  (lambda () (mesh-draw (car meshes)))
 		  (lambda (key . args) #f))
 	 (draw-meshes (cdr meshes)))))
+
+
+(define default-view (activate-view (make-view)))
 
 
 ;;; Meshes
@@ -67,13 +90,13 @@
 
 (define mesh? (record-predicate mesh-type))
 
-(define* (make-mesh proc #:optional mesh-type)
+(define* (make-mesh proc #:optional type)
   (apply
    (record-constructor mesh-type)
    (let ((px 0) (py 0) (pz 0)
 	 (ax 0) (ay 0) (az 0)
 	 (rx 0) (ry 0) (rz 0)
-	 (id (gensym)) (type mesh-type)
+	 (id (gensym))
 	 (properties '()))
      (let ((inner-properties
 	    (lambda ()
@@ -142,12 +165,14 @@
   (((record-accessor mesh-type 'property-set!) mesh) prop-name value))
 
 (define* (show mesh #:optional (view default-view))
-  (let ((id (mesh-inner-property mesh 'id)))
-    (if (not (hash-ref view id))
-	(hash-set! view id mesh))))
+  (let ((id (mesh-inner-property mesh 'id))
+	(table (view-meshes view)))
+    (if (not (hash-ref table id))
+	(hash-set! table id mesh))))
 
 (define* (hide mesh #:optional (view default-view))
-  (hash-remove! view (mesh-inner-property mesh 'id)))
+  (let ((table (view-meshes view)))
+    (hash-remove! table (mesh-inner-property mesh 'id))))
 
 (define* (translate mesh x y #:optional (z 0))
   (((record-accessor mesh-type 'translate) mesh) x y z)
@@ -198,4 +223,4 @@
 
 
 ;;; Adding extensions to the main loop
-(add-extension! draw-meshes 50)
+(add-extension! run-views 10)
