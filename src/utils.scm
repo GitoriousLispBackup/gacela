@@ -143,3 +143,20 @@
 	    (optional-arguments-apply args values)
 	    (keyword-arguments-apply args values)
 	    (rest-arguments-apply args values))))
+
+
+;;; Continuations and coroutines
+
+(define (make-producer body)
+  (define resume #f)
+  (lambda (real-send)
+    (define send-to real-send)
+    (define (send value-to-send)
+      (set! send-to
+	    (call/cc
+	     (lambda (k)
+	       (set! resume k)
+	       (send-to value-to-send)))))
+    (if resume
+        (resume real-send)
+        (body send))))

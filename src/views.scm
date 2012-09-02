@@ -26,18 +26,25 @@
 
 (define view-type
   (make-record-type "view" 
-		    '(id controllers meshes priority)
+		    '(id body meshes priority)
 		    (lambda (record port)
-		      (format port "#<view: ~a controllers / ~a meshes>"
-			      (length (hash-map->list (lambda x x) (view-controllers record)))
-			      (length (hash-map->list (lambda x x) (view-meshes record)))))))
+		      (format port "#<view: ~a meshes>"
+			      (length (view-meshes record))))))
 
-(define* (make-view #:optional (priority 0)) ((record-constructor view-type) (gensym) (make-hash-table) (make-hash-table) priority))
+(define (make-view body meshes) ((record-constructor view-type) (gensym) body meshes 0))
 (define view? (record-predicate view-type))
 (define view-id (record-accessor view-type 'id))
-(define view-controllers (record-accessor view-type 'controllers))
+(define view-body (record-accessor view-type 'body))
 (define view-meshes (record-accessor view-type 'meshes))
 (define view-priority (record-accessor view-type 'priority))
+
+(define-macro (view meshes . body)
+  `(make-view
+    ,(cond ((null? body) `(lambda () #f))
+	   (else `(lambda () ,@body)))
+    (map (lambda (m)
+	   `(,(mesh-inner-property m 'id) . ,m))
+	 meshes)))
 
 (define activated-views '())
 (define (sort-views views-alist)
@@ -60,18 +67,18 @@
 (define* (run-views #:optional (views activated-views))
   (cond ((not (null? views))
 	 ; controllers go here
-	 (draw-meshes (hash-map->list (lambda (k v) v) (view-meshes (cdar views))))
+	 (draw-meshes (view-meshes (cdar views)))
 	 (run-views (cdr views)))))
 
 (define (draw-meshes meshes)
   (cond ((not (null? meshes))
 	 (catch #t
-		  (lambda () (mesh-draw (car meshes)))
+		  (lambda () (mesh-draw (cdar meshes)))
 		  (lambda (key . args) #f))
 	 (draw-meshes (cdr meshes)))))
 
 
-(define default-view (activate-view (make-view)))
+;(define default-view (activate-view (make-view)))
 
 
 ;;; Meshes
@@ -216,11 +223,11 @@
   (square video:draw-square))
 
 
+;;; Adding extensions to the main loop
+(add-extension! run-views 10)
+
+
 (module-map (lambda (sym var)
 	      (if (not (eq? sym '%module-public-interface))
 		  (module-export! (current-module) (list sym))))
 	    (current-module))
-
-
-;;; Adding extensions to the main loop
-(add-extension! run-views 10)
