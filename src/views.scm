@@ -38,13 +38,13 @@
 (define view-meshes (record-accessor view-type 'meshes))
 (define view-priority (record-accessor view-type 'priority))
 
-(define-macro (view meshes . body)
+(define-macro (define-view meshes . body)
   `(make-view
     ,(cond ((null? body) `(lambda () #f))
 	   (else `(lambda () ,@body)))
     (map (lambda (m)
 	   `(,(mesh-inner-property m 'id) . ,m))
-	 meshes)))
+	 ,meshes)))
 
 (define activated-views '())
 (define (sort-views views-alist)
@@ -64,10 +64,13 @@
   ((record-modifier view-type 'priority) view priority)
   (set! activated-views (sort-views activated-views)))
 
+(define current-view #f)
+
 (define* (run-views #:optional (views activated-views))
   (cond ((not (null? views))
+	 (set! current-view (cdar views))
 	 ; controllers go here
-	 (draw-meshes (view-meshes (cdar views)))
+	 (draw-meshes (view-meshes current-view))
 	 (run-views (cdr views)))))
 
 (define (draw-meshes meshes)
@@ -78,7 +81,7 @@
 	 (draw-meshes (cdr meshes)))))
 
 
-;(define default-view (activate-view (make-view)))
+(define default-view (activate-view (define-view '())))
 
 
 ;;; Meshes
@@ -171,13 +174,13 @@
 (define (mesh-property-set! mesh prop-name value)
   (((record-accessor mesh-type 'property-set!) mesh) prop-name value))
 
-(define* (show mesh #:optional (view default-view))
+(define* (show mesh #:optional (view current-view))
   (let ((id (mesh-inner-property mesh 'id))
 	(table (view-meshes view)))
     (if (not (hash-ref table id))
 	(hash-set! table id mesh))))
 
-(define* (hide mesh #:optional (view default-view))
+(define* (hide mesh #:optional (view current-view))
   (let ((table (view-meshes view)))
     (hash-remove! table (mesh-inner-property mesh 'id))))
 
