@@ -19,7 +19,8 @@
   #:export (use-cache-with
 	    arguments-calling
 	    arguments-apply
-	    bound?))
+	    bound?
+	    make-producer))
 
 
 ;;; Cache for procedures

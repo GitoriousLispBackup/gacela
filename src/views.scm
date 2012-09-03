@@ -26,25 +26,21 @@
 
 (define view-type
   (make-record-type "view" 
-		    '(id body meshes priority)
+		    '(id constructor body meshes priority)
 		    (lambda (record port)
 		      (format port "#<view: ~a meshes>"
 			      (length (view-meshes record))))))
 
-(define (make-view body meshes) ((record-constructor view-type) (gensym) body meshes 0))
+(define (make-view constructor) ((record-constructor view-type) (gensym) constructor #f '() 0))
 (define view? (record-predicate view-type))
 (define view-id (record-accessor view-type 'id))
+(define view-constructor (record-accessor view-type 'constructor))
 (define view-body (record-accessor view-type 'body))
 (define view-meshes (record-accessor view-type 'meshes))
 (define view-priority (record-accessor view-type 'priority))
 
-(define-macro (define-view meshes . body)
-  `(make-view
-    ,(cond ((null? body) `(lambda () #f))
-	   (else `(lambda () ,@body)))
-    (map (lambda (m)
-	   `(,(mesh-inner-property m 'id) . ,m))
-	 ,meshes)))
+(define-macro (define-view body)
+  `(make-view (lambda () ,body)))
 
 (define activated-views '())
 (define (sort-views views-alist)
