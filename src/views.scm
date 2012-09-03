@@ -31,24 +31,33 @@
 		      (format port "#<view: ~a meshes>"
 			      (length (view-meshes record))))))
 
-(define (make-view constructor) ((record-constructor view-type) (gensym) constructor #f '() 0))
+(define (build-view constructor) ((record-constructor view-type) (gensym) constructor #f '() 0))
 (define view? (record-predicate view-type))
 (define view-id (record-accessor view-type 'id))
 (define view-constructor (record-accessor view-type 'constructor))
 (define view-body (record-accessor view-type 'body))
+(define view-body-set! (record-modifier view-type 'body))
 (define view-meshes (record-accessor view-type 'meshes))
+(define view-meshes-set! (record-modifier view-type 'meshes))
 (define view-priority (record-accessor view-type 'priority))
 
-(define-macro (define-view body)
-  `(make-view (lambda () ,body)))
+(define-macro (make-view body)
+  `(build-view (lambda () ,body)))
 
 (define activated-views '())
+
 (define (sort-views views-alist)
   (sort views-alist
 	(lambda (v1 v2)
 	  (< (view-priority (cdr v1)) (view-priority (cdr v2))))))
 
+(define (reset-view! view)
+  (view-body-set! view ((view-constructor view)))
+  (view-meshes-set! view '())
+  (view-priority-set! view 0))
+
 (define (activate-view view)
+  (reset-view! view)
   (set! activated-views
 	(sort-views (assoc-set! activated-views (view-id view) view)))
   view)
@@ -58,14 +67,15 @@
 
 (define (view-priority-set! view priority)
   ((record-modifier view-type 'priority) view priority)
-  (set! activated-views (sort-views activated-views)))
+  (if (view-actived? view)
+      (set! activated-views (sort-views activated-views))))
 
 (define current-view #f)
 
 (define* (run-views #:optional (views activated-views))
   (cond ((not (null? views))
 	 (set! current-view (cdar views))
-	 ; controllers go here
+	 ((view-body current-view))
 	 (draw-meshes (view-meshes current-view))
 	 (run-views (cdr views)))))
 
@@ -77,7 +87,7 @@
 	 (draw-meshes (cdr meshes)))))
 
 
-(define default-view (activate-view (define-view '())))
+(define default-view (activate-view (make-view (lambda () #f))))
 
 
 ;;; Meshes
@@ -173,12 +183,16 @@
 (define* (show mesh #:optional (view current-view))
   (let ((id (mesh-inner-property mesh 'id))
 	(table (view-meshes view)))
-    (if (not (hash-ref table id))
-	(hash-set! table id mesh))))
+    (if (not (assoc-ref table id))
+	(view-meshes-set! view (assoc-set! table id mesh))))
+  mesh)
 
 (define* (hide mesh #:optional (view current-view))
-  (let ((table (view-meshes view)))
-    (hash-remove! table (mesh-inner-property mesh 'id))))
+  (let ((id (mesh-inner-property mesh 'id))
+	(table (view-meshes view)))
+    (if (assoc-ref table id)
+	(view-meshes-set! view (assoc-remove! table id))))
+  mesh)
 
 (define* (translate mesh x y #:optional (z 0))
   (((record-accessor mesh-type 'translate) mesh) x y z)
