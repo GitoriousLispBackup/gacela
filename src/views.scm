@@ -26,23 +26,46 @@
 
 (define view-type
   (make-record-type "view" 
-		    '(id constructor body meshes priority)
+		    '(id controllers meshes priority)
 		    (lambda (record port)
 		      (format port "#<view: ~a meshes>"
 			      (length (view-meshes record))))))
 
-(define (build-view constructor) ((record-constructor view-type) (gensym) constructor #f '() 0))
+(define (make-view controllers meshes priority) ((record-constructor view-type) (gensym) controllers meshes priority))
 (define view? (record-predicate view-type))
 (define view-id (record-accessor view-type 'id))
-(define view-constructor (record-accessor view-type 'constructor))
-(define view-body (record-accessor view-type 'body))
-(define view-body-set! (record-modifier view-type 'body))
 (define view-meshes (record-accessor view-type 'meshes))
 (define view-meshes-set! (record-modifier view-type 'meshes))
+(define view-controllers (record-accessor view-type 'controllers))
+(define view-controllers-set! (record-modifier view-type 'controllers))
 (define view-priority (record-accessor view-type 'priority))
 
-(define-macro (make-view body)
-  `(build-view (lambda () ,body)))
+;(defmacro* view (#:key (priority 0) . elements)
+(define-macro (view-elements . elements)
+  (cond ((null? elements) `'(() ()))
+	(else
+	 `(let ((l (view-elements ,@(cdr elements))))
+	    ,(let ((e (car elements)))
+	       `(cond ((mesh? ,e)
+		       (list (car l) (cons ,e (cadr l))))
+		      ((procedure? ,e)
+		       (list (cons ,(if (list? e) e `(lambda () (,e))) (car l))
+			     (cadr l)))
+		      (else l)))))))
+
+(define* (view2 #:key (priority 0) . elements)
+  (let ((controllers '())
+	(meshes '()))
+    (define (f elements)
+      (cond ((not (null? elements))
+	     (cond ((mesh? (car elements)) (set! meshes (cons (car elements) meshes)))
+		   ((procedure? (car elements)) (set! controllers (cons (car elements) controllers))))
+	     (f (cdr elements)))))
+    (f elements)
+    (display controllers)
+    (newline)
+    (display meshes)
+    (newline)))
 
 (define activated-views '())
 
@@ -51,13 +74,7 @@
 	(lambda (v1 v2)
 	  (< (view-priority (cdr v1)) (view-priority (cdr v2))))))
 
-(define (reset-view! view)
-  (view-body-set! view ((view-constructor view)))
-  (view-meshes-set! view '())
-  (view-priority-set! view 0))
-
 (define (activate-view view)
-  (reset-view! view)
   (set! activated-views
 	(sort-views (assoc-set! activated-views (view-id view) view)))
   view)
@@ -75,7 +92,7 @@
 (define* (run-views #:optional (views activated-views))
   (cond ((not (null? views))
 	 (set! current-view (cdar views))
-	 ((view-body current-view))
+	 ;((view-body current-view))
 	 (draw-meshes (view-meshes current-view))
 	 (run-views (cdr views)))))
 
@@ -87,7 +104,7 @@
 	 (draw-meshes (cdr meshes)))))
 
 
-(define default-view (activate-view (make-view (lambda () #f))))
+;(define default-view (activate-view (make-view (lambda () #f))))
 
 
 ;;; Meshes
