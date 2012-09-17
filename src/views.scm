@@ -40,7 +40,10 @@
 (define view-controllers-set! (record-modifier view-type 'controllers))
 (define view-priority (record-accessor view-type 'priority))
 
-;(defmacro* view (#:key (priority 0) . elements)
+(defmacro* view (#:key (priority 0) . elements)
+  `(let ((e (view-elements ,@elements)))
+     (make-view (car e) (cadr e) ,priority)))
+
 (define-macro (view-elements . elements)
   (cond ((null? elements) `'(() ()))
 	(else
@@ -53,19 +56,13 @@
 			     (cadr l)))
 		      (else l)))))))
 
-(define* (view2 #:key (priority 0) . elements)
-  (let ((controllers '())
-	(meshes '()))
-    (define (f elements)
-      (cond ((not (null? elements))
-	     (cond ((mesh? (car elements)) (set! meshes (cons (car elements) meshes)))
-		   ((procedure? (car elements)) (set! controllers (cons (car elements) controllers))))
-	     (f (cdr elements)))))
-    (f elements)
-    (display controllers)
-    (newline)
-    (display meshes)
-    (newline)))
+(define (controllers-list list controllers)
+  (cond ((null? controllers)
+	 list)
+	((list? (car controllers))
+	 (assoc-set! (controllers-list list (cdr controllers)) (caar controllers) (cadar controllers)))
+	(else
+	 (assoc-set! (controllers-list list (cdr controllers)) (gensym) (car controllers)))))
 
 (define activated-views '())
 
