@@ -374,10 +374,10 @@
      (glNormal3f -1 0 0)
      (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) #:texture (or texture-6 texture) #:color (or color-6 color)))))
 
-(define* (translate x y #:optional (z 0))
+(define* (gtranslate x y #:optional (z 0))
   (glTranslatef x y z))
 
-(define (rotate . rot)
+(define (grotate . rot)
   (cond ((3d-mode?)
 	 (apply 3d-rotate rot))
 	(else
@@ -446,3 +446,131 @@
 	((not (= (ftglGetFontFaceSize font) (font-size font)))
 	 (ftglSetFontFaceSize font (font-size font) 72)))
   (ftglRenderFont font text FTGL_RENDER_ALL))
+
+
+;;; Meshes
+
+(define mesh-type
+  (make-record-type "mesh" 
+ 		    '(draw translate turn rotate inner-properties inner-property properties properties-set! property property-set!)
+ 		    (lambda (record port)
+ 		      (format port "#<mesh: ~a" (mesh-inner-property record 'type))
+ 		      (for-each (lambda (x)
+ 				  (cond (((@ (gacela utils) bound?) (cdr x))
+ 					 (format port " ~a" x))))
+ 				(mesh-properties record))
+ 		      (display ">" port))))
+
+(define mesh? (record-predicate mesh-type))
+
+(define* (make-mesh type proc)
+  (apply
+   (record-constructor mesh-type)
+   (let ((px 0) (py 0) (pz 0)
+ 	 (ax 0) (ay 0) (az 0)
+ 	 (rx 0) (ry 0) (rz 0)
+ 	 (properties '()))
+     (let ((inner-properties
+ 	    (lambda ()
+ 	      `((type . ,type) (x . ,px) (y . ,py) (z . ,pz) (ax . ,ax) (ay . ,ay) (az . ,az) (rx . ,rx) (ry . ,ry) (rz . ,rz)))))
+       (list
+ 	(lambda ()
+ 	  "draw"
+ 	  (glmatrix-block
+ 	   (grotate ax ay az)
+ 	   (gtranslate px py pz)
+ 	   (grotate rx ry rz)
+ 	   (proc properties)))
+ 	(lambda (x y z)
+ 	  "translate"
+ 	  (set! px (+ px x))
+ 	  (set! py (+ py y))
+ 	  (set! pz (+ pz z)))
+ 	(lambda (x y z)
+ 	  "turn"
+ 	  (set! ax (+ ax x))
+ 	  (set! ay (+ ay y))
+ 	  (set! az (+ az z)))
+ 	(lambda (x y z)
+ 	  "rotate"
+ 	  (set! rx (+ rx x))
+ 	  (set! ry (+ ry y))
+ 	  (set! rz (+ rz z)))
+ 	(lambda ()
+ 	  "inner-properties"
+ 	  (inner-properties))
+ 	(lambda (prop-name)
+ 	  "inner-property"
+ 	  (assoc-ref (inner-properties) prop-name))
+ 	(lambda ()
+ 	  "properties"
+ 	  properties)
+ 	(lambda (new-properties)
+ 	  "properties-set!"
+ 	  (set! properties new-properties))
+ 	(lambda (prop-name)
+ 	  "property"
+ 	  (assoc-ref properties prop-name))
+ 	(lambda (prop-name value)
+ 	  "property-set!"
+ 	  (set! properties (assoc-set! properties prop-name value))))))))
+
+(define (mesh-draw mesh)
+  (((record-accessor mesh-type 'draw) mesh)))
+
+(define (mesh-inner-properties mesh)
+  (((record-accessor mesh-type 'inner-properties) mesh)))
+
+(define (mesh-inner-property mesh prop-name)
+  (((record-accessor mesh-type 'inner-property) mesh) prop-name))
+
+(define (mesh-properties mesh)
+  (((record-accessor mesh-type 'properties) mesh)))
+
+(define (mesh-properties-set! mesh new-properties)
+  (((record-accessor mesh-type 'properties-set!) mesh) new-properties))
+
+(define (mesh-property mesh prop-name)
+  (((record-accessor mesh-type 'property) mesh) prop-name))
+
+(define (mesh-property-set! mesh prop-name value)
+  (((record-accessor mesh-type 'property-set!) mesh) prop-name value))
+
+(define* (translate mesh x y #:optional (z 0))
+  (((record-accessor mesh-type 'translate) mesh) x y z)
+  mesh)
+
+(define (turn mesh . params)
+  (apply ((record-accessor mesh-type 'turn) mesh)
+ 	 (if (>= (length params) 3)
+ 	     params
+ 	     (list 0 0 (car params))))
+  mesh)
+
+(define (rotate mesh . params)
+  (apply ((record-accessor mesh-type 'rotate) mesh)
+ 	 (if (>= (length params) 3)
+ 	     params
+ 	     (list 0 0 (car params))))
+  mesh)
+
+
+;;; Primitives
+
+(define-macro (define-mesh header . body)
+  (let ((name (car header))
+	(args (cdr header)))
+    `(define* ,header
+       (let ((m (make-mesh
+		 ',name
+		 (lambda (props)
+		   (apply (lambda* ,args ,@body)
+			  ((@ (gacela utils) arguments-apply) ,name props))))))
+	 (mesh-properties-set! m (list ,@(map (lambda (a) `(cons ',a ,a)) (names-arguments args))))
+	 m))))
+
+
+(module-map (lambda (sym var)
+	      (if (not (eq? sym '%module-public-interface))
+		  (module-export! (current-module) (list sym))))
+	    (current-module))

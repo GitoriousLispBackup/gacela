@@ -55,8 +55,9 @@
 
 ;;; Main Loop
 
-(define loop-flag #f)
+(define game-loop-flag #f)
 (define game-loop-thread #f)
+(define game-loop-procedure #f)
 
 (define-macro (run-in-game-loop proc)
   (let ((pgl (string->symbol (string-concatenate (list (symbol->string proc) "-in-game-loop"))))
@@ -86,29 +87,30 @@
 (run-in-game-loop resize-screen)
 
 (define-macro (game . code)
-  (if (null? code)
-      #f
-      `(call-with-new-thread (lambda () ,@code))))
+  `(set! game-loop-procedure
+    ,(if (null? code)
+	 `#f
+	 `(lambda (game-elements) ,@code))))
 
 (define (init-gacela)
-  (hide-all-mobs)
+;  (hide-all-mobs)
   (cond ((not game-loop-thread)
 	 (set! game-loop-thread (call-with-new-thread (lambda () (cond ((not (game-running?)) (game-loop))))))))
-  (while (not loop-flag))
+  (while (not game-loop-flag))
   #t)
 
 (define (quit-gacela)
-  (hide-all-mobs)
+;  (hide-all-mobs)
   (set! game-loop-thread #f)
-  (set! loop-flag #f)
+  (set! game-loop-flag #f)
   (quit-video))
 
 (define (game-loop)
-  (refresh-active-mobs)
+;  (refresh-active-mobs)
   (init-video *width-screen* *height-screen* *bpp-screen* #:title *title* #:mode *mode* #:fps *frames-per-second*)
-  (set! loop-flag #t)
-  (let loop ()
-    (cond (loop-flag
+  (set! game-loop-flag #t)
+  (let loop ((game-elements '()))
+    (cond (game-loop-flag
 	   (init-frame-time)
 ;	    (check-connections)
 	   (process-events)
@@ -117,19 +119,25 @@
 		 (else
 		  (clear-screen)
 		  (to-origin)
-		  (refresh-active-mobs)
-		  (run-mobs)
-		  (run-extensions)
+;		  (refresh-active-mobs)
+;		  (run-mobs)
+;		  (run-extensions)
+		  (if game-loop-procedure
+		      (set! game-elements (game-loop-procedure game-elements)))
+		  (process-game-elements game-elements)
 		  (flip-screen)
 		  (delay-frame)
 		  (loop)))))))
 
-(define (gacela-script args)
-  (while loop-flag (sleep 1)))
-
 (define (game-running?)
-  loop-flag)
+  game-loop-flag)
 
+(define (process-game-elements elements)
+  (cond ((not (list? elements))
+	 (process-game-elements (list elements)))
+	(else
+	 (draw-meshes (filter (lambda (e) (mesh? e)) elements))
+)))
 
 ;;; Extensions to main loop
 

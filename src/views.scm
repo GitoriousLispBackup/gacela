@@ -116,7 +116,6 @@
 					 (format port " ~a" x))))
 				(mesh-properties record))
 		      (display ">" port))))
-		      
 
 (define mesh? (record-predicate mesh-type))
 

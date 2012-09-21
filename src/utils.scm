@@ -20,6 +20,7 @@
 	    arguments-calling
 	    arguments-apply
 	    bound?
+	    names-arguments
 	    make-producer))
 
 
@@ -145,6 +146,11 @@
 	    (keyword-arguments-apply args values)
 	    (rest-arguments-apply args values))))
 
+(define (names-arguments args)
+  (map (lambda (x) (if (list? x) (car x) x))
+       (filter (lambda (x) (not (keyword? x)))
+	       (pair-to-list args))))
+
 
 ;;; Continuations and coroutines
 
@@ -161,3 +167,11 @@
     (if resume
         (resume real-send)
         (body send))))
+
+
+;;; Miscellaneous
+
+(define (pair-to-list pair)
+  (cond ((null? pair) '())
+	((not (pair? pair)) (list pair))
+	(else (cons (car pair) (pair-to-list (cdr pair))))))
