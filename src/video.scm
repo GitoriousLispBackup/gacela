@@ -353,7 +353,7 @@
 	       #:texture-coord texture-coord
 	       #:color color)))
 
-(define* (draw-square #:key (size 1) texture color)
+(define* (draw-square size #:key texture color)
   (draw-rectangle size size #:texture texture #:color color))
 
 (define* (draw-cube #:key (size 1)
@@ -568,6 +568,9 @@
 			  ((@ (gacela utils) arguments-apply) ,name props))))))
 	 (mesh-properties-set! m (list ,@(map (lambda (a) `(cons ',a ,a)) (names-arguments args))))
 	 m))))
+
+(define-mesh (square size #:key texture color)
+  (draw-square size #:texture texture #:color color))
 
 
 (module-map (lambda (sym var)

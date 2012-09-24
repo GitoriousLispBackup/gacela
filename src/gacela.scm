@@ -123,11 +123,13 @@
 ;		  (run-mobs)
 ;		  (run-extensions)
 		  (if game-loop-procedure
-		      (set! game-elements (game-loop-procedure game-elements)))
+		      (catch #t
+			     (lambda () (set! game-elements (game-loop-procedure game-elements)))
+			     (lambda (key . args) #f)))
 		  (process-game-elements game-elements)
 		  (flip-screen)
 		  (delay-frame)
-		  (loop)))))))
+		  (loop game-elements)))))))
 
 (define (game-running?)
   game-loop-flag)
@@ -136,8 +138,15 @@
   (cond ((not (list? elements))
 	 (process-game-elements (list elements)))
 	(else
-	 (draw-meshes (filter (lambda (e) (mesh? e)) elements))
-)))
+	 (draw-meshes (filter (lambda (e) (mesh? e)) elements)))))
+
+(define (draw-meshes meshes)
+  (cond ((null? meshes) #t)
+	(else
+	 (catch #t
+		(lambda () (mesh-draw (car meshes)))
+		(lambda (key . args) #f))
+	 (draw-meshes (cdr meshes)))))
 
 ;;; Extensions to main loop
 
