@@ -455,9 +455,7 @@
  		    '(draw translate turn rotate inner-properties inner-property properties properties-set! property property-set!)
  		    (lambda (record port)
  		      (format port "#<mesh: ~a" (mesh-inner-property record 'type))
- 		      (for-each (lambda (x)
- 				  (cond (((@ (gacela utils) bound?) (cdr x))
- 					 (format port " ~a" x))))
+ 		      (for-each (lambda (x) (format port " ~a" x))
  				(mesh-properties record))
  		      (display ">" port))))
 
@@ -555,6 +553,15 @@
   mesh)
 
 
+;;; Advanced meshes
+
+(define (mesh-join . meshes)
+  (make-mesh
+   'joined-meshes
+   (lambda (props)
+     (for-each (lambda (m) (glmatrix-block (mesh-draw m))) meshes))))
+
+
 ;;; Primitives
 
 (define-macro (define-mesh header . body)
@@ -569,8 +576,36 @@
 	 (mesh-properties-set! m (list ,@(map (lambda (a) `(cons ',a ,a)) (names-arguments args))))
 	 m))))
 
-(define-mesh (square size #:key texture color)
+(define-macro (primitive header . body)
+  (let* ((type (car header))
+	 (args (cdr header))
+	 (list-args (names-arguments args)))
+    `(lambda* ,args
+       (let ((m (make-mesh
+		 ',type
+		 (lambda (props)
+		   (apply (lambda* ,(cons #:key list-args) ,@body)
+			  (list
+			   ,@(let get-params ((l list-args))
+			       (cond ((null? l) '())
+				     (else
+				      (cons (symbol->keyword (car l))
+					    (cons `(assoc-ref props ',(car l))
+						  (get-params (cdr l)))))))))))))
+	 (mesh-properties-set! m (list ,@(map (lambda (a) `(cons ',a ,a)) list-args)))
+	 m))))
+
+(define-macro (define-primitive header . body)
+  `(define ,(car header) (primitive ,header ,@body)))
+
+
+;;; Primitives definition
+
+(define-primitive (square size #:key texture color)
   (draw-square size #:texture texture #:color color))
+
+(define-primitive (rectangle width height #:key texture color texture-coord)
+  (draw-rectangle width height #:texture texture #:color color #:texture-coord texture-coord))
 
 
 (module-map (lambda (sym var)
