@@ -607,6 +607,9 @@
 (define-primitive (rectangle width height #:key texture color texture-coord)
   (draw-rectangle width height #:texture texture #:color color #:texture-coord texture-coord))
 
+(define-primitive (texture texture #:key (zoom 1) (sprite '((0 0) (1 1))))
+  (draw-texture texture #:zoom zoom #:sprite sprite))
+
 
 (module-map (lambda (sym var)
 	      (if (not (eq? sym '%module-public-interface))
