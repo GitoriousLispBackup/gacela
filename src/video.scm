@@ -564,18 +564,6 @@
 
 ;;; Primitives
 
-(define-macro (define-mesh header . body)
-  (let ((name (car header))
-	(args (cdr header)))
-    `(define* ,header
-       (let ((m (make-mesh
-		 ',name
-		 (lambda (props)
-		   (apply (lambda* ,args ,@body)
-			  ((@ (gacela utils) arguments-apply) ,name props))))))
-	 (mesh-properties-set! m (list ,@(map (lambda (a) `(cons ',a ,a)) (names-arguments args))))
-	 m))))
-
 (define-macro (primitive header . body)
   (let* ((type (car header))
 	 (args (cdr header))
@@ -607,8 +595,8 @@
 (define-primitive (rectangle width height #:key texture color texture-coord)
   (draw-rectangle width height #:texture texture #:color color #:texture-coord texture-coord))
 
-(define-primitive (texture texture #:key (zoom 1) (sprite '((0 0) (1 1))))
-  (draw-texture texture #:zoom zoom #:sprite sprite))
+(define-primitive (picture filename #:key (min-filter GL_LINEAR) (mag-filter GL_LINEAR) (zoom 1) (sprite '((0 0) (1 1))))
+  (draw-texture (load-texture filename #:min-filter min-filter #:mag-filter mag-filter) #:zoom zoom #:sprite sprite))
 
 
 (module-map (lambda (sym var)
