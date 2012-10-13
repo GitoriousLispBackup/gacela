@@ -247,7 +247,8 @@
 (define (begin-draw number-of-points)
   (cond ((= number-of-points 2) (glBegin GL_LINES))
 	((= number-of-points 3) (glBegin GL_TRIANGLES))
-	((= number-of-points 4) (glBegin GL_QUADS))))
+	((= number-of-points 4) (glBegin GL_QUADS))
+	((> number-of-points 4) (glBegin GL_POLYGON))))
 
 (define (draw-vertexes vertexes)
   (cond ((not (null? vertexes))
@@ -327,6 +328,14 @@
 	   (with-color color (draw (list 0 l) (list 0 (- l)))))
 	  (else
 	   (draw (list 0 l) (list 0 (- l)))))))
+
+(define (draw-circle radius)
+  (glBegin GL_POLYGON)
+  (do ((i 0 (1+ i)))
+      ((>= i 360))
+    (let ((a (degrees-to-radians i)))
+      (draw-vertex (list (* radius (cos a)) (* radius (sin a))))))
+  (glEnd))
 
 (define* (draw-quad v1 v2 v3 v4 #:key texture color (texture-coord '((0 0) (1 1))))
   (cond (texture
@@ -594,6 +603,9 @@
 
 (define-primitive (rectangle width height #:key texture color texture-coord)
   (draw-rectangle width height #:texture texture #:color color #:texture-coord texture-coord))
+
+(define-primitive (circle radius)
+  (draw-circle radius))
 
 (define-primitive (picture filename #:key (min-filter GL_LINEAR) (mag-filter GL_LINEAR) (zoom 1) (sprite '((0 0) (1 1))))
   (draw-texture (load-texture filename #:min-filter min-filter #:mag-filter mag-filter) #:zoom zoom #:sprite sprite))
