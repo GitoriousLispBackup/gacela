@@ -223,14 +223,14 @@
   (glColor4f red green blue alpha))
 
 (define-macro (with-color color . code)
-  (cond (color
-	 `(let ((original-color (get-current-color))
+  `(cond (,color
+	  (let ((original-color (get-current-color))
 		(result #f))
 	    (apply set-current-color ,color)
 	    (set! result (begin ,@code))
 	    (apply set-current-color original-color)
 	    result))
-	(else `(begin ,@code))))
+	 (else (begin ,@code))))
 
 (define-macro (progn-textures . code)
   `(let ((result #f))
@@ -256,12 +256,8 @@
 	 (draw-vertexes (cdr vertexes)))))
 
 (define* (draw-vertex vertex #:key texture-coord)
-  (cond ((list? (car vertex))
-	 (with-color (car vertex)
-		     (apply simple-draw-vertex (cadr vertex))))
-	(else
-	 (cond (texture-coord (apply glTexCoord2f texture-coord)))
-	 (apply simple-draw-vertex vertex))))
+  (cond (texture-coord (apply glTexCoord2f texture-coord)))
+  (apply simple-draw-vertex vertex))
 
 (define* (simple-draw-vertex x y #:optional (z 0))
   (cond ((3d-mode?) (glVertex3f x y z))
@@ -322,12 +318,9 @@
 			   #:texture texture
 			   #:texture-coord sprite)))))
 
-(define* (draw-line length #:optional color)
+(define* (draw-line length)
   (let ((l (/ length 2)))
-    (cond (color
-	   (with-color color (draw (list 0 l) (list 0 (- l)))))
-	  (else
-	   (draw (list 0 l) (list 0 (- l)))))))
+    (draw (list 0 l) (list 0 (- l)))))
 
 (define (draw-circle radius)
   (glBegin GL_POLYGON)
@@ -337,7 +330,7 @@
       (draw-vertex (list (* radius (cos a)) (* radius (sin a))))))
   (glEnd))
 
-(define* (draw-quad v1 v2 v3 v4 #:key texture color (texture-coord '((0 0) (1 1))))
+(define* (draw-quad v1 v2 v3 v4 #:key texture (texture-coord '((0 0) (1 1))))
   (cond (texture
 	 (progn-textures
 	  (glBindTexture GL_TEXTURE_2D texture)
@@ -347,41 +340,38 @@
 	  (draw-vertex v3 #:texture-coord (cadr texture-coord))
 	  (draw-vertex v4 #:texture-coord (list (caar texture-coord) (cadadr texture-coord)))
 	  (glEnd)))
-	(color
-	 (with-color color (draw v1 v2 v3 v4)))
 	(else
 	 (draw v1 v2 v3 v4))))
 
-(define* (draw-rectangle width height #:key texture color texture-coord)
+(define* (draw-rectangle width height #:key texture texture-coord)
   (let ((w (/ width 2)) (h (/ height 2)))
     (draw-quad (list (- w) h 0)
 	       (list w h 0)
 	       (list w (- h) 0)
 	       (list (- w) (- h) 0)
 	       #:texture texture
-	       #:texture-coord texture-coord
-	       #:color color)))
+	       #:texture-coord texture-coord)))
 
-(define* (draw-square size #:key texture color)
-  (draw-rectangle size size #:texture texture #:color color))
+(define* (draw-square size #:key texture)
+  (draw-rectangle size size #:texture texture))
 
 (define* (draw-cube #:key (size 1)
 		   texture texture-1 texture-2 texture-3 texture-4 texture-5 texture-6
-		   color color-1 color-2 color-3 color-4 color-5 color-6)
+		   color-1 color-2 color-3 color-4 color-5 color-6)
   (let ((-size (- size)))
     (progn-textures
      (glNormal3f 0 0 1)
-     (draw-quad (list -size size size) (list size size size) (list size -size size) (list -size -size size) #:texture (or texture-1 texture) #:color (or color-1 color))
+     (with-color color-1 (draw-quad (list -size size size) (list size size size) (list size -size size) (list -size -size size) #:texture (or texture-1 texture)))
      (glNormal3f 0 0 -1)
-     (draw-quad (list -size -size -size) (list size -size -size) (list size size -size) (list -size size -size) #:texture (or texture-2 texture) #:color (or color-2 color))
+     (with-color color-2 (draw-quad (list -size -size -size) (list size -size -size) (list size size -size) (list -size size -size) #:texture (or texture-2 texture)))
      (glNormal3f 0 1 0)
-     (draw-quad (list size size size) (list -size size size) (list -size size -size) (list size size -size) #:texture (or texture-3 texture) #:color (or color-3 color))
+     (with-color color-3 (draw-quad (list size size size) (list -size size size) (list -size size -size) (list size size -size) #:texture (or texture-3 texture)))
      (glNormal3f 0 -1 0)
-     (draw-quad (list -size -size size) (list size -size size) (list size -size -size) (list -size -size -size) #:texture (or texture-4 texture) #:color (or color-4 color))
+     (with-color color-4 (draw-quad (list -size -size size) (list size -size size) (list size -size -size) (list -size -size -size) #:texture (or texture-4 texture)))
      (glNormal3f 1 0 0)
-     (draw-quad (list size -size -size) (list size -size size) (list size size size) (list size size -size) #:texture (or texture-5 texture) #:color (or color-5 color))
+     (with-color color-5 (draw-quad (list size -size -size) (list size -size size) (list size size size) (list size size -size) #:texture (or texture-5 texture)))
      (glNormal3f -1 0 0)
-     (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) #:texture (or texture-6 texture) #:color (or color-6 color)))))
+     (with-color color-6 (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) #:texture (or texture-6 texture))))))
 
 (define* (gtranslate x y #:optional (z 0))
   (glTranslatef x y z))
@@ -461,7 +451,7 @@
 
 (define mesh-type
   (make-record-type "mesh" 
- 		    '(draw translate turn rotate inner-properties inner-property properties properties-set! property property-set!)
+ 		    '(draw translate turn rotate color inner-properties inner-property properties properties-set! property property-set!)
  		    (lambda (record port)
  		      (format port "#<mesh: ~a" (mesh-inner-property record 'type))
  		      (for-each (lambda (x) (format port " ~a" x))
@@ -476,10 +466,14 @@
    (let ((px 0) (py 0) (pz 0)
  	 (ax 0) (ay 0) (az 0)
  	 (rx 0) (ry 0) (rz 0)
+	 (color #f)
  	 (properties '()))
      (let ((inner-properties
  	    (lambda ()
- 	      `((type . ,type) (x . ,px) (y . ,py) (z . ,pz) (ax . ,ax) (ay . ,ay) (az . ,az) (rx . ,rx) (ry . ,ry) (rz . ,rz)))))
+ 	      `((type . ,type) (color . ,color)
+		(x . ,px) (y . ,py) (z . ,pz)
+		(ax . ,ax) (ay . ,ay) (az . ,az)
+		(rx . ,rx) (ry . ,ry) (rz . ,rz)))))
        (list
  	(lambda ()
  	  "draw"
@@ -487,7 +481,7 @@
  	   (grotate ax ay az)
  	   (gtranslate px py pz)
  	   (grotate rx ry rz)
- 	   (proc properties)))
+	   (with-color color (proc properties))))
  	(lambda (x y z)
  	  "translate"
  	  (set! px (+ px x))
@@ -503,6 +497,9 @@
  	  (set! rx (+ rx x))
  	  (set! ry (+ ry y))
  	  (set! rz (+ rz z)))
+	(lambda (c)
+	  "color"
+	  (set! color c))
  	(lambda ()
  	  "inner-properties"
  	  (inner-properties))
@@ -561,6 +558,10 @@
  	     (list 0 0 (car params))))
   mesh)
 
+(define (color mesh c)
+  (((record-accessor mesh-type 'color) mesh) c)
+  mesh)
+
 
 ;;; Advanced meshes
 
@@ -598,11 +599,11 @@
 
 ;;; Primitives definition
 
-(define-primitive (square size #:key texture color)
-  (draw-square size #:texture texture #:color color))
+(define-primitive (square size #:key texture)
+  (draw-square size #:texture texture))
 
-(define-primitive (rectangle width height #:key texture color texture-coord)
-  (draw-rectangle width height #:texture texture #:color color #:texture-coord texture-coord))
+(define-primitive (rectangle width height #:key texture texture-coord)
+  (draw-rectangle width height #:texture texture #:texture-coord texture-coord))
 
 (define-primitive (circle radius)
   (draw-circle radius))
