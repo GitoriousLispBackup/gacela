@@ -17,7 +17,9 @@
 
 (define-module (gacela video)
   #:use-module (gacela sdl)
-  #:use-module (gacela gl)
+;  #:use-module (gacela gl)
+  #:use-module (figl gl)
+  #:use-module (figl glu)
   #:use-module (gacela ftgl)
   #:use-module (gacela math)
   #:use-module (gacela utils)
@@ -67,9 +69,7 @@
 	    load-font
 	    load-font-without-texture
 	    render-text)
-  #:re-export (glPushMatrix
-	       glPopMatrix)
-  #:export-syntax (glmatrix-block))
+  #:re-export (with-gl-push-matrix))
 
 
 
@@ -118,7 +118,7 @@
 	 (SDL_Quit))))
 
 (define (clear-screen)
-  (glClear (+ GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT)))
+  (gl-clear (clear-buffer-mask color-buffer depth-buffer)))
 
 (define (flip-screen)
   (SDL_GL_SwapBuffers))
@@ -138,14 +138,14 @@
 
 (define (set-2d-mode)
   (set! mode '2d)
-  (glDisable GL_DEPTH_TEST)
+  (gl-disable depth-test)
   (resize-screen-GL (get-screen-width) (get-screen-height)))
 
 (define (set-3d-mode)
   (set! mode '3d)
-  (glClearDepth 1)
-  (glEnable GL_DEPTH_TEST)
-  (glDepthFunc GL_LEQUAL)
+  (sel-gl-clear-depth 1)
+  (gl-enable depth-test)
+  (set-gl-depth-function lequal)
   (resize-screen-GL (get-screen-width) (get-screen-height)))
 
 (define (3d-mode?)
@@ -166,9 +166,9 @@
 
 
 (define (init-gl)
-  (glShadeModel GL_SMOOTH)
+  (set-gl-shade-model GL_SMOOTH)
   (glClearColor 0 0 0 0)
-  (glEnable GL_BLEND)
+  (gl-enable GL_BLEND)
   (glBlendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
   (glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST))
 
@@ -234,9 +234,9 @@
 
 (define-macro (progn-textures . code)
   `(let ((result #f))
-     (glEnable GL_TEXTURE_2D)
+     (gl-enable GL_TEXTURE_2D)
      (set! result (begin ,@code))
-     (glDisable GL_TEXTURE_2D)
+     (gl-disable GL_TEXTURE_2D)
      result))
 
 (define (draw . vertexes)
@@ -394,13 +394,6 @@
   (glLoadIdentity)
   (cond ((3d-mode?) (camera-look))))
 
-(define-macro (glmatrix-block . code)
-  `(let ((result #f))
-     (glPushMatrix)
-     (set! result (begin ,@code))
-     (glPopMatrix)
-     result))
-
 
 ;;; Lights
 
@@ -409,7 +402,7 @@
 ;;   (and light (glLightfv id GL_DIFFUSE (car light) (cadr light) (caddr light) (cadddr light)))
 ;;   (and light position (glLightfv GL_POSITION (car position) (cadr position) (caddr position) (cadddr position)))
 ;;   (and ambient (glLightfv id GL_AMBIENT (car ambient) (cadr ambient) (caddr ambient) (cadddr ambient)))
-;;   (and turn-on (glEnable id))
+;;   (and turn-on (gl-enable id))
 ;;   id)
 
 
