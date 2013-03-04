@@ -138,14 +138,14 @@
 
 (define (set-2d-mode)
   (set! mode '2d)
-  (gl-disable depth-test)
+  (gl-disable (enable-cap depth-test))
   (resize-screen-GL (get-screen-width) (get-screen-height)))
 
 (define (set-3d-mode)
   (set! mode '3d)
-  (sel-gl-clear-depth 1)
-  (gl-enable depth-test)
-  (set-gl-depth-function lequal)
+  (set-gl-clear-depth 1)
+  (gl-enable (enable-cap depth-test))
+  (set-gl-depth-function (depth-function lequal))
   (resize-screen-GL (get-screen-width) (get-screen-height)))
 
 (define (3d-mode?)
@@ -166,11 +166,11 @@
 
 
 (define (init-gl)
-  (set-gl-shade-model GL_SMOOTH)
-  (glClearColor 0 0 0 0)
-  (gl-enable GL_BLEND)
-  (glBlendFunc GL_SRC_ALPHA GL_ONE_MINUS_SRC_ALPHA)
-  (glHint GL_PERSPECTIVE_CORRECTION_HINT GL_NICEST))
+  (set-gl-shade-model (shading-model smooth))
+  (set-gl-clear-color 0 0 0 0)
+  (gl-enable (enable-cap blend))
+  (set-gl-blend-function (blending-factor-dest src-alpha) (blending-factor-dest one-minus-src-alpha))
+  (glHint (hint-target perspective-correction-hint) (hint-mode nicest)))
 
 (define (resize-screen-GL width height)
   (glViewport 0 0 width height)
