@@ -49,7 +49,7 @@
 	    get-current-color
 	    set-current-color
 	    with-color
-	    progn-textures
+	    begin-textures
 	    draw
 	    load-texture
 	    load-texture-without-cache
@@ -170,20 +170,20 @@
   (set-gl-clear-color 0 0 0 0)
   (gl-enable (enable-cap blend))
   (set-gl-blend-function (blending-factor-dest src-alpha) (blending-factor-dest one-minus-src-alpha))
-  (glHint (hint-target perspective-correction-hint) (hint-mode nicest)))
+  (set-gl-hint (hint-target perspective-correction-hint) (hint-mode nicest)))
 
 (define (resize-screen-GL width height)
-  (glViewport 0 0 width height)
-  (glMatrixMode GL_PROJECTION)
-  (glLoadIdentity)
+  (gl-viewport 0 0 width height)
+  (set-gl-matrix-mode (matrix-mode projection))
+  (gl-load-identity)
   (cond ((3d-mode?)
 	 (let ((ratio (if (= height 0) width (/ width height))))
-	   (gluPerspective 45 ratio 0.1 100)))
+	   (glu-perspective 45 ratio 0.1 100)))
 	(else
 	 (let* ((w (/ width 2)) (h (/ height 2)))
-	   (glOrtho (- w) w (- h) h 0 1))))
-  (glMatrixMode GL_MODELVIEW)
-  (glLoadIdentity))
+	   (gl-ortho (- w) w (- h) h 0 1))))
+  (set-gl-matrix-mode (matrix-mode modelview))
+  (gl-load-identity))
 
 
 ;;; Frames per second
@@ -220,7 +220,7 @@
 
 (define* (set-current-color red green blue #:optional (alpha 1))
   (set! current-color (list red green blue alpha))
-  (glColor4f red green blue alpha))
+  (gl-color red green blue alpha))
 
 (define-macro (with-color color . code)
   `(cond (,color
@@ -232,36 +232,30 @@
 	    result))
 	 (else (begin ,@code))))
 
-(define-macro (progn-textures . code)
+(define-macro (begin-textures . code)
   `(let ((result #f))
-     (gl-enable GL_TEXTURE_2D)
+     (gl-enable (oes-framebuffer-object texture-2d))
      (set! result (begin ,@code))
-     (gl-disable GL_TEXTURE_2D)
+     (gl-disable (oes-framebuffer-object texture-2d))
      result))
 
 (define (draw . vertexes)
-  (begin-draw (length vertexes))
-  (draw-vertexes vertexes)
-  (glEnd))
-
-(define (begin-draw number-of-points)
-  (cond ((= number-of-points 2) (glBegin GL_LINES))
-	((= number-of-points 3) (glBegin GL_TRIANGLES))
-	((= number-of-points 4) (glBegin GL_QUADS))
-	((> number-of-points 4) (glBegin GL_POLYGON))))
+  (gl-begin
+   (let ((number-of-points (length vertexes)))
+     (cond ((= number-of-points 2) (begin-mode lines))
+	   ((= number-of-points 3) (begin-mode triangles))
+	   ((= number-of-points 4) (begin-mode quads))
+	   ((> number-of-points 4) (begin-mode polygon))))
+   (draw-vertexes vertexes)))
 
 (define (draw-vertexes vertexes)
   (cond ((not (null? vertexes))
-	 (draw-vertex (car vertexes))
+	 (apply draw-vertex (if (list? (caar vertexes)) (car vertexes) (list (car vertexes))))
 	 (draw-vertexes (cdr vertexes)))))
 
 (define* (draw-vertex vertex #:key texture-coord)
   (cond (texture-coord (apply glTexCoord2f texture-coord)))
-  (apply simple-draw-vertex vertex))
-
-(define* (simple-draw-vertex x y #:optional (z 0))
-  (cond ((3d-mode?) (glVertex3f x y z))
-	(else (glVertex2f x y))))
+  (apply gl-vertex vertex))
 
 (define (load-image filename)
   (let ((image (IMG_Load filename)))
@@ -286,21 +280,21 @@
 	  (else (let ((zoomx (/ (+ width 0.5) old-width)) (zoomy (/ (+ height 0.5) old-height)))
 	       (zoomSurface surface zoomx zoomy 0))))))
 
-(define* (load-texture-without-cache filename #:key (min-filter GL_LINEAR) (mag-filter GL_LINEAR))
-  (progn-textures
+(define* (load-texture-without-cache filename #:key (min-filter (texture-min-filter linear)) (mag-filter (texture-mag-filter linear)))
+  (begin-textures
    (receive
     (image real-w real-h) (load-image-for-texture filename)
     (cond (image
 	   (let ((width (surface-w image)) (height (surface-h image))
 		 (byteorder (if (= SDL_BYTEORDER SDL_LIL_ENDIAN)
-				(if (= (surface-format-BytesPerPixel image) 3) GL_BGR GL_BGRA)
-				(if (= (surface-format-BytesPerPixel image) 3) GL_RGB GL_RGBA)))
+				(if (= (surface-format-BytesPerPixel image) 3) (ext-bgra bgr-ext) (ext-bgra bgra-ext))
+				(if (= (surface-format-BytesPerPixel image) 3) (pixel-format rgb) (pixel-format rgba))))
 		 (texture (car (glGenTextures 1))))
 
-	     (glBindTexture GL_TEXTURE_2D texture)
-	     (glTexImage2D GL_TEXTURE_2D 0 4 width height 0 byteorder GL_UNSIGNED_BYTE (surface-pixels image))
-	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MIN_FILTER min-filter)
-	     (glTexParameteri GL_TEXTURE_2D GL_TEXTURE_MAG_FILTER mag-filter)
+	     (glBindTexture (oes-framebuffer-object texture-2d) texture)
+	     (glTexImage2D (oes-framebuffer-object texture-2d) 0 4 width height 0 byteorder (data-type unsigned-byte) (surface-pixels image))
+	     (glTexParameteri (oes-framebuffer-object texture-2d) (texture-parameter-name texture-min-filter) min-filter)
+	     (glTexParameteri (oes-framebuffer-object texture-2d) (texture-parameter-name texture-mag-filter) mag-filter)
 	     (set-texture-size! texture real-w real-h)
 	     texture))))))
 
@@ -323,23 +317,21 @@
     (draw (list 0 l) (list 0 (- l)))))
 
 (define (draw-circle radius)
-  (glBegin GL_POLYGON)
-  (do ((i 0 (1+ i)))
-      ((>= i 360))
-    (let ((a (degrees-to-radians i)))
-      (draw-vertex (list (* radius (cos a)) (* radius (sin a))))))
-  (glEnd))
+  (gl-begin
+   (begin-mode polygon)
+   (do ((i 0 (1+ i)))
+       ((>= i 360))
+     (let ((a (degrees-to-radians i)))
+       (draw-vertex (list (* radius (cos a)) (* radius (sin a))))))))
 
 (define* (draw-quad v1 v2 v3 v4 #:key texture (texture-coord '((0 0) (1 1))))
   (cond (texture
-	 (progn-textures
-	  (glBindTexture GL_TEXTURE_2D texture)
-	  (begin-draw 4)
-	  (draw-vertex v1 #:texture-coord (car texture-coord))
-	  (draw-vertex v2 #:texture-coord (list (caadr texture-coord) (cadar texture-coord)))
-	  (draw-vertex v3 #:texture-coord (cadr texture-coord))
-	  (draw-vertex v4 #:texture-coord (list (caar texture-coord) (cadadr texture-coord)))
-	  (glEnd)))
+	 (begin-textures
+	  (glBindTexture (oes-framebuffer-object texture-2d) texture)
+	  (draw (list v1 #:texture-coord (car texture-coord))
+		(list v2 #:texture-coord (list (caadr texture-coord) (cadar texture-coord)))
+		(list v3 #:texture-coord (cadr texture-coord))
+		(list v4 #:texture-coord (list (caar texture-coord) (cadadr texture-coord))))))
 	(else
 	 (draw v1 v2 v3 v4))))
 
@@ -359,22 +351,22 @@
 		   texture texture-1 texture-2 texture-3 texture-4 texture-5 texture-6
 		   color-1 color-2 color-3 color-4 color-5 color-6)
   (let ((-size (- size)))
-    (progn-textures
-     (glNormal3f 0 0 1)
+    (begin-textures
+     (gl-normal 0 0 1)
      (with-color color-1 (draw-quad (list -size size size) (list size size size) (list size -size size) (list -size -size size) #:texture (or texture-1 texture)))
-     (glNormal3f 0 0 -1)
+     (gl-normal 0 0 -1)
      (with-color color-2 (draw-quad (list -size -size -size) (list size -size -size) (list size size -size) (list -size size -size) #:texture (or texture-2 texture)))
-     (glNormal3f 0 1 0)
+     (gl-normal 0 1 0)
      (with-color color-3 (draw-quad (list size size size) (list -size size size) (list -size size -size) (list size size -size) #:texture (or texture-3 texture)))
-     (glNormal3f 0 -1 0)
+     (gl-normal 0 -1 0)
      (with-color color-4 (draw-quad (list -size -size size) (list size -size size) (list size -size -size) (list -size -size -size) #:texture (or texture-4 texture)))
-     (glNormal3f 1 0 0)
+     (gl-normal 1 0 0)
      (with-color color-5 (draw-quad (list size -size -size) (list size -size size) (list size size size) (list size size -size) #:texture (or texture-5 texture)))
-     (glNormal3f -1 0 0)
+     (gl-normal -1 0 0)
      (with-color color-6 (draw-quad (list -size -size size) (list -size -size -size) (list -size size -size) (list -size size size) #:texture (or texture-6 texture))))))
 
 (define* (gtranslate x y #:optional (z 0))
-  (glTranslatef x y z))
+  (gl-translate x y z))
 
 (define (grotate . rot)
   (cond ((3d-mode?)
@@ -383,15 +375,15 @@
 	 (2d-rotate (car (last-pair rot))))))
 
 (define (3d-rotate xrot yrot zrot)
-  (glRotatef xrot 1 0 0)
-  (glRotatef yrot 0 1 0)
-  (glRotatef zrot 0 0 1))
+  (gl-rotate xrot 1 0 0)
+  (gl-rotate yrot 0 1 0)
+  (gl-rotate zrot 0 0 1))
 
 (define (2d-rotate rot)
-  (glRotatef rot 0 0 1))
+  (gl-rotate rot 0 0 1))
 
 (define (to-origin)
-  (glLoadIdentity)
+  (gl-load-identity)
   (cond ((3d-mode?) (camera-look))))
 
 
@@ -418,7 +410,7 @@
   (cond (up (set! camera-up up))))
 
 (define (camera-look)
-  (apply gluLookAt (append camera-eye camera-center camera-up)))
+  (apply glu-look-at (append camera-eye camera-center camera-up)))
 
 
 ;;; Text and fonts
@@ -470,7 +462,7 @@
        (list
  	(lambda ()
  	  "draw"
- 	  (glmatrix-block
+ 	  (with-gl-push-matrix
  	   (grotate ax ay az)
  	   (gtranslate px py pz)
  	   (grotate rx ry rz)
@@ -562,7 +554,7 @@
   (make-mesh
    'joined-meshes
    (lambda (props)
-     (for-each (lambda (m) (glmatrix-block (mesh-draw m))) meshes))))
+     (for-each (lambda (m) (with-gl-push-matrix (mesh-draw m))) meshes))))
 
 
 ;;; Primitives
@@ -601,7 +593,7 @@
 (define-primitive (circle radius)
   (draw-circle radius))
 
-(define-primitive (picture filename #:key (min-filter GL_LINEAR) (mag-filter GL_LINEAR) (zoom 1) (sprite '((0 0) (1 1))))
+(define-primitive (picture filename #:key (min-filter (texture-min-filter linear)) (mag-filter (texture-mag-filter linear)) (zoom 1) (sprite '((0 0) (1 1))))
   (draw-texture (load-texture filename #:min-filter min-filter #:mag-filter mag-filter) #:zoom zoom #:sprite sprite))
 
 
