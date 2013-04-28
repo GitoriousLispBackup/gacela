@@ -19,12 +19,15 @@
   #:use-module (gacela sdl)
 ;  #:use-module (gacela gl)
   #:use-module (figl gl)
+  #:use-module (figl glx)
   #:use-module (figl glu)
   #:use-module (gacela ftgl)
   #:use-module (gacela math)
   #:use-module (gacela utils)
   #:use-module (ice-9 optargs)
   #:use-module (ice-9 receive)
+  #:use-module (srfi srfi-9)
+  #:use-module (system foreign)
   #:export (init-video
 	    get-screen-height
 	    get-screen-width
@@ -49,7 +52,7 @@
 	    get-current-color
 	    set-current-color
 	    with-color
-	    begin-textures
+	    with-textures
 	    draw
 	    load-texture
 	    load-texture-without-cache
@@ -211,51 +214,21 @@
 	   (SDL_Delay (- time-per-frame frame-time))))))
 
 
-;;; Drawing
+;;; Textures
 
-(define current-color '(1 1 1 1))
+(define-record-type <texture>
+  (texture id width height)
+  texture?
+  (id texture-id)
+  (width texture-width set-texture-width)
+  (height texture-height set-texture-height))
 
-(define (get-current-color)
-  current-color)
-
-(define* (set-current-color red green blue #:optional (alpha 1))
-  (set! current-color (list red green blue alpha))
-  (gl-color red green blue alpha))
-
-(define-macro (with-color color . code)
-  `(cond (,color
-	  (let ((original-color (get-current-color))
-		(result #f))
-	    (apply set-current-color ,color)
-	    (set! result (begin ,@code))
-	    (apply set-current-color original-color)
-	    result))
-	 (else (begin ,@code))))
-
-(define-macro (begin-textures . code)
+(define-macro (with-textures . code)
   `(let ((result #f))
      (gl-enable (oes-framebuffer-object texture-2d))
      (set! result (begin ,@code))
      (gl-disable (oes-framebuffer-object texture-2d))
      result))
-
-(define (draw . vertexes)
-  (gl-begin
-   (let ((number-of-points (length vertexes)))
-     (cond ((= number-of-points 2) (begin-mode lines))
-	   ((= number-of-points 3) (begin-mode triangles))
-	   ((= number-of-points 4) (begin-mode quads))
-	   ((> number-of-points 4) (begin-mode polygon))))
-   (draw-vertexes vertexes)))
-
-(define (draw-vertexes vertexes)
-  (cond ((not (null? vertexes))
-	 (apply draw-vertex (if (list? (caar vertexes)) (car vertexes) (list (car vertexes))))
-	 (draw-vertexes (cdr vertexes)))))
-
-(define* (draw-vertex vertex #:key texture-coord)
-  (cond (texture-coord (apply glTexCoord2f texture-coord)))
-  (apply gl-vertex vertex))
 
 (define (load-image filename)
   (let ((image (IMG_Load filename)))
@@ -281,32 +254,72 @@
 	       (zoomSurface surface zoomx zoomy 0))))))
 
 (define* (load-texture-without-cache filename #:key (min-filter (texture-min-filter linear)) (mag-filter (texture-mag-filter linear)))
-  (begin-textures
+  (with-textures
    (receive
     (image real-w real-h) (load-image-for-texture filename)
     (cond (image
-	   (let ((width (surface-w image)) (height (surface-h image))
-		 (byteorder (if (= SDL_BYTEORDER SDL_LIL_ENDIAN)
-				(if (= (surface-format-BytesPerPixel image) 3) (ext-bgra bgr-ext) (ext-bgra bgra-ext))
-				(if (= (surface-format-BytesPerPixel image) 3) (pixel-format rgb) (pixel-format rgba))))
-		 (texture (car (glGenTextures 1))))
+    	   (let ((width (surface-w image)) (height (surface-h image))
+    		 (byteorder (if (= SDL_BYTEORDER SDL_LIL_ENDIAN)
+    				(if (= (surface-format-BytesPerPixel image) 3) (ext-bgra bgr-ext) (ext-bgra bgra-ext))
+    				(if (= (surface-format-BytesPerPixel image) 3) (pixel-format rgb) (pixel-format rgba))))
+    		 (texture-id (gl-generate-texture))
+    		 (image-pointer (make-pointer
+    				 (if (> (surface-pixels image) 0)
+    				     (surface-pixels image)
+    				     (+ ($expt 2 32) (surface-pixels image))))))
 
-	     (glBindTexture (oes-framebuffer-object texture-2d) texture)
-	     (glTexImage2D (oes-framebuffer-object texture-2d) 0 4 width height 0 byteorder (data-type unsigned-byte) (surface-pixels image))
-	     (glTexParameteri (oes-framebuffer-object texture-2d) (texture-parameter-name texture-min-filter) min-filter)
-	     (glTexParameteri (oes-framebuffer-object texture-2d) (texture-parameter-name texture-mag-filter) mag-filter)
-	     (set-texture-size! texture real-w real-h)
-	     texture))))))
+    	     (gl-bind-texture (oes-framebuffer-object texture-2d) texture-id)
+    	     (set-gl-texture-image (oes-framebuffer-object texture-2d) 0 4 0 byteorder (data-type unsigned-byte) image-pointer width height)
+    	     (set-gl-texture-parameter (oes-framebuffer-object texture-2d) (texture-parameter-name texture-min-filter) min-filter)
+    	     (set-gl-texture-parameter (oes-framebuffer-object texture-2d) (texture-parameter-name texture-mag-filter) mag-filter)
+    	     (texture texture-id real-w real-h)))))))
 
 (define load-texture (use-cache-with load-texture-without-cache))
 
-(define (get-texture-properties texture)
-  `((width . ,(texture-w texture)) (height . ,(texture-h texture))))
+      
+;;; Drawing
+
+(define current-color '(1 1 1 1))
+
+(define (get-current-color)
+  current-color)
+
+(define* (set-current-color red green blue #:optional (alpha 1))
+  (set! current-color (list red green blue alpha))
+  (gl-color red green blue alpha))
+
+(define-macro (with-color color . code)
+  `(cond (,color
+	  (let ((original-color (get-current-color))
+		(result #f))
+	    (apply set-current-color ,color)
+	    (set! result (begin ,@code))
+	    (apply set-current-color original-color)
+	    result))
+	 (else (begin ,@code))))
+
+(define (draw . vertexes)
+  (gl-begin
+   (let ((number-of-points (length vertexes)))
+     (cond ((= number-of-points 2) (begin-mode lines))
+	   ((= number-of-points 3) (begin-mode triangles))
+	   ((= number-of-points 4) (begin-mode quads))
+	   ((> number-of-points 4) (begin-mode polygon))))
+   (draw-vertexes vertexes)))
+
+(define (draw-vertexes vertexes)
+  (cond ((not (null? vertexes))
+	 (apply draw-vertex (if (list? (caar vertexes)) (car vertexes) (list (car vertexes))))
+	 (draw-vertexes (cdr vertexes)))))
+
+(define* (draw-vertex vertex #:key texture-coord)
+  (cond (texture-coord (apply gl-texture-coordinates texture-coord)))
+  (apply gl-vertex vertex))
 
 (define* (draw-texture texture #:key (zoom 1) (sprite '((0 0) (1 1))))
   (cond (texture
-	 (let ((width (texture-w texture))
-	       (height (texture-h texture)))
+	 (let ((width (texture-width texture))
+	       (height (texture-height texture)))
 	   (draw-rectangle (* zoom width (- (caadr sprite) (caar sprite)))
 			   (* zoom height (- (cadadr sprite) (cadar sprite)))
 			   #:texture texture
@@ -326,8 +339,8 @@
 
 (define* (draw-quad v1 v2 v3 v4 #:key texture (texture-coord '((0 0) (1 1))))
   (cond (texture
-	 (begin-textures
-	  (glBindTexture (oes-framebuffer-object texture-2d) texture)
+	 (with-textures
+	  (gl-bind-texture (oes-framebuffer-object texture-2d) (texture-id texture))
 	  (draw (list v1 #:texture-coord (car texture-coord))
 		(list v2 #:texture-coord (list (caadr texture-coord) (cadar texture-coord)))
 		(list v3 #:texture-coord (cadr texture-coord))
@@ -351,7 +364,7 @@
 		   texture texture-1 texture-2 texture-3 texture-4 texture-5 texture-6
 		   color-1 color-2 color-3 color-4 color-5 color-6)
   (let ((-size (- size)))
-    (begin-textures
+    (with-textures
      (gl-normal 0 0 1)
      (with-color color-1 (draw-quad (list -size size size) (list size size size) (list size -size size) (list -size -size size) #:texture (or texture-1 texture)))
      (gl-normal 0 0 -1)
@@ -445,7 +458,7 @@
 
 (define mesh? (record-predicate mesh-type))
 
-(define* (make-mesh type proc)
+(define (make-mesh type proc)
   (apply
    (record-constructor mesh-type)
    (let ((px 0) (py 0) (pz 0)
