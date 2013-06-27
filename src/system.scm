@@ -16,6 +16,7 @@
 
 
 (define-module (gacela system)
+  #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-9))
 
 
@@ -45,3 +46,27 @@
 
 (export define-component
 	get-component-type)
+
+
+;;; Making systems
+
+(define* (find-entities-by-components c t)
+  (cond ((null? t) '())
+	(else
+	 (let* ((e (assoc-ref c (car t)))
+		(e* (if e e '())))
+	   (cond ((null? (cdr t)) e*)
+		 (else
+		  (lset-intersection eq? e* (find-entities-by-components c (cdr t)))))))))
+		  
+
+(define (make-system component-types system-fun)
+  (lambda (entities components)
+    (let* ((e (find-entities-by-components components component-types))
+	   (e* (map (lambda (x) (assoc x entities)) e))
+	   (e** (map (lambda (x) (cons (car x) (filter (lambda (x) (memq (get-component-type x) component-types)) (cdr x)))) e*)))
+      e**)))
+
+
+(export find-entities-by-components
+	make-system)
