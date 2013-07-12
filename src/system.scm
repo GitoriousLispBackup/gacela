@@ -22,7 +22,7 @@
 
 ;;; Component definitions
 
-(define (make-symbol . args)
+(define (symbol-concatenate . args)
   (string->symbol
    (string-concatenate
     (map (lambda (a) (if (symbol? a) (symbol->string a) a)) args))))
@@ -31,21 +31,60 @@
   `(begin
      (use-modules (srfi srfi-9) (srfi srfi-9 gnu))
      (define-record-type ,name
-       (,(make-symbol "make-" name) ,@args)
-       ,(make-symbol name "?")
-       ,@(map (lambda (a) (list a (make-symbol name "-" a) (make-symbol "set-" name "-" a "!"))) args))
+       (,(symbol-concatenate "make-" name) ,@args)
+       ,(symbol-concatenate name "?")
+       ,@(map (lambda (a) (list a (symbol-concatenate name "-" a) (symbol-concatenate "set-" name "-" a "!"))) args))
      (set-record-type-printer! ,name
        (lambda (record port)
 	 (format port "#<[~a]" ',name)
-	 ,@(map (lambda (a) `(format port " ~a: ~a" ',a (,(make-symbol name "-" a) record))) args)
+	 ,@(map (lambda (a) `(format port " ~a: ~a" ',a (,(symbol-concatenate name "-" a) record))) args)
 	 (format port ">")))
      ',name))
+
+(define (export-component component)
+  (let ((name (record-type-name component))
+	(m (current-module)))
+    (module-export! m (list
+		       (symbol-concatenate "make-" name)
+		       (symbol-concatenate name "?")))
+    (for-each
+     (lambda (a)
+       (module-export! (current-module)
+		       (list
+			(symbol-concatenate name "-" a)
+			(symbol-concatenate "set-" name "-" a "!"))))
+     (record-type-fields component))))
 
 (define (get-component-type component)
   (record-type-name (record-type-descriptor component)))
 
 (export define-component
+	export-component
 	get-component-type)
+
+
+;;; Entities and components
+
+(define (new-entity new-components entities components)
+  (let ((key (gensym)))
+    (values
+     (acons key (map (lambda (c) `(,(get-component-type c) . ,c)) new-components) entities)
+     (register-components key new-components components)
+     key)))
+
+(define* (register-components entity components clist)
+  (cond ((null? components) clist)
+	(else
+	 (let* ((type (get-component-type (car components)))
+		(elist (assoc-ref clist type)))
+	   (register-components entity (cdr components)
+	     (assoc-set! clist type
+	       (cond (elist
+		      (lset-adjoin eq? elist entity))
+		     (else
+		      (list entity)))))))))
+
+(export new-entity)
 
 
 ;;; Making systems
@@ -64,9 +103,24 @@
   (lambda (entities components)
     (let* ((e (find-entities-by-components components component-types))
 	   (e* (map (lambda (x) (assoc x entities)) e))
-	   (e** (map (lambda (x) (cons (car x) (filter (lambda (x) (memq (get-component-type x) component-types)) (cdr x)))) e*)))
-      e**)))
+	   (e** (map (lambda (x) (cons (car x) (filter (lambda (x) (memq (get-component-type x) component-types)) (cdr x)))) e*))
+	   (res (system-fun e**)))
+      (lambda* (#:optional (entities2 #f) (components2 #f))
+        (let* ((e2 (if (and entities2 components2)
+		       (find-entities-by-components components2 component-types)
+		       e))
+	       (e2* (if (and entities2 components2)
+			(map (lambda (x) (assoc x entities2)) e2)
+			e*))
+	       (e2** (if (and entities2 components2)
+			 (map (lambda (x) (cons (car x) (filter (lambda (x) (memq (get-component-type x) component-types)) (cdr x)))) e2*)
+			 e**)))
+	  e2**)))))
 
+; ((1 a b) (2 a b c) (3 c))
+; ((1 a b) (2 a b))
+; ((1 a) (a b))
+; ((1 a) (3 c) (4 a b))
 
 (export find-entities-by-components
 	make-system)
