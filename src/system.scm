@@ -65,17 +65,10 @@
 
 ;;; Entities and components
 
-(define (new-entity new-components entities components)
-  (let ((key (gensym)))
-    (values
-     (acons key (map (lambda (c) `(,(get-component-type c) . ,c)) new-components) entities)
-     (register-components key new-components components)
-     key)))
-
-(define* (register-components entity components clist)
+(define (register-components entity components clist)
   (cond ((null? components) clist)
 	(else
-	 (let* ((type (get-component-type (car components)))
+	 (let* ((type (car components))
 		(elist (assoc-ref clist type)))
 	   (register-components entity (cdr components)
 	     (assoc-set! clist type
@@ -84,7 +77,35 @@
 		     (else
 		      (list entity)))))))))
 
-(export new-entity)
+(define (unregister-components entity components clist)
+  (cond ((null? components) clist)
+	(else
+	 (let* ((type (car components))
+		(elist (lset-difference eq? (assoc-ref clist type) (list entity))))
+	   (unregister-components entity (cdr components)
+	     (cond ((null? elist)
+		    (assoc-remove! clist type))
+		   (else
+		    (assoc-set! clist type elist))))))))
+
+(define (new-entity new-components entities components)
+  (let ((key (gensym)))
+    (values
+     (acons key (map (lambda (c) `(,(get-component-type c) . ,c)) new-components) entities)
+     (register-components
+      key
+      (map (lambda (c) (get-component-type c)) new-components)
+      components)
+     key)))
+
+(define (remove-entity key entities components)
+  (let ((clist (map (lambda (c) (car c)) (assoc-ref entities key))))
+    (values
+     (assoc-remove! entities key)
+     (unregister-components key clist components))))
+   
+(export new-entity
+	remove-entity)
 
 
 ;;; Making systems
