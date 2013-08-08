@@ -52,6 +52,37 @@
 	     (set! entities e)
 	     (set! components c))
     (format #t "~a~%~a~%~%" entities components)
+
+    (receive (e c k) (new-entity `((a . ,(make-a 1 2)) (b . ,(make-b))) entities components)
+	     (set! entities e)
+	     (set! components c)
+	     (set! key k)
+	     (display k) (newline))
+    (format #t "~a~%~a~%~%" entities components)
+
+    (receive (e c) (set-entities `((,key . ((b . #f) (a . ,(make-a 50 50)))) (#f . ((a . ,(make-a 1000 1000))))) entities components)
+	     (set! entities e)
+	     (set! components c))
+    (format #t "~a~%~a~%~%" entities components)
+
+    (receive (e c) (set-entities `((,key . #f)) entities components)
+	     (set! entities e)
+	     (set! components c))
+    (format #t "~a~%~a~%~%" entities components)
 ))
 
 (export test1)
+
+
+(define (test2)
+  (let ((entities '())
+	(components '()))
+    (receive (e c) (((make-system '() (lambda (e) `((#f . ((a . ,(make-a 1 2)))) (#f . ((a . ,(make-a 10 20))))))) entities components))
+	     (set! entities e)
+	     (set! components c))
+    (format #t "~a~%~a~%~%" entities components)
+
+    (((make-system '(a) (lambda (e) (display e) (newline) '())) entities components))
+))
+
+(export test2)

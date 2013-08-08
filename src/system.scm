@@ -16,6 +16,7 @@
 
 
 (define-module (gacela system)
+  #:use-module (ice-9 receive)
   #:use-module (srfi srfi-1)
   #:use-module (srfi srfi-9))
 
@@ -123,11 +124,26 @@
 	    (cdr new-components)))))
   (set-entity key (set-components (alist-copy (assoc-ref entities key)) new-components) entities components))
 
+(define (set-entities new-entities entities components)
+  (cond ((null? new-entities)
+	 (values entities components))
+	(else
+	 (cond ((not (caar new-entities))
+		(receive (e c k) (new-entity (cdar new-entities) entities components)
+			 (set-entities (cdr new-entities) e c)))
+	       ((not (cdar new-entities))
+		(receive (e c) (remove-entity (caar new-entities) entities components)
+			 (set-entities (cdr new-entities) e c)))
+	       (else
+		(receive (e c) (set-entity-components (caar new-entities) (cdar new-entities) entities components)
+			 (set-entities (cdr new-entities) e c)))))))
+
    
 (export new-entity
 	remove-entity
 	set-entity
-	set-entity-components)
+	set-entity-components
+	set-entities)
 
 
 ;;; Making systems
@@ -146,24 +162,13 @@
   (lambda (entities components)
     (let* ((e (find-entities-by-components components component-types))
 	   (e* (map (lambda (x) (assoc x entities)) e))
-	   (e** (map (lambda (x) (cons (car x) (filter (lambda (x) (memq (get-component-type x) component-types)) (cdr x)))) e*))
+	   (e** (map (lambda (x) (cons (car x) (filter (lambda (x) (memq (car x) component-types)) (cdr x)))) e*))
 	   (res (system-fun e**)))
       (lambda* (#:optional (entities2 #f) (components2 #f))
-        (let* ((e2 (if (and entities2 components2)
-		       (find-entities-by-components components2 component-types)
-		       e))
-	       (e2* (if (and entities2 components2)
-			(map (lambda (x) (assoc x entities2)) e2)
-			e*))
-	       (e2** (if (and entities2 components2)
-			 (map (lambda (x) (cons (car x) (filter (lambda (x) (memq (get-component-type x) component-types)) (cdr x)))) e2*)
-			 e**)))
-	  e2**)))))
+	(let ((e (if (and entities2 components2) entities2 entities))
+	      (c (if (and entities2 components2) components2 components)))
+	  (set-entities res e c))))))
 
-; ((1 a b) (2 a b c) (3 c))
-; ((1 a b) (2 a b))
-; ((1 a) (a b))
-; ((1 a) (3 c) (4 a b))
 
 (export find-entities-by-components
 	make-system)
