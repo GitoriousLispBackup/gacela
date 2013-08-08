@@ -66,6 +66,14 @@
 
 ;;; Entities and components
 
+(define (normalize-components components)
+  (map
+   (lambda (c)
+     (if (record? c)
+	 `(,(get-component-type c) . ,c)
+	 c))
+   components))
+
 (define (register-components entity components clist)
   (cond ((null? components) clist)
 	(else
@@ -90,11 +98,12 @@
 		    (assoc-set! clist type elist))))))))
 
 (define (new-entity new-components entities components)
-  (let ((key (gensym)))
+  (let ((key (gensym))
+	(nc (normalize-components new-components)))
     (values
-     (acons key new-components entities)
+     (acons key nc entities)
      (register-components key
-			  (map (lambda (c) (car c)) new-components)
+			  (map (lambda (c) (car c)) nc)
 			  components)
      key)))
 
@@ -105,10 +114,11 @@
      (unregister-components key clist components))))
 
 (define (set-entity key new-components entities components)
-  (let ((clist (map (lambda (c) (car c)) (assoc-ref entities key)))
-	(nclist (map (lambda (c) (car c)) new-components)))
+  (let* ((nc (normalize-components new-components))
+	 (clist (map (lambda (c) (car c)) (assoc-ref entities key)))
+	 (nclist (map (lambda (c) (car c)) nc)))
     (values
-     (assoc-set! entities key new-components)
+     (assoc-set! entities key nc)
      (register-components key (lset-difference eq? nclist clist)
 			  (unregister-components key (lset-difference eq? clist nclist) components)))))
 
@@ -122,7 +132,7 @@
 		(assoc-set! clist (caar new-components) (cdar new-components))
 		(assoc-remove! clist (caar new-components)))
 	    (cdr new-components)))))
-  (set-entity key (set-components (alist-copy (assoc-ref entities key)) new-components) entities components))
+  (set-entity key (set-components (alist-copy (assoc-ref entities key)) (normalize-components new-components)) entities components))
 
 (define (set-entities new-entities entities components)
   (cond ((null? new-entities)
