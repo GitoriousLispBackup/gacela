@@ -180,5 +180,33 @@
 	  (set-entities res e c))))))
 
 
+(define (join-systems . systems)
+  (lambda (entities components)
+    (let run ((s systems) (e entities) (c components))
+      (cond ((null? s)
+	     (values e c))
+	    (else
+	     (receive (e2 c2) (((car s) e c))
+	       (run (cdr s) e2 c2)))))))
+
+
+(define (threaded-systems . systems)
+  (lambda (entities components)
+    (let run-wait ((thd
+		    (map
+		     (lambda (s)
+		       (call-with-new-thread
+			(lambda () (s entities components))))
+		     systems))
+		   (e entities) (c components))
+      (cond ((null? thd)
+	     (values e c))
+	    (else
+	     (receive (e2 c2) ((join-thread (car thd)) e c)
+	       (run-wait (cdr thd) e2 c2)))))))
+
+
 (export find-entities-by-components
-	make-system)
+	make-system
+	join-systems
+	threaded-systems)

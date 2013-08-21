@@ -86,3 +86,37 @@
 ))
 
 (export test2)
+
+
+(define (test3)
+  (let ((entities '())
+	(components '())
+	(s1 (make-system '(l)
+	      (lambda (e)
+		(map
+		 (lambda (e1)
+		   `(,(car e1) . ((l . (cons 1 (cdr e1)))))
+		 e)))))
+	(s2 (make-system '(l)
+	      (lambda (e)
+		(map
+		 (lambda (e1)
+		   `(,(car e1) . ((l . (cons 2 (cdr e1))))))
+		 e)))))
+    (receive (e c) (set-entities `((#f . ((l . ()))) (#f . ((l . ())))) entities components)
+      ((join-systems s1 s2) e c))))
+
+(export test3)
+
+
+(define (test4)
+  (let ((f1 (lambda (e c) (sleep 3) (lambda (e2 c2) (values (+ 1 e2) c2))))
+	(f2 (lambda (e c) (sleep 4) (lambda (e2 c2) (values e2 (+ 10 c2))))))
+    (let ((t (current-time)))
+      (receive (e c) ((join-systems f1 f2) 2 2) (format #t "~a~%~a~%" e c))
+      (display (- (current-time) t)) (newline) (newline))
+    (let ((t (current-time)))
+      (receive (e c) ((threaded-systems f1 f2) 2 2) (format #t "~a~%~a~%" e c))
+      (display (- (current-time) t)) (newline) (newline))))
+
+(export test4)
