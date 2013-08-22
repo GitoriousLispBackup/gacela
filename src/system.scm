@@ -97,63 +97,70 @@
 		   (else
 		    (assoc-set! clist type elist))))))))
 
-(define (new-entity new-components entities components)
-  (let ((key (gensym))
-	(nc (normalize-components new-components)))
-    (values
-     (acons key nc entities)
-     (register-components key
-			  (map (lambda (c) (car c)) nc)
-			  components)
-     key)))
+(define (new-entity . new-components)
+  (lambda (entities components)
+    (let ((key (gensym))
+	  (nc (normalize-components new-components)))
+      (values
+       (acons key nc entities)
+       (register-components key
+			    (map (lambda (c) (car c)) nc)
+			    components)
+       key))))
 
-(define (remove-entity key entities components)
-  (let ((clist (map (lambda (c) (car c)) (assoc-ref entities key))))
-    (values
-     (assoc-remove! entities key)
-     (unregister-components key clist components))))
+(define (remove-entity key)
+  (lambda (entities components)
+    (let ((clist (map (lambda (c) (car c)) (assoc-ref entities key))))
+      (values
+       (assoc-remove! entities key)
+       (unregister-components key clist components)))))
 
-(define (set-entity key new-components entities components)
-  (let* ((nc (normalize-components new-components))
-	 (clist (map (lambda (c) (car c)) (assoc-ref entities key)))
-	 (nclist (map (lambda (c) (car c)) nc)))
-    (values
-     (assoc-set! entities key nc)
-     (register-components key (lset-difference eq? nclist clist)
-			  (unregister-components key (lset-difference eq? clist nclist) components)))))
+(define (set-entity key . new-components)
+  (lambda (entities components)
+    (let* ((nc (normalize-components new-components))
+	   (clist (map (lambda (c) (car c)) (assoc-ref entities key)))
+	   (nclist (map (lambda (c) (car c)) nc)))
+      (values
+       (assoc-set! entities key nc)
+       (register-components key (lset-difference eq? nclist clist)
+			    (unregister-components key (lset-difference eq? clist nclist) components))))))
 
-(define (set-entity-components key new-components entities components)
-  (define (set-components clist new-components)
-    (cond ((null? new-components)
-	   clist)
-	  (else
-	   (set-components
-	    (if (cdar new-components)
-		(assoc-set! clist (caar new-components) (cdar new-components))
-		(assoc-remove! clist (caar new-components)))
-	    (cdr new-components)))))
-  (set-entity key (set-components (alist-copy (assoc-ref entities key)) (normalize-components new-components)) entities components))
+(define (set-entity-components key . new-components)
+  (lambda (entities components)
+    (let ((nc (normalize-components new-components))
+	  (clist (alist-copy (assoc-ref entities key))))
+      (for-each
+       (lambda (c)
+	 (assoc-set! clist (car c) (cdr c)))
+       nc)
+      (values
+       (assoc-set! entities key clist)
+       (register-components key (map (lambda (c) (car c)) nc) components)))))
 
-(define (set-entities new-entities entities components)
-  (cond ((null? new-entities)
+(define (remove-entity-components key . old-components)
+  (lambda (entities components)
+    (let ((clist (alist-copy (assoc-ref entities key))))
+      (for-each
+       (lambda (c)
+	 (assoc-remove! clist c))
+       old-components)
+      (values
+       (assoc-set! entities key clist)
+       (unregister-components key old-components components)))))
+
+(define (modify-entities changes entities components)
+  (cond ((null? changes)
 	 (values entities components))
 	(else
-	 (cond ((not (caar new-entities))
-		(receive (e c k) (new-entity (cdar new-entities) entities components)
-			 (set-entities (cdr new-entities) e c)))
-	       ((not (cdar new-entities))
-		(receive (e c) (remove-entity (caar new-entities) entities components)
-			 (set-entities (cdr new-entities) e c)))
-	       (else
-		(receive (e c) (set-entity-components (caar new-entities) (cdar new-entities) entities components)
-			 (set-entities (cdr new-entities) e c)))))))
+	 (receive (e c) ((car changes) entities components)
+	   (modify-entities (cdr changes) e c)))))
 
-   
 (export new-entity
 	remove-entity
 	set-entity
 	set-entity-components
-	set-entities)
+	remove-entity-components
+	modify-entities)
 
 
 ;;; Making systems
