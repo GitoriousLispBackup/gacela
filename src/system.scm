@@ -184,7 +184,7 @@
       (lambda* (#:optional (entities2 #f) (components2 #f))
 	(let ((e (if (and entities2 components2) entities2 entities))
 	      (c (if (and entities2 components2) components2 components)))
-	  (set-entities res e c))))))
+	  (modify-entities res e c))))))
 
 
 (define (join-systems . systems)
