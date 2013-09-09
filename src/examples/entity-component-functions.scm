@@ -15,18 +15,15 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-(define-module (gacela test)
+(define-module (gacela examples entity-component-functions)
   #:use-module (gacela system)
   #:use-module (ice-9 receive))
 
 
 (define-component a x y)
 (define-component b)
-(define-component c)
 
-(export-component a)
-
-(define (test1)
+(define (entity-component-functions)
   (let ((entities '())
 	(components '())
 	(key #f))
@@ -68,55 +65,6 @@
     (receive (e c) (modify-entities (list (remove-entity key)) entities components)
       (set! entities e)
       (set! components c))
-    (format #t "Remove last entity:~%~a~%~a~%~%" entities components)
-))
+    (format #t "Remove last entity:~%~a~%~a~%~%" entities components)))
 
-(export test1)
-
-
-(define (test2)
-  (let ((entities '())
-	(components '()))
-    (receive (e c) (((make-system '() (lambda (e) (list (new-entity (make-a 1 2)) (new-entity (make-a 10 20))))) entities components))
-	     (set! entities e)
-	     (set! components c))
-    (format #t "Two new entities with a:~%~a~%~a~%~%" entities components)
-
-    (((make-system '(a) (lambda (e) (display e) (newline) '())) entities components))
-))
-
-(export test2)
-
-
-(define (test3)
-  (let ((entities '())
-	(components '())
-	(s1 (make-system '(l)
-	      (lambda (e)
-		(map
-		 (lambda (e1)
-		   `(,(car e1) . ((l . (cons 1 (cdr e1)))))
-		 e)))))
-	(s2 (make-system '(l)
-	      (lambda (e)
-		(map
-		 (lambda (e1)
-		   `(,(car e1) . ((l . (cons 2 (cdr e1))))))
-		 e)))))
-    (receive (e c) (set-entities `((#f . ((l . ()))) (#f . ((l . ())))) entities components)
-      ((join-systems s1 s2) e c))))
-
-(export test3)
-
-
-(define (test4)
-  (let ((f1 (lambda (e c) (sleep 3) (lambda (e2 c2) (values (+ 1 e2) c2))))
-	(f2 (lambda (e c) (sleep 4) (lambda (e2 c2) (values e2 (+ 10 c2))))))
-    (let ((t (current-time)))
-      (receive (e c) ((join-systems f1 f2) 2 2) (format #t "~a~%~a~%" e c))
-      (display (- (current-time) t)) (newline) (newline))
-    (let ((t (current-time)))
-      (receive (e c) ((threaded-systems f1 f2) 2 2) (format #t "~a~%~a~%" e c))
-      (display (- (current-time) t)) (newline) (newline))))
-
-(export test4)
+(export entity-component-functions)
