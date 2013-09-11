@@ -175,16 +175,23 @@
 		  (lset-intersection eq? e* (find-entities-by-components c (cdr t)))))))))
 		  
 
-(define (make-system component-types system-fun)
-  (lambda (entities components)
-    (let* ((e (find-entities-by-components components component-types))
-	   (e* (map (lambda (x) (assoc x entities)) e))
-	   (e** (map (lambda (x) (cons (car x) (filter (lambda (x) (memq (car x) component-types)) (cdr x)))) e*))
-	   (res (system-fun e**)))
-      (lambda* (#:optional (entities2 #f) (components2 #f))
-	(let ((e (if (and entities2 components2) entities2 entities))
-	      (c (if (and entities2 components2) components2 components)))
-	  (modify-entities res e c))))))
+(define-macro (make-system component-types system-func)
+  `(let ((func ,system-func))
+     (lambda (entities components)
+       (let* ((e (find-entities-by-components components ',component-types))
+	      (e* (map (lambda (x) (assoc x entities)) e))
+	      (e** (map (lambda (x) (cons (car x) (filter (lambda (x) (memq (car x) ',component-types)) (cdr x)))) e*))
+	      (res (func e**)))
+	 (lambda* (#:optional (entities2 #f) (components2 #f))
+	   (let ((e (if (and entities2 components2) entities2 entities))
+		 (c (if (and entities2 components2) components2 components)))
+	     (modify-entities res e c)))))))
+
+
+(define-macro (define-system head system-func)
+  (let ((name (car head))
+	(component-types (cdr head)))
+    `(define ,name (make-system ,component-types ,system-func))))
 
 
 (define (join-systems . systems)
@@ -214,6 +221,7 @@
 
 
 (export find-entities-by-components
+	define-system
 	make-system
 	join-systems
 	threaded-systems)

@@ -25,11 +25,11 @@
 (define (making-systems)
   (let ((entities '())
 	(components '()))
-    (receive (e c) (((make-system '() (lambda (e) (list (new-entity (make-a 1 2)) (new-entity (make-a 10 20))))) entities components))
+    (receive (e c) (((make-system () (lambda (e) (list (new-entity (make-a 1 2)) (new-entity (make-a 10 20))))) entities components))
 	     (set! entities e)
 	     (set! components c))
     (format #t "Two new entities with a:~%~a~%~a~%~%" entities components)
 
-    (((make-system '(a) (lambda (e) (display e) (newline) '())) entities components))))
+    (((make-system (a) (lambda (e) (display e) (newline) '())) entities components))))
 
 (export making-systems)

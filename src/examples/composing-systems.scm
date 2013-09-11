@@ -20,23 +20,21 @@
   #:use-module (ice-9 receive))
 
 
-(define s1
-  (make-system '(l)
-    (lambda (e)
-      (sleep 3)
-      (map
-       (lambda (e1)
-	 (set-entity-components (car e1) `(l . ,(cons 1 (cdadr e1)))))
-       e))))
+(define-system (s1 l)
+  (lambda (e)
+    (sleep 3)
+    (map
+     (lambda (e1)
+       (set-entity-components (car e1) `(l . ,(cons 1 (cdadr e1)))))
+     e)))
 
-(define s2
-  (make-system '(l)
-    (lambda (e)
-      (sleep 4)
-      (map
-       (lambda (e1)
-	 (set-entity-components (car e1) `(l . ,(cons 2 (cdadr e1)))))
-       e))))
+(define-system (s2 l)
+  (lambda (e)
+    (sleep 4)
+    (map
+     (lambda (e1)
+       (set-entity-components (car e1) `(l . ,(cons 2 (cdadr e1)))))
+     e)))
 
 (define (composing-with-join)
   (let ((entities '())
