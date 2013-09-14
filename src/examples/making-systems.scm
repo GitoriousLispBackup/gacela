@@ -22,14 +22,27 @@
 
 (define-component a x y)
 
+(define-system (s1)
+  (lambda (e)
+    (list (new-entity (make-a 1 2))
+	  (new-entity (make-a 10 20)))))
+
+(define-system (s2 a)
+  (lambda (e)
+    (for-each
+     (lambda (e1)
+       (format #t "Key: ~a  Component: ~a~%" (get-key e1) (get-component 'a e1)))
+     e)
+    '()))
+
 (define (making-systems)
   (let ((entities '())
 	(components '()))
-    (receive (e c) (((make-system () (lambda (e) (list (new-entity (make-a 1 2)) (new-entity (make-a 10 20))))) entities components))
+    (receive (e c) ((s1 entities components))
 	     (set! entities e)
 	     (set! components c))
     (format #t "Two new entities with a:~%~a~%~a~%~%" entities components)
 
-    (((make-system (a) (lambda (e) (display e) (newline) '())) entities components))))
+    ((s2 entities components))))
 
 (export making-systems)

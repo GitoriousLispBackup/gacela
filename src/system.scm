@@ -225,3 +225,16 @@
 	make-system
 	join-systems
 	threaded-systems)
+
+
+;;; Entities and components access inside systems
+
+(define (get-key entity)
+  (car entity))
+
+(define (get-component component-name entity)
+  (assoc-ref (cdr entity) component-name))
+
+
+(export get-key
+	get-component)
