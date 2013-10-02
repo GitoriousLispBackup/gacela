@@ -18,7 +18,8 @@
 (define-module (gacela system)
   #:use-module (ice-9 receive)
   #:use-module (srfi srfi-1)
-  #:use-module (srfi srfi-9))
+  #:use-module (srfi srfi-9)
+  #:use-module (srfi srfi-9 gnu))
 
 
 ;;; Component definitions
@@ -28,19 +29,35 @@
    (string-concatenate
     (map (lambda (a) (if (symbol? a) (symbol->string a) a)) args))))
 
-(define-macro (define-component name . args)
-  `(begin
-     (use-modules (srfi srfi-9) (srfi srfi-9 gnu))
-     (define-record-type ,name
-       (,(symbol-concatenate "make-" name) ,@args)
-       ,(symbol-concatenate name "?")
-       ,@(map (lambda (a) (list a (symbol-concatenate name "-" a) (symbol-concatenate "set-" name "-" a "!"))) args))
-     (set-record-type-printer! ,name
-       (lambda (record port)
-	 (format port "#<[~a]" ',name)
-	 ,@(map (lambda (a) `(format port " ~a: ~a" ',a (,(symbol-concatenate name "-" a) record))) args)
-	 (format port ">")))
-     ',name))
+(define-syntax define-component
+  (lambda (x)
+    (define (concat . args)
+      (datum->syntax x
+        (apply symbol-concatenate
+	  (map (lambda (a)
+		 (if (string? a)
+		     a
+		     (syntax->datum a)))
+	       args))))
+    (syntax-case x ()
+      ((_ name field ...)
+       (with-syntax ((make-name (concat "make-" #'name))
+		     (name? (concat #'name "?"))
+		     ((field-getter ...) (map (lambda (f) (concat #'name "-" f)) #'(field ...)))
+		     ((field-setter ...) (map (lambda (f) (concat "set-" #'name "-" f "!")) #'(field ...))))
+         #'(begin
+	     (define-record-type name
+	       (make-name field ...)
+	       name?
+	       (field field-getter field-setter)
+	       ...)
+	     (set-record-type-printer! name
+	       (lambda (record port)
+		 (format port "#<[~a]" 'name)
+		 (format port " ~a: ~a" 'field (field-getter record))
+		 ...
+		 (format port ">")))
+	     'name))))))
 
 (define (export-component component)
   (let ((name (record-type-name component))
@@ -173,26 +190,24 @@
 	   (cond ((null? (cdr t)) e*)
 		 (else
 		  (lset-intersection eq? e* (find-entities-by-components c (cdr t)))))))))
-		  
 
-(define-macro (make-system component-types system-func)
-  `(let ((func ,system-func))
+(define-syntax make-system
+  (syntax-rules ()
+    ((_ component-types system-func)
      (lambda (entities components)
-       (let* ((e (find-entities-by-components components ',component-types))
+       (let* ((e (find-entities-by-components components 'component-types))
 	      (e* (map (lambda (x) (assoc x entities)) e))
-	      (e** (map (lambda (x) (cons (car x) (filter (lambda (x) (memq (car x) ',component-types)) (cdr x)))) e*))
-	      (res (func e**)))
+	      (e** (map (lambda (x) (cons (car x) (filter (lambda (x) (memq (car x) 'component-types)) (cdr x)))) e*))
+	      (res (system-func e**)))
 	 (lambda* (#:optional (entities2 #f) (components2 #f))
 	   (let ((e (if (and entities2 components2) entities2 entities))
 		 (c (if (and entities2 components2) components2 components)))
-	     (modify-entities res e c)))))))
+	     (modify-entities res e c))))))))
 
-
-(define-macro (define-system head system-func)
-  (let ((name (car head))
-	(component-types (cdr head)))
-    `(define ,name (make-system ,component-types ,system-func))))
-
+(define-syntax define-system
+  (syntax-rules ()
+    ((_ (name . component-types) system-func)
+     (define name (make-system component-types system-func)))))
 
 (define (join-systems . systems)
   (lambda (entities components)
@@ -202,7 +217,6 @@
 	    (else
 	     (receive (e2 c2) (((car s) e c))
 	       (run (cdr s) e2 c2)))))))
-
 
 (define (threaded-systems . systems)
   (lambda (entities components)
@@ -219,7 +233,6 @@
 	     (receive (e2 c2) ((join-thread (car thd)) e c)
 	       (run-wait (cdr thd) e2 c2)))))))
 
-
 (export find-entities-by-components
 	define-system
 	make-system
@@ -234,7 +247,6 @@
 
 (define (get-component component-name entity)
   (assoc-ref (cdr entity) component-name))
-
 
 (export get-key
 	get-component)
