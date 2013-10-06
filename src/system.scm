@@ -193,21 +193,30 @@
 
 (define-syntax make-system
   (syntax-rules ()
-    ((_ component-types system-func)
+    ((_ ((name (component-type ...)) ...) form ...)
      (lambda (entities components)
-       (let* ((e (find-entities-by-components components 'component-types))
-	      (e* (map (lambda (x) (assoc x entities)) e))
-	      (e** (map (lambda (x) (cons (car x) (filter (lambda (x) (memq (car x) 'component-types)) (cdr x)))) e*))
-	      (res (system-func e**)))
-	 (lambda* (#:optional (entities2 #f) (components2 #f))
-	   (let ((e (if (and entities2 components2) entities2 entities))
-		 (c (if (and entities2 components2) components2 components)))
-	     (modify-entities res e c))))))))
+       (let ((name (map (lambda (x)
+			  (cons (car x)
+				(filter (lambda (x)
+					  (memq (car x) '(component-type ...)))
+					(cdr x))))
+			(map (lambda (x)
+			       (assoc x entities))
+			     (find-entities-by-components components '(component-type ...)))))
+	     ...)
+	 (let ((res (begin form ...)))
+	   (lambda* (#:optional (entities2 #f) (components2 #f))
+	     (let ((e (if (and entities2 components2) entities2 entities))
+		   (c (if (and entities2 components2) components2 components)))
+	       (modify-entities res e c)))))))))
 
 (define-syntax define-system
   (syntax-rules ()
-    ((_ (name . component-types) system-func)
-     (define name (make-system component-types system-func)))))
+    ((_ system-name ((name (component-type ...)) ...) form ...)
+     (define system-name
+       (make-system ((name (component-type ...)) ...)
+         form
+	 ...)))))
 
 (define (join-systems . systems)
   (lambda (entities components)
