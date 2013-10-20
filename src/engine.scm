@@ -57,10 +57,55 @@
 
 ;;; Engine Access Protocol Interface
 
-(define (with-engine engine . changes)
-  (with-mutex (engine-mutex engine)
-    (let ((entities (engine-entities engine)))
-      (receive (e c) (modify-entities changes (car entities) (cadr entities))
-        (set-engine-entities! engine (list e c))))))
+(define current-engine-mutex (make-mutex))
+(define current-engine-list '())
 
-(export with-engine)
+(define (current-engine)
+  (with-mutex current-engine-mutex
+    (assoc-ref current-engine-list (current-thread))))
+
+(define (set-current-engine! engine)
+  (with-mutex current-engine-mutex
+    (set! current-engine-list
+	  (cond (engine
+		 (assoc-set! current-engine-list (current-thread) engine))
+		(else
+		 (assoc-remove! current-engine-list (current-thread)))))))
+
+(define* (get-entity key #:key (engine (current-engine)))
+  (assoc key (car (engine-entities engine))))
+
+(define-syntax define-entity-setter
+  (syntax-rules ()
+    ((_ name! name)
+     (define (name! . args)
+       (let ((f (apply name args))
+	     (engine (current-engine)))
+	 (receive (e c r) (f (car (engine-entities engine)) (cadr (engine-entities engine)))
+	   (set-engine-entities! engine (list e c))
+	   r))))))
+
+(define-entity-setter new-entity! new-entity)
+(define-entity-setter remove-entity! remove-entity)
+(define-entity-setter set-entity! set-entity)
+(define-entity-setter set-entity-components! set-entity-components)
+(define-entity-setter remove-entity-components! remove-entity-components)
+
+(define-syntax with-engine
+  (syntax-rules ()
+    ((_ engine body ...)
+     (begin
+       (set-current-engine! engine)
+       (let ((res (begin body ...)))
+	 (set-current-engine! #f)
+	 res)))))
+
+(export current-engine
+	set-current-engine!
+	get-entity
+	new-entity!
+	remove-entity!
+	set-entity!
+	set-entity-components!
+	remove-entity-components!
+	with-engine)

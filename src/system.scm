@@ -123,14 +123,16 @@
        (register-components key
 			    (map (lambda (c) (car c)) nc)
 			    components)
-       key))))
+       (cons key nc)))))
 
 (define (remove-entity key)
   (lambda (entities components)
-    (let ((clist (map (lambda (c) (car c)) (assoc-ref entities key))))
+    (let ((clist (map (lambda (c) (car c)) (assoc-ref entities key)))
+	  (entity (assoc key entities)))
       (values
        (assoc-remove! entities key)
-       (unregister-components key clist components)))))
+       (unregister-components key clist components)
+       entity))))
 
 (define (set-entity key . new-components)
   (lambda (entities components)
@@ -140,7 +142,8 @@
       (values
        (assoc-set! entities key nc)
        (register-components key (lset-difference eq? nclist clist)
-			    (unregister-components key (lset-difference eq? clist nclist) components))))))
+			    (unregister-components key (lset-difference eq? clist nclist) components))
+       (cons key nc)))))
 
 (define (set-entity-components key . new-components)
   (lambda (entities components)
@@ -152,7 +155,8 @@
        nc)
       (values
        (assoc-set! entities key clist)
-       (register-components key (map (lambda (c) (car c)) nc) components)))))
+       (register-components key (map (lambda (c) (car c)) nc) components)
+       (cons key clist)))))
 
 (define (remove-entity-components key . old-components)
   (lambda (entities components)
@@ -163,7 +167,8 @@
        old-components)
       (values
        (assoc-set! entities key clist)
-       (unregister-components key old-components components)))))
+       (unregister-components key old-components components)
+       (cons key clist)))))
 
 (define (modify-entities changes entities components)
   (cond ((null? changes)
