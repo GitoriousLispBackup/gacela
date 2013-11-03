@@ -94,10 +94,12 @@
 (define-syntax with-engine
   (syntax-rules ()
     ((_ engine body ...)
-     (begin
+     (let ((old-engine (current-engine)))
        (set-current-engine! engine)
-       (let ((res (begin body ...)))
-	 (set-current-engine! #f)
+       (let ((res (with-mutex (engine-mutex engine)
+		    body
+		    ...)))
+	 (set-current-engine! old-engine)
 	 res)))))
 
 (export current-engine
