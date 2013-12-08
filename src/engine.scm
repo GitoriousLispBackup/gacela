@@ -50,9 +50,7 @@
      (list e c))
    (make-mutex)
    (make-mutex)
-   (if (not (= (length systems) 1))
-       (join-systems systems)
-       (car systems))))
+   (apply group-systems systems)))
 
 (define-syntax define-engine
   (syntax-rules ()
@@ -122,6 +120,10 @@
 	 (set-current-engine! old-engine)
 	 res)))))
 
+(define (set-engine-systems! engine . systems)
+  (with-mutex (engine-mutex engine)
+    (set-engine-system! engine (apply group-systems systems))))
+
 (export current-engine
 	set-current-engine!
 	get-entity
@@ -131,7 +133,8 @@
 	set-entity!
 	set-entity-components!
 	remove-entity-components!
-	with-engine)
+	with-engine
+	set-engine-systems!)
 
 
 ;;; Engine execution

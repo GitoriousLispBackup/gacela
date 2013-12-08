@@ -247,11 +247,20 @@
 	     (receive (e2 c2) ((join-thread (car thd)) e c)
 	       (run-wait (cdr thd) e2 c2)))))))
 
+(define (group-systems . systems)
+  (cond ((null? systems)
+	 (make-system ()))
+	((= (length systems) 1)
+	 (car systems))
+	(else
+	 (join-systems systems))))
+
 (export find-entities-by-components
 	define-system
 	make-system
 	join-systems
-	threaded-systems)
+	threaded-systems
+	group-systems)
 
 
 ;;; Entities and components access inside systems
