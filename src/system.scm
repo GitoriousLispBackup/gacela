@@ -225,27 +225,46 @@
 
 (define (join-systems . systems)
   (lambda (entities components)
-    (let run ((s systems) (e entities) (c components))
-      (cond ((null? s)
-	     (values e c))
-	    (else
-	     (receive (e2 c2) (((car s) e c))
-	       (run (cdr s) e2 c2)))))))
+    (let ((changes
+	   (let run ((s systems) (e (alist-copy entities)) (c (alist-copy components)) (res '()))
+	     (cond ((null? s)
+		    res)
+		   (else
+		    (let ((r ((car s) e c)))
+		      (receive (e2 c2) (r)
+		        (run (cdr s) e2 c2 (cons r res)))))))))
+      (lambda* (#:optional (entities2 #f) (components2 #f))
+        (let modify ((e (if (and entities2 components2) entities2 entities))
+		     (c (if (and entities2 components2) components2 components))
+		     (ch (reverse changes)))
+	  (cond ((null? ch)
+		 (values e c))
+		(else
+		 (receive (e2 c2) ((car ch) e c)
+		   (modify e2 c2 (cdr ch))))))))))
 
 (define (threaded-systems . systems)
   (lambda (entities components)
-    (let run-wait ((thd
-		    (map
-		     (lambda (s)
-		       (call-with-new-thread
-			(lambda () (s entities components))))
-		     systems))
-		   (e entities) (c components))
-      (cond ((null? thd)
-	     (values e c))
-	    (else
-	     (receive (e2 c2) ((join-thread (car thd)) e c)
-	       (run-wait (cdr thd) e2 c2)))))))
+    (let ((changes
+	   (let run-wait ((thd
+			   (map (lambda (s)
+				  (call-with-new-thread
+				   (lambda () (s entities components))))
+				systems))
+			  (res '()))
+	     (cond ((null? thd)
+		    res)
+		   (else
+		    (run-wait (cdr thd) (cons (join-thread (car thd)) res)))))))
+      (lambda* (#:optional (entities2 #f) (components2 #f))
+        (let modify ((e (if (and entities2 components2) entities2 entities))
+		     (c (if (and entities2 components2) components2 components))
+		     (ch changes))
+	  (cond ((null? ch)
+		 (values e c))
+		(else
+		 (receive (e2 c2) ((car ch) e c)
+		   (modify e2 c2 (cdr ch))))))))))
 
 (define (group-systems . systems)
   (cond ((null? systems)
@@ -253,7 +272,7 @@
 	((= (length systems) 1)
 	 (car systems))
 	(else
-	 (join-systems systems))))
+	 (apply join-systems systems))))
 
 (export find-entities-by-components
 	define-system
