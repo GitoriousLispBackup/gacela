@@ -20,27 +20,25 @@
   #:use-module (ice-9 receive))
 
 
-(define-system (s1 l)
-  (lambda (e)
-    (sleep 3)
-    (map
-     (lambda (e1)
-       (set-entity-components (car e1) `(l . ,(cons 1 (cdadr e1)))))
-     e)))
+(define-system s1 ((with-l (l)))
+  (sleep 3)
+  (map
+   (lambda (e)
+     (set-entity-components (get-key e) `(l . ,(cons 1 (get-component 'l e)))))
+   with-l))
 
-(define-system (s2 l)
-  (lambda (e)
-    (sleep 4)
-    (map
-     (lambda (e1)
-       (set-entity-components (car e1) `(l . ,(cons 2 (cdadr e1)))))
-     e)))
+(define-system s2 ((with-l (l)))
+  (sleep 4)
+  (map
+   (lambda (e)
+     (set-entity-components (get-key e) `(l . ,(cons 2 (get-component 'l e)))))
+   with-l))
 
 (define (composing-with-join)
   (let ((entities '())
 	(components '()))
     (receive (e c) (modify-entities (list (new-entity '(l . ())) (new-entity '(l . ()))) entities components)
-      ((join-systems s1 s2) e c))))
+      (((join-systems s1 s2) e c)))))
 
 (export composing-with-join)
 
@@ -49,7 +47,7 @@
   (let ((entities '())
 	(components '()))
     (receive (e c) (modify-entities (list (new-entity '(l . ())) (new-entity '(l . ()))) entities components)
-      ((threaded-systems s1 s2) e c))))
+      (((threaded-systems s1 s2) e c)))))
 
 (export composing-with-threaded)
 
@@ -59,14 +57,14 @@
 	(components '())
 	(t (current-time)))
     (receive (e c) (modify-entities (list (new-entity '(l . ())) (new-entity '(l . ()))) entities components)
-      (receive (e c) ((join-systems s1 s2) e c)
+      (receive (e c) (((join-systems s1 s2) e c))
 	(format #t "~a~%~a~%Time: ~a~%~%" e c (- (current-time) t)))))
 
   (let ((entities '())
 	(components '())
 	(t (current-time)))
     (receive (e c) (modify-entities (list (new-entity '(l . ())) (new-entity '(l . ()))) entities components)
-      (receive (e c) ((threaded-systems s1 s2) e c)
+      (receive (e c) (((threaded-systems s1 s2) e c))
 	(format #t "~a~%~a~%Time: ~a~%~%" e c (- (current-time) t))))))
 
 (export join-vs-threaded)
