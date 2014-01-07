@@ -23,12 +23,46 @@
   #:use-module (srfi srfi-9 gnu))
 
 
-;;; Engine definitions
+;;; Engine Properties
+
+(define* (get-property property-path #:key (engine (current-engine)))
+  (let ((entities (get-entities-by-components (list (car property-path)) #:engine engine)))
+    (cond ((null? entities)
+	   #f)
+	  (else
+	   (let loop ((property (get-component (car property-path) (car entities)))
+		      (path (cdr property-path)))
+	     (cond ((or (null? path) (not property))
+		    property)
+		   (else
+		    (loop (assoc-ref property (car path)) (cdr path)))))))))
+
+(define* (set-property! property-path value #:key (engine (current-engine)))
+  (define (loop property path)
+    (cond ((null? path)
+	   value)
+	  (else
+	   (assoc-set! (or property '()) (car path) (loop (assoc-ref property (car path)) (cdr path))))))
+
+  (let ((entities (get-entities-by-components (list (car property-path)) #:engine engine)))
+    (cond ((null? entities)
+	   (new-entity! `(,(car property-path) . ,(loop '() (cdr property-path)))))
+	  (else
+	   (set-entity-components! (get-key (car entities)) `(,(car property-path) . ,(loop (get-component (car property-path) (car entities)) (cdr property-path))))))))
+
+(export get-property
+	set-property!)
+
+
+;;; Engine Inner Properties
 
 (define (default-delay) 0.1)
 
-(define-component engine-inner-properties
-  delay)
+(define (default-engine-inner-properties)
+  `(engine-inner-properties (delay . ,(default-delay))))
+
+
+;;; Engine definitions
 
 (define-record-type engine
   (make-engine-record entities mutex running-mutex system)
@@ -46,7 +80,7 @@
 
 (define (make-engine . systems)
   (make-engine-record
-   (receive (e c) ((new-entity (make-engine-inner-properties (default-delay))) '() '())
+   (receive (e c) ((new-entity (default-engine-inner-properties)) '() '())
      (list e c))
    (make-mutex)
    (make-mutex)
@@ -64,8 +98,6 @@
 (export make-engine
 	define-engine
 	engine-running?)
-
-(export-component engine-inner-properties)
 
 
 ;;; Engine Access Protocol Interface
@@ -147,7 +179,7 @@
 	       (with-engine engine
 	         (receive (e c) ((apply (engine-system engine) (engine-entities engine)))
 		   (set-engine-entities! engine (list e c)))
-		 (set! delay (engine-inner-properties-delay (get-component 'engine-inner-properties (car (get-entities-by-components '(engine-inner-properties)))))))
+		 (set! delay (get-property '(engine-inner-properties delay))))
 	       (usleep (inexact->exact (* delay 1000000))))
 	     (if (not (engine-stopping? engine #:clean #t))
 		 (loop)))))))
