@@ -16,6 +16,7 @@
 
 
 (define-module (gacela engine)
+  #:use-module (gacela misc)
   #:use-module (gacela system)
   #:use-module (ice-9 receive)
   #:use-module (ice-9 threads)
@@ -56,10 +57,10 @@
 
 ;;; Engine Inner Properties
 
-(define (default-delay) 0.1)
+(define (default-step) 0.1)
 
 (define (default-engine-inner-properties)
-  `(engine-inner-properties (delay . ,(default-delay))))
+  `(engine-inner-properties (step . ,(default-step))))
 
 
 ;;; Engine definitions
@@ -175,12 +176,15 @@
   (cond ((not (engine-running? engine))
 	 (with-mutex (engine-running-mutex engine)
 	   (let loop ()
-	     (let ((delay 0))
+	     (let ((t (current-utime))
+		   (delay 0))
 	       (with-engine engine
 	         (receive (e c) ((apply (engine-system engine) (engine-entities engine)))
 		   (set-engine-entities! engine (list e c)))
-		 (set! delay (get-property '(engine-inner-properties delay))))
-	       (usleep (inexact->exact (* delay 1000000))))
+		 (set! delay (- (inexact->exact (* (get-property '(engine-inner-properties step)) 1000000))
+				(- (current-utime) t))))
+	       (cond ((> delay 0)
+		      (usleep delay))))
 	     (if (not (engine-stopping? engine #:clean #t))
 		 (loop)))))))
 
