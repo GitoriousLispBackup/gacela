@@ -22,17 +22,17 @@
 
 (define-system s1 ((with-l (l)))
   (sleep 3)
-  (map
-   (lambda (e)
-     (set-entity-components (get-key e) `(l . ,(cons 1 (get-component 'l e)))))
-   with-l))
+  (entities-changes
+   (map (lambda (e)
+	  (set-entity-components (get-key e) `(l . ,(cons 1 (get-component 'l e)))))
+	with-l)))
 
 (define-system s2 ((with-l (l)))
   (sleep 4)
-  (map
-   (lambda (e)
-     (set-entity-components (get-key e) `(l . ,(cons 2 (get-component 'l e)))))
-   with-l))
+  (entities-changes
+   (map (lambda (e)
+	  (set-entity-components (get-key e) `(l . ,(cons 2 (get-component 'l e)))))
+	with-l)))
 
 (define (composing-with-join)
   (let ((entities '())

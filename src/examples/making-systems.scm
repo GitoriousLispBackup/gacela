@@ -23,15 +23,15 @@
 (define-component a x y)
 
 (define-system s1 ()
-  (list (new-entity (make-a 1 2))
-	(new-entity (make-a 10 20))))
+  (entities-changes
+   (list (new-entity (make-a 1 2))
+	 (new-entity (make-a 10 20)))))
 
 (define-system s2 ((with-a (a)))
   (for-each
    (lambda (e)
      (format #t "Key: ~a  Component: ~a~%" (get-key e) (get-component 'a e)))
-   with-a)
-  '())
+   with-a))
   
 (define (making-systems)
   (let ((entities '())

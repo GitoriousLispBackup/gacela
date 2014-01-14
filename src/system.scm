@@ -187,6 +187,11 @@
 
 ;;; Making systems
 
+(define-record-type entities-changes-type
+  (entities-changes changes)
+  entities-changes?
+  (changes get-entities-changes))
+
 (define* (find-entities-by-components c t)
   (cond ((null? t) '())
 	(else
@@ -213,7 +218,7 @@
 	   (lambda* (#:optional (entities2 #f) (components2 #f))
 	     (let ((e (if (and entities2 components2) entities2 entities))
 		   (c (if (and entities2 components2) components2 components)))
-	       (modify-entities res e c)))))))))
+	       (modify-entities (if (entities-changes? res) (get-entities-changes res) '()) e c)))))))))
 
 (define-syntax define-system
   (syntax-rules ()
@@ -274,7 +279,10 @@
 	(else
 	 (apply join-systems systems))))
 
-(export find-entities-by-components
+(export entities-changes
+	entities-changes?
+	get-entities-changes
+	find-entities-by-components
 	define-system
 	make-system
 	join-systems
