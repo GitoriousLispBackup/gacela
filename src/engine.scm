@@ -177,31 +177,32 @@
 	 (with-mutex (engine-running-mutex engine)
 	   (let loop ()
 	     (let ((t (current-utime))
-		   (delay 0))
+		   (delay 0)
+		   (halt #f))
 	       (with-engine engine
 	         (receive (e c) ((apply (engine-system engine) (engine-entities engine)))
 		   (set-engine-entities! engine (list e c)))
 		 (set! delay (- (inexact->exact (* (get-property '(engine-inner-properties step)) 1000000))
-				(- (current-utime) t))))
-	       (cond ((> delay 0)
-		      (usleep delay))))
-	     (if (not (engine-stopping? engine #:clean #t))
-		 (loop)))))))
+				(- (current-utime) t)))
+		 (set! halt (engine-stopping? #:clean #t)))
+	       (cond ((not halt)
+		      (cond ((> delay 0)
+			     (usleep delay)))
+		      (loop)))))))))
 
 (define (stop-engine engine)
   (with-engine engine
     (new-entity! '(engine-halt . #t)))
   'engine-halt)
 
-(define* (engine-stopping? engine #:key (clean #f))
+(define* (engine-stopping? #:key (engine (current-engine)) (clean #f))
   (let ((halt #f))
-    (with-engine engine
-      (let halt-engine ((halts (get-entities-by-components '(engine-halt))))
-	(cond ((not (null? halts))
-	       (set! halt #t)
-	       (cond (clean
-		      (remove-entity! (caar halts))
-		      (halt-engine (cdr halts))))))))
+    (let halt-engine ((halts (get-entities-by-components '(engine-halt))))
+      (cond ((not (null? halts))
+	     (set! halt #t)
+	     (cond (clean
+		    (remove-entity! (caar halts))
+		    (halt-engine (cdr halts)))))))
     halt))
 
 (export start-engine
