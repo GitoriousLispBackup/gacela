@@ -80,15 +80,6 @@
 
 (define-engine conway-game lives-or-deads print-world)
 
-(with-engine conway-game
-  (let ((cells '((4 1) (4 2) (5 1) (5 2)
-		 (11 3) (11 4) (11 5) (12 2) (12 6) (13 1) (13 7) (14 1) (14 7)
-		 (15 4) (16 2) (16 6) (17 3) (17 4) (17 5) (18 4)
-		 (21 5) (21 6) (21 7) (22 5) (22 6) (22 7) (23 4) (23 8)
-		 (25 3) (25 4) (25 8) (25 9)
-		 (35 6) (35 7) (36 6) (36 7))))
-    (for-each (lambda (c) (new-entity! `(coord . ,c))) cells)))
-
 (with-engine conway-game ()
   (let ((cells '((4 1) (4 2) (5 1) (5 2)
 		 (11 3) (11 4) (11 5) (12 2) (12 6) (13 1) (13 7) (14 1) (14 7)

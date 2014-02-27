@@ -24,47 +24,41 @@
   (sleep 3)
   (entities-changes
    (map (lambda (e)
-	  (set-entity-components (get-key e) `(l . ,(cons 1 (get-component 'l e)))))
+	  (set-entity-components (get-key e) '(l1 . 1)))
 	with-l)))
 
 (define-system s2 ((with-l (l)))
   (sleep 4)
   (entities-changes
    (map (lambda (e)
-	  (set-entity-components (get-key e) `(l . ,(cons 2 (get-component 'l e)))))
+	  (set-entity-components (get-key e) '(l2 . 2)))
 	with-l)))
 
 (define (composing-with-join)
-  (let ((entities '())
-	(components '()))
-    (receive (e c) (modify-entities (list (new-entity '(l . ())) (new-entity '(l . ()))) entities components)
-      (((join-systems s1 s2) e c)))))
+  (let ((entities (make-entity-set (new-entity '(l . ())) (new-entity '(l . ())) (new-entity '(a . #f)))))
+    (set! entities (modify-entities entities (get-entities-changes ((join-systems s1 s2) entities))))
+    (entity-list entities)))
 
 (export composing-with-join)
 
 
-(define (composing-with-threaded)
-  (let ((entities '())
-	(components '()))
-    (receive (e c) (modify-entities (list (new-entity '(l . ())) (new-entity '(l . ()))) entities components)
-      (((threaded-systems s1 s2) e c)))))
+(define (composing-with-thread)
+  (let ((entities (make-entity-set (new-entity '(l . ())) (new-entity '(l . ())) (new-entity '(a . #f)))))
+    (set! entities (modify-entities entities (get-entities-changes ((thread-systems s1 s2) entities))))
+    (entity-list entities)))
+  
+(export composing-with-thread)
 
-(export composing-with-threaded)
 
-
-(define (join-vs-threaded)
-  (let ((entities '())
-	(components '())
+(define (join-vs-thread)
+  (let ((entities (make-entity-set (new-entity '(l . ())) (new-entity '(l . ())) (new-entity '(a . #f))))
 	(t (current-time)))
-    (receive (e c) (modify-entities (list (new-entity '(l . ())) (new-entity '(l . ()))) entities components)
-      (receive (e c) (((join-systems s1 s2) e c))
-	(format #t "~a~%~a~%Time: ~a~%~%" e c (- (current-time) t)))))
+    (set! entities (modify-entities entities (get-entities-changes ((join-systems s1 s2) entities))))
+    (format #t "~a~%Time: ~a~%~%" entities (- (current-time) t)))
 
-  (let ((entities '())
-	(components '())
+  (let ((entities (make-entity-set (new-entity '(l . ())) (new-entity '(l . ())) (new-entity '(a . #f))))
 	(t (current-time)))
-    (receive (e c) (modify-entities (list (new-entity '(l . ())) (new-entity '(l . ()))) entities components)
-      (receive (e c) (((threaded-systems s1 s2) e c))
-	(format #t "~a~%~a~%Time: ~a~%~%" e c (- (current-time) t))))))
+    (set! entities (modify-entities entities (get-entities-changes ((thread-systems s1 s2) entities))))
+    (format #t "~a~%Time: ~a~%~%" entities (- (current-time) t))))
 
-(export join-vs-threaded)
+(export join-vs-thread)

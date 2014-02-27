@@ -83,6 +83,17 @@
 
 ;;; Entities and components
 
+(define (make-entity-set . changes)
+  (modify-entities
+   (cons (make-hash-table) (make-hash-table))
+   changes))
+
+(define (entity-list entity-set)
+  (hash-map->list (lambda (k v) (cons k v)) (car entity-set)))
+
+(define (entity-count entity-set)
+  (hash-count (const #t) (car entity-set)))
+
 (define (normalize-components components)
   (map
    (lambda (c)
@@ -95,89 +106,105 @@
   (cond ((null? components) clist)
 	(else
 	 (let* ((type (car components))
-		(elist (assoc-ref clist type)))
-	   (register-components entity (cdr components)
-	     (assoc-set! clist type
-	       (cond (elist
-		      (lset-adjoin eq? elist entity))
-		     (else
-		      (list entity)))))))))
+		(elist (hash-ref clist type)))
+	   (hash-set! clist type
+	     (cond (elist
+		    (lset-adjoin eq? elist entity))
+		   (else
+		    (list entity))))
+	   (register-components entity (cdr components) clist)))))
 
 (define (unregister-components entity components clist)
   (cond ((null? components) clist)
 	(else
 	 (let* ((type (car components))
-		(elist (lset-difference eq? (assoc-ref clist type) (list entity))))
-	   (unregister-components entity (cdr components)
-	     (cond ((null? elist)
-		    (assoc-remove! clist type))
-		   (else
-		    (assoc-set! clist type elist))))))))
+		(elist (lset-difference eq? (hash-ref clist type) (list entity))))
+	   (cond ((null? elist)
+		  (hash-remove! clist type))
+		 (else
+		  (hash-set! clist type elist)))
+	   (unregister-components entity (cdr components) clist)))))
+
+(define (component-names components)
+  (map (lambda (c) (car c)) components))
+
+(define (entity-component-names key entity-set)
+  (component-names
+   (hash-ref (car entity-set) key)))
+
+(define (entity-ref key entity-set)
+  (hash-get-handle (car entity-set) key))
 
 (define (new-entity . new-components)
-  (lambda (entities components)
+  (lambda (entity-set)
     (let ((key (gensym))
 	  (nc (normalize-components new-components)))
+      (hash-set! (car entity-set) key nc)
+      (register-components key (component-names nc) (cdr entity-set))
       (values
-       (acons key nc entities)
-       (register-components key
-			    (map (lambda (c) (car c)) nc)
-			    components)
+       entity-set
        (cons key nc)))))
 
 (define (remove-entity key)
-  (lambda (entities components)
-    (let ((clist (map (lambda (c) (car c)) (assoc-ref entities key)))
-	  (entity (assoc key entities)))
+  (lambda (entity-set)
+    (let ((clist (entity-component-names key entity-set))
+	  (entity (entity-ref key entity-set)))
+      (hash-remove! (car entity-set) key)
+      (unregister-components key clist (cdr entity-set))
       (values
-       (assoc-remove! entities key)
-       (unregister-components key clist components)
+       entity-set
        entity))))
 
 (define (set-entity key . new-components)
-  (lambda (entities components)
+  (lambda (entity-set)
     (let* ((nc (normalize-components new-components))
-	   (clist (map (lambda (c) (car c)) (assoc-ref entities key)))
-	   (nclist (map (lambda (c) (car c)) nc)))
+	   (clist (entity-component-names key entity-set))
+	   (nclist (component-names nc)))
+      (hash-set! (car entity-set) key nc)
+      (register-components key
+       (lset-difference eq? nclist clist)
+       (unregister-components key (lset-difference eq? clist nclist) (cdr entity-set)))
       (values
-       (assoc-set! entities key nc)
-       (register-components key (lset-difference eq? nclist clist)
-			    (unregister-components key (lset-difference eq? clist nclist) components))
+       entity-set
        (cons key nc)))))
 
 (define (set-entity-components key . new-components)
-  (lambda (entities components)
+  (lambda (entity-set)
     (let ((nc (normalize-components new-components))
-	  (clist (alist-copy (assoc-ref entities key))))
+	  (clist (alist-copy (hash-ref (car entity-set) key))))
       (for-each
        (lambda (c)
-	 (assoc-set! clist (car c) (cdr c)))
+	 (set! clist (assoc-set! clist (car c) (cdr c))))
        nc)
+      (hash-set! (car entity-set) key clist)
+      (register-components key (component-names nc) (cdr entity-set))
       (values
-       (assoc-set! entities key clist)
-       (register-components key (map (lambda (c) (car c)) nc) components)
+       entity-set
        (cons key clist)))))
 
 (define (remove-entity-components key . old-components)
-  (lambda (entities components)
-    (let ((clist (alist-copy (assoc-ref entities key))))
+  (lambda (entity-set)
+    (let ((clist (alist-copy (hash-ref (car entity-set) key))))
       (for-each
        (lambda (c)
-	 (assoc-remove! clist c))
+	 (set! clist (assoc-remove! clist c)))
        old-components)
+      (hash-set! (car entity-set) key clist)
+      (unregister-components key old-components (cdr entity-set))
       (values
-       (assoc-set! entities key clist)
-       (unregister-components key old-components components)
+       entity-set
        (cons key clist)))))
 
-(define (modify-entities changes entities components)
+(define (modify-entities entity-set changes)
   (cond ((null? changes)
-	 (values entities components))
+	 entity-set)
 	(else
-	 (receive (e c) ((car changes) entities components)
-	   (modify-entities (cdr changes) e c)))))
+	 (modify-entities ((car changes) entity-set) (cdr changes)))))
 
-(export new-entity
+(export make-entity-set
+	entity-list
+	entity-count
+	new-entity
 	remove-entity
 	set-entity
 	set-entity-components
@@ -192,33 +219,35 @@
   entities-changes?
   (changes get-entities-changes))
 
-(define* (find-entities-by-components c t)
-  (cond ((null? t) '())
+(define (append-changes changes)
+  (entities-changes
+   (apply append
+	  (map get-entities-changes changes))))
+
+(define (find-entities-by-components entity-set clist)
+  (cond ((null? clist) '())
 	(else
-	 (let* ((e (assoc-ref c (car t)))
-		(e* (if e e '())))
-	   (cond ((null? (cdr t)) e*)
-		 (else
-		  (lset-intersection eq? e* (find-entities-by-components c (cdr t)))))))))
+	 (let ((e (hash-ref (cdr entity-set) (car clist) '()))
+	       (e* (find-entities-by-components entity-set (cdr clist))))
+	   (if (null? e*)
+	       e
+	       (lset-intersection eq? e e*))))))
 
 (define-syntax make-system
   (syntax-rules ()
     ((_ ((name (component-type ...)) ...) form ...)
-     (lambda (entities components)
+     (lambda (entity-set)
        (let ((name (map (lambda (x)
 			  (cons (car x)
 				(filter (lambda (x)
 					  (memq (car x) '(component-type ...)))
 					(cdr x))))
 			(map (lambda (x)
-			       (assoc x entities))
-			     (find-entities-by-components components '(component-type ...)))))
+			       (entity-ref x entity-set))
+			     (find-entities-by-components entity-set '(component-type ...)))))
 	     ...)
-	 (let ((res (begin form ...)))
-	   (lambda* (#:optional (entities2 #f) (components2 #f))
-	     (let ((e (if (and entities2 components2) entities2 entities))
-		   (c (if (and entities2 components2) components2 components)))
-	       (modify-entities (if (entities-changes? res) (get-entities-changes res) '()) e c)))))))))
+	 form
+	 ...)))))
 
 (define-syntax define-system
   (syntax-rules ()
@@ -228,56 +257,33 @@
          form
 	 ...)))))
 
+(define (composed-systems-result results)
+  (let ((changes (filter (lambda (r) (entities-changes? r)) results)))
+    (cond ((null? changes)
+	   (car results))
+	  (else
+	   (append-changes changes)))))
+
 (define (join-systems . systems)
-  (lambda (entities components)
-    (let ((changes
-	   (let run ((s systems) (e (alist-copy entities)) (c (alist-copy components)) (res '()))
-	     (cond ((null? s)
-		    res)
-		   (else
-		    (let ((r ((car s) e c)))
-		      (receive (e2 c2) (r)
-		        (run (cdr s) e2 c2 (cons r res)))))))))
-      (lambda* (#:optional (entities2 #f) (components2 #f))
-        (let modify ((e (if (and entities2 components2) entities2 entities))
-		     (c (if (and entities2 components2) components2 components))
-		     (ch (reverse changes)))
-	  (cond ((null? ch)
-		 (values e c))
-		(else
-		 (receive (e2 c2) ((car ch) e c)
-		   (modify e2 c2 (cdr ch))))))))))
+  (lambda (entity-set)
+    (let run ((s systems) (res '()))
+      (cond ((null? s)
+	     (composed-systems-result res))
+	    (else
+	     (run (cdr s) (cons ((car s) entity-set) res)))))))
 
-(define (threaded-systems . systems)
-  (lambda (entities components)
-    (let ((changes
-	   (let run-wait ((thd
-			   (map (lambda (s)
-				  (call-with-new-thread
-				   (lambda () (s entities components))))
-				systems))
-			  (res '()))
-	     (cond ((null? thd)
-		    res)
-		   (else
-		    (run-wait (cdr thd) (cons (join-thread (car thd)) res)))))))
-      (lambda* (#:optional (entities2 #f) (components2 #f))
-        (let modify ((e (if (and entities2 components2) entities2 entities))
-		     (c (if (and entities2 components2) components2 components))
-		     (ch changes))
-	  (cond ((null? ch)
-		 (values e c))
-		(else
-		 (receive (e2 c2) ((car ch) e c)
-		   (modify e2 c2 (cdr ch))))))))))
-
-(define (group-systems . systems)
-  (cond ((null? systems)
-	 (make-system ()))
-	((= (length systems) 1)
-	 (car systems))
-	(else
-	 (apply join-systems systems))))
+(define (thread-systems . systems)
+  (lambda (entity-set)
+    (let run-wait ((thd
+		    (map (lambda (s)
+			   (call-with-new-thread
+			    (lambda () (s entity-set))))
+			 systems))
+		   (res '()))
+      (cond ((null? thd)
+	     (composed-systems-result res))
+	    (else
+	     (run-wait (cdr thd) (cons (join-thread (car thd)) res)))))))
 
 (export entities-changes
 	entities-changes?
@@ -286,8 +292,7 @@
 	define-system
 	make-system
 	join-systems
-	threaded-systems
-	group-systems)
+	thread-systems)
 
 
 ;;; Entities and components access inside systems

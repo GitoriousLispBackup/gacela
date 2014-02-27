@@ -24,37 +24,6 @@
   #:use-module (srfi srfi-9 gnu))
 
 
-;;; Engine Properties
-
-(define* (get-property property-path #:key (engine (current-engine)))
-  (let ((entities (get-entities-by-components (list (car property-path)) #:engine engine)))
-    (cond ((null? entities)
-	   #f)
-	  (else
-	   (let loop ((property (get-component (car property-path) (car entities)))
-		      (path (cdr property-path)))
-	     (cond ((or (null? path) (not property))
-		    property)
-		   (else
-		    (loop (assoc-ref property (car path)) (cdr path)))))))))
-
-(define* (set-property! property-path value #:key (engine (current-engine)))
-  (define (loop property path)
-    (cond ((null? path)
-	   value)
-	  (else
-	   (assoc-set! (or property '()) (car path) (loop (assoc-ref property (car path)) (cdr path))))))
-
-  (let ((entities (get-entities-by-components (list (car property-path)) #:engine engine)))
-    (cond ((null? entities)
-	   (new-entity! `(,(car property-path) . ,(loop '() (cdr property-path)))))
-	  (else
-	   (set-entity-components! (get-key (car entities)) `(,(car property-path) . ,(loop (get-component (car property-path) (car entities)) (cdr property-path))))))))
-
-(export get-property
-	set-property!)
-
-
 ;;; Engine Inner Properties
 
 (define (default-step) 0.1)
@@ -66,26 +35,25 @@
 ;;; Engine definitions
 
 (define-record-type engine
-  (make-engine-record entities mutex running-mutex system)
+  (make-engine-record entities mutex running-mutex systems)
   engine?
   (entities engine-entities set-engine-entities!)
   (mutex engine-mutex set-engine-mutex!)
   (running-mutex engine-running-mutex set-engine-running-mutex!)
-  (system engine-system set-engine-system!))
+  (systems engine-systems set-engine-systems!))
 
 (set-record-type-printer! engine
   (lambda (record port)
     (format port "#<[engine] state: ~a, entities: ~a>"
 	    (if (engine-running? record) "Running" "Stopped")
-	    (length (car (engine-entities record))))))
+	    (entity-count (engine-entities record)))))
 
 (define (make-engine . systems)
   (make-engine-record
-   (receive (e c) ((new-entity (default-engine-inner-properties)) '() '())
-     (list e c))
+   (make-entity-set (new-entity (default-engine-inner-properties)))
    (make-mutex)
    (make-mutex)
-   (apply group-systems systems)))
+   systems))
 
 (define-syntax define-engine
   (syntax-rules ()
@@ -101,75 +69,6 @@
 	engine-running?)
 
 
-;;; Engine Access Protocol Interface
-
-(define current-engine-mutex (make-mutex))
-(define current-engine-list '())
-
-(define (current-engine)
-  (with-mutex current-engine-mutex
-    (assoc-ref current-engine-list (current-thread))))
-
-(define (set-current-engine! engine)
-  (with-mutex current-engine-mutex
-    (set! current-engine-list
-	  (cond (engine
-		 (assoc-set! current-engine-list (current-thread) engine))
-		(else
-		 (assoc-remove! current-engine-list (current-thread)))))))
-
-(define* (get-entity key #:key (engine (current-engine)))
-  (assoc key (car (engine-entities engine))))
-
-(define* (get-entities-by-components component-types #:key (engine (current-engine)))
-  (map (lambda (e)
-	 (get-entity e #:engine engine))
-       (find-entities-by-components (cadr (engine-entities engine)) component-types)))
-
-(define-syntax define-entity-setter
-  (syntax-rules ()
-    ((_ name! name)
-     (define (name! . args)
-       (let ((f (apply name args))
-	     (engine (current-engine)))
-	 (receive (e c r) (f (car (engine-entities engine)) (cadr (engine-entities engine)))
-	   (set-engine-entities! engine (list e c))
-	   r))))))
-
-(define-entity-setter new-entity! new-entity)
-(define-entity-setter remove-entity! remove-entity)
-(define-entity-setter set-entity! set-entity)
-(define-entity-setter set-entity-components! set-entity-components)
-(define-entity-setter remove-entity-components! remove-entity-components)
-
-(define-syntax with-engine
-  (syntax-rules ()
-    ((_ engine body ...)
-     (let ((old-engine (current-engine)))
-       (set-current-engine! engine)
-       (let ((res (with-mutex (engine-mutex engine)
-		    body
-		    ...)))
-	 (set-current-engine! old-engine)
-	 res)))))
-
-(define (set-engine-systems! engine . systems)
-  (with-mutex (engine-mutex engine)
-    (set-engine-system! engine (apply group-systems systems))))
-
-(export current-engine
-	set-current-engine!
-	get-entity
-	get-entities-by-components
-	new-entity!
-	remove-entity!
-	set-entity!
-	set-entity-components!
-	remove-entity-components!
-	with-engine
-	set-engine-systems!)
-
-
 ;;; Engine execution
 
 (define (start-engine engine)
@@ -179,32 +78,80 @@
 	     (let ((t (current-utime))
 		   (delay 0)
 		   (halt #f))
-	       (with-engine engine
-	         (receive (e c) ((apply (engine-system engine) (engine-entities engine)))
-		   (set-engine-entities! engine (list e c)))
-		 (set! delay (- (inexact->exact (* (get-property '(engine-inner-properties step)) 1000000))
+	       (with-mutex (engine-mutex engine)
+	         (for-each
+		  (lambda (s) (eval-system s engine))
+		  (engine-systems engine))
+		 (set! delay (- (inexact->exact (* (engine-property engine 'step) 1000000))
 				(- (current-utime) t)))
-		 (set! halt (engine-stopping? #:clean #t)))
+		 (set! halt (engine-stopping? engine #:clean #t)))
 	       (cond ((not halt)
 		      (cond ((> delay 0)
 			     (usleep delay)))
 		      (loop)))))))))
 
+(define (eval-system system engine)
+  (call-with-values
+      (lambda () (system (engine-entities engine)))
+    (lambda vals
+      (let ((changes (car vals)))
+	(cond ((entities-changes? changes)
+	       (set-engine-entities! engine
+	         (modify-entities (engine-entities engine)
+				  (get-entities-changes changes))))))
+      (apply values vals))))
+
+(define-syntax with-engine
+  (syntax-rules ()
+    ((_ engine component-types form ...)
+     (with-mutex (engine-mutex engine)
+       (eval-system (make-system component-types form ...) engine)))))
+
 (define (stop-engine engine)
-  (with-engine engine
-    (new-entity! '(engine-halt . #t)))
+  (with-engine engine ()
+    (entities-changes
+     (list
+      (new-entity '(engine-halt . #t)))))
   'engine-halt)
 
-(define* (engine-stopping? #:key (engine (current-engine)) (clean #f))
-  (let ((halt #f))
-    (let halt-engine ((halts (get-entities-by-components '(engine-halt))))
-      (cond ((not (null? halts))
-	     (set! halt #t)
-	     (cond (clean
-		    (remove-entity! (caar halts))
-		    (halt-engine (cdr halts)))))))
-    halt))
+(define* (engine-stopping? engine #:key (clean #f))
+  (let ((halts (eval-system
+		(make-system ((halt (engine-halt))) halt)
+		engine)))
+    (cond ((and clean (not (null? halts)))
+	   (eval-system
+	    (make-system () (entities-changes (map (lambda (h) (remove-entity (car h))) halts)))
+	    engine)))
+    (not (null? halts))))
 
 (export start-engine
-	stop-engine
-	engine-stopping?)
+	with-engine
+	stop-engine)
+
+
+;;; Properties
+
+(define (engine-property engine name)
+  (eval-system
+   (make-system ((props (engine-inner-properties)))
+     (assoc-ref
+      (assoc-ref (cdar props) 'engine-inner-properties)
+      name))
+   engine))
+
+(define (set-engine-property! engine name value)
+  (eval-system
+   (make-system ((props (engine-inner-properties)))
+     (entities-changes
+      (list
+       (set-entity (caar props)
+		   (car
+		    (assoc-set! (cdar props) 'engine-inner-properties
+				(assoc-set! (assoc-ref (cdar props) 'engine-inner-properties)
+					    name
+					    value)))))))
+   engine)
+  value)
+
+(export engine-property
+	set-engine-property!)

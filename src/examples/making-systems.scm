@@ -24,8 +24,9 @@
 
 (define-system s1 ()
   (entities-changes
-   (list (new-entity (make-a 1 2))
-	 (new-entity (make-a 10 20)))))
+   (list
+    (new-entity (make-a 1 2))
+    (new-entity (make-a 10 20)))))
 
 (define-system s2 ((with-a (a)))
   (for-each
@@ -34,13 +35,10 @@
    with-a))
   
 (define (making-systems)
-  (let ((entities '())
-	(components '()))
-    (receive (e c) ((s1 entities components))
-	     (set! entities e)
-	     (set! components c))
-    (format #t "Two new entities with a:~%~a~%~a~%~%" entities components)
+  (let ((entities (make-entity-set)))
+    (set! entities (modify-entities entities (get-entities-changes (s1 entities))))
+    (format #t "Two new entities with a:~%~a~%~%" (entity-list entities))
 
-    ((s2 entities components))))
+    (s2 entities)))
 
 (export making-systems)
