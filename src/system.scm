@@ -39,22 +39,31 @@
 		     a
 		     (syntax->datum a)))
 	       args))))
+    (define (filtered-args args)
+      (let ((datum (map (lambda (a) (syntax->datum a)) args)))
+	(map (lambda (a) (datum->syntax x a))
+	     (map (lambda (a) (if (list? a) (car a) a))
+		  (filter (lambda (a) (not (keyword? a))) datum)))))
     (syntax-case x ()
       ((_ name field ...)
        (with-syntax ((make-name (concat "make-" #'name))
+		     (make-name-record (concat "make-" #'name "-record"))
 		     (name? (concat #'name "?"))
-		     ((field-getter ...) (map (lambda (f) (concat #'name "-" f)) #'(field ...)))
-		     ((field-setter ...) (map (lambda (f) (concat "set-" #'name "-" f "!")) #'(field ...))))
+		     ((field-name ...) (filtered-args #'(field ...)))
+		     ((field-getter ...) (map (lambda (f) (concat #'name "-" f)) (filtered-args #'(field ...))))
+		     ((field-setter ...) (map (lambda (f) (concat "set-" #'name "-" f "!")) (filtered-args #'(field ...)))))
          #'(begin
+	     (define* (make-name field ...)
+	       (make-name-record field-name ...))
 	     (define-record-type name
-	       (make-name field ...)
+	       (make-name-record field-name ...)
 	       name?
-	       (field field-getter field-setter)
+	       (field-name field-getter field-setter)
 	       ...)
 	     (set-record-type-printer! name
 	       (lambda (record port)
 		 (format port "#<[~a]" 'name)
-		 (format port " ~a: ~a" 'field (field-getter record))
+		 (format port " ~a: ~a" 'field-name (field-getter record))
 		 ...
 		 (format port ">")))
 	     'name))))))
