@@ -15,18 +15,18 @@
 ;;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-(define-module (gacela examples asteroids)
-  #:use-module (gacela game))
+(define-module (gacela examples asteroids))
+;  #:use-module (gacela game))
 
 
-(define asteroids (make-game "Asteroids"))
-(define player (make-entity))
-(add-component player (make-transform))
-(add-component player (make-mesh))
-(add-entity asteroids player)
+(define asteroids (game "Asteroids"))
+(define player (entity))
+(set! player (add-component player (transform)))
+(set! player (add-component player (mesh)))
+(set! asteroids (add-entity asteroids player))
 
 (define asteroids
-  (make-game "Asteroids"
-   (make-entity
-    (make-transform)
-    (make-mesh))))
+  (game "Asteroids"
+   (entity
+    (transform)
+    (mesh))))

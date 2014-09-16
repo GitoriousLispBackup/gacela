@@ -25,10 +25,11 @@
 
 ;;; Working with entities
 
-(define-record-type entity
+(define-record-type entity-type
   (make-entity-record id components)
   entity?
   (id entity-id)
+  (game entity-game set-entity-game!)
   (components entity-components set-entity-components!))
 
 (set-record-type-printer! entity
@@ -37,19 +38,20 @@
 	    (entity-id record)
 	    (entity-components record))))
 
-(define (make-entity . components)
+(define (entity . components)
   (make-entity-record
    (gensym)
+   #f
    components))
 
-(export make-entity
+(export entity
 	entity?
 	entity-id)
 
 
 ;;; Game Definition
 
-(define-record-type game
+(define-record-type game-type
   (make-game-record name entities)
   game?
   (name game-name set-game-name!)
@@ -68,14 +70,14 @@
 	      '()
 	      (game-entities record))))))
 
-(define (make-game name . entities)
+(define (game name . entities)
   (make-game-record
    name
    (alist->vhash
     (map (lambda (e) (cons (entity-id e) e))
 	 entities))))
 
-(export make-game
+(export game
 	game?)
 
 
