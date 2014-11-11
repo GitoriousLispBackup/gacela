@@ -21,12 +21,24 @@
 
 (define asteroids (game "Asteroids"))
 (define player (entity))
+(set! player (add-component player (name "player")))
 (set! player (add-component player (transform)))
 (set! player (add-component player (mesh)))
 (set! asteroids (add-entity asteroids player))
+(define rock (entity))
+(set! rock (add-component rock (name "rock")))
+(set! rock (add-component rock (transform)))
+(set! rock (add-component rock (mesh)))
+(set! asteroids (add-entity asteroids rock))
+
 
 (define asteroids
   (game "Asteroids"
    (entity
+    (name "player")
+    (transform)
+    (mesh))
+   (entity
+    (name "rock")
     (transform)
     (mesh))))
